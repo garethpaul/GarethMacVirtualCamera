@@ -1,0 +1,130 @@
+# GarethVideoCam - macOS Virtual Camera System Extension
+
+## Project Overview
+GarethVideoCam is a macOS application that creates a virtual camera device using Apple's CoreMediaIO framework and System Extensions. The project consists of two main components:
+1. **Main App** (`GarethVideoCam/`) - SwiftUI-based installer/manager application
+2. **System Extension** (`Extension/`) - CoreMediaIO virtual camera provider
+
+## Architecture
+
+### Main Application (`GarethVideoCam/`)
+- **GarethVideoCam.swift**: Main SwiftUI app entry point with window configuration (1200x980 minimum size)
+- **ContentView.swift**: User interface with Install/Uninstall buttons and system extension management
+- **SystemExtensionRequestManager**: Handles OSSystemExtension lifecycle (install/uninstall/status monitoring)
+
+### System Extension (`Extension/`)
+- **main.swift**: Extension entry point that starts the CMIOExtensionProvider service
+- **ExtensionProvider.swift**: Core virtual camera implementation with three main classes:
+  - `ExtensionDeviceSource`: Virtual camera device management
+  - `ExtensionStreamSource`: Video stream handling and format management
+  - `ExtensionProviderSource`: Provider-level management and device registration
+
+## Key Features
+- **Video Streaming**: Loops a bundled MP4 video file (`video.mp4`) as virtual camera output
+- **High Quality Output**: 1920x1080 HD resolution at 30fps
+- **System Integration**: Full macOS virtual camera integration via CoreMediaIO
+- **Automatic Looping**: Seamless video loop with timestamp management
+- **Error Handling**: Comprehensive error reporting for installation issues
+
+## Technical Specifications
+- **Video Format**: 420YpCbCr8BiPlanarFullRange (high-quality YUV format)
+- **Resolution**: 1920x1080 (HD)
+- **Frame Rate**: 30 FPS
+- **Pixel Buffer**: Metal-compatible with IOSurface support
+- **Bundle ID**: `com.garethpaul.GarethVideoCam`
+- **Extension ID**: `com.gareth.GarethVideoCam.Extension`
+
+## Development Guidelines
+
+### Code Structure
+- Swift 5+ with SwiftUI for UI components
+- CoreMediaIO framework for virtual camera functionality
+- AVFoundation for video processing
+- System Extensions framework for installation management
+
+### Key Classes and Their Responsibilities
+1. **SystemExtensionRequestManager**:
+   - Manages system extension installation/uninstall
+   - Provides user feedback through error codes and status messages
+   - Handles extension replacement and user approval workflows
+
+2. **ExtensionDeviceSource**:
+   - Creates and manages virtual camera device
+   - Handles video streaming from MP4 file
+   - Manages pixel buffer pools and video format descriptions
+   - Implements device property management
+
+3. **ExtensionStreamSource**:
+   - Manages video stream properties and formats
+   - Handles stream start/stop operations
+   - Manages client authorization for stream access
+
+### Installation Requirements
+- App must be in `/Applications` folder for system extension to install
+- Requires user approval in System Preferences > Security & Privacy
+- May require system reboot depending on macOS version
+
+### Error Handling
+The app includes comprehensive error reporting with specific error codes:
+- Code 1: Unknown error
+- Code 2: Missing entitlement
+- Code 3: App not in /Applications folder
+- Code 4: Extension not found
+- Code 5: Extension missing identifier
+- Code 6: Duplicate extension identifier
+- Code 7: Unknown extension category
+- Code 8: Code signature invalid
+- Code 9: Validation failed
+- Code 10: Forbidden by system policy
+- Code 11: Request canceled
+- Code 12: Request superseded
+- Code 13: Authorization required
+
+### Video Processing Pipeline
+1. **Asset Reader Setup**: Creates AVAssetReader for MP4 file processing
+2. **Timer-Based Streaming**: Uses DispatchSourceTimer for frame-accurate delivery
+3. **Buffer Management**: CVPixelBufferPool for efficient memory management
+4. **Timestamp Handling**: Manages PTS (Presentation Time Stamps) for seamless looping
+5. **Stream Delivery**: Sends processed frames to CMIOExtensionStream
+
+### Build Configuration
+- Minimum macOS version: Likely macOS 10.15+ (based on System Extensions usage)
+- Xcode project with embedded system extension
+- Proper code signing and entitlements required
+- System extension must be embedded in main app bundle
+
+### File Resources
+- **video.mp4**: Source video file for virtual camera output (present in both main app and extension bundles)
+- **Assets.xcassets**: App icons and visual assets
+- **Entitlements files**: Required for system extension and camera access
+
+### Development Tips
+1. Test installation process thoroughly - system extensions can be tricky
+2. Ensure proper code signing for both app and extension
+3. Video file should be optimized for streaming (reasonable bitrate/size)
+4. Monitor memory usage during video processing
+5. Handle edge cases in video looping and timestamp management
+
+### Debugging
+- Use Console.app to monitor system extension logs
+- Check System Preferences > Extensions for extension status
+- Verify camera appears in apps like Photo Booth or QuickTime Player
+- Use `systemextensionsctl list` command to check extension status
+
+## Future Enhancements
+- Support for multiple video sources
+- Real-time video effects and filters
+- Dynamic resolution/quality adjustment
+- Network streaming capabilities
+- Green screen/background replacement features
+
+## Dependencies
+- CoreMediaIO.framework
+- AVFoundation.framework
+- SystemExtensions.framework
+- SwiftUI.framework
+- CoreMedia.framework
+- CoreVideo.framework
+- IOKit.framework
+
+This virtual camera system provides a solid foundation for creating custom video sources on macOS, with proper system integration and professional video handling capabilities.
