@@ -21,13 +21,12 @@ struct ContentView: View {
     }
 }
 
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView(systemExtensionRequestManager: SystemExtensionRequestManager(logText: ""))
-    }
+#Preview {
+    ContentView(systemExtensionRequestManager: SystemExtensionRequestManager(logText: ""))
 }
 
-class SystemExtensionRequestManager: NSObject, ObservableObject {
+@MainActor
+class SystemExtensionRequestManager: NSObject, ObservableObject, @unchecked Sendable {
     @Published var logText: String = "Installation results here"
 
     init(logText: String) {

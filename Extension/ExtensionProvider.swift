@@ -6,7 +6,7 @@
 import CoreMediaIO
 import Foundation
 import IOKit.audio
-import os.log
+import os
 import AVFoundation
 import CoreMedia
 import CoreVideo
@@ -22,13 +22,15 @@ let logger = Logger(subsystem: "com.garethpaul.GarethVideoCam",
 
 // MARK: - ExtensionDeviceSourceDelegate
 
-protocol ExtensionDeviceSourceDelegate: NSObject {
+@MainActor
+protocol ExtensionDeviceSourceDelegate: NSObject, Sendable {
     func bufferReceived(_ buffer: CMSampleBuffer)
 }
 
 // MARK: - ExtensionDeviceSource
 
-class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource {
+@MainActor
+class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @unchecked Sendable {
     // MARK: Lifecycle
 
     init(localizedName: String) {
@@ -212,12 +214,12 @@ class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource {
         if pts.flags.contains(.valid) {
             if pts < lastPresentationTime {
                 // Detected a loop, update the timestamp offset by adding the asset duration
-                timestampOffset = CMTimeAdd(timestampOffset, assetDuration)
+                timestampOffset = timestampOffset + assetDuration
             }
             lastPresentationTime = pts
 
             // Adjust the PTS by the current timestamp offset
-            let adjustedPTS = CMTimeAdd(pts, timestampOffset)
+            let adjustedPTS = pts + timestampOffset
             let hostTimeInNanoseconds = UInt64(CMTimeGetSeconds(adjustedPTS) * Double(NSEC_PER_SEC))
 
             // Send the sample buffer with the adjusted PTS
@@ -272,7 +274,8 @@ class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource {
 
 // MARK: - ExtensionStreamSource
 
-class ExtensionStreamSource: NSObject, CMIOExtensionStreamSource {
+@MainActor
+class ExtensionStreamSource: NSObject, CMIOExtensionStreamSource, @unchecked Sendable {
     // MARK: Lifecycle
 
     init(localizedName: String, streamID: UUID,
@@ -356,7 +359,8 @@ class ExtensionStreamSource: NSObject, CMIOExtensionStreamSource {
 
 // MARK: - ExtensionProviderSource
 
-class ExtensionProviderSource: NSObject, CMIOExtensionProviderSource {
+@MainActor
+class ExtensionProviderSource: NSObject, CMIOExtensionProviderSource, @unchecked Sendable {
     // MARK: Lifecycle
 
     // CMIOExtensionProviderSource protocol methods (all are required)
