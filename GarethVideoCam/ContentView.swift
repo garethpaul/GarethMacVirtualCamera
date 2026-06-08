@@ -1196,6 +1196,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         Request Readiness: \(requestReadinessStatus)
         Request Readiness Detail: \(requestReadinessDetail ?? "System extension requests can be submitted.")
         Request Readiness Next Action: \(requestReadinessNextAction)
+        Runtime Diagnostics Command Source: \(runtimeDiagnosticsCommandSource)
+        Runtime Diagnostics Command: \(runtimeDiagnosticsCommand)
         Pending Request: \(pendingRequestStatus)
         State Guidance: \(stateGuidanceDetail ?? "None")
         Last Failure: \(lastFailureDetail ?? "No failure recorded.")
@@ -1230,6 +1232,12 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         let scriptPath = Self.bundledRuntimeDiagnosticsScriptPath()
             ?? "./scripts/collect_runtime_diagnostics.sh"
         return "/bin/bash \(Self.shellQuoted(scriptPath)) \(Self.shellQuoted(expectedApplicationPath)) 1h"
+    }
+
+    var runtimeDiagnosticsCommandSource: String {
+        return Self.bundledRuntimeDiagnosticsScriptPath() == nil
+            ? "Repository fallback"
+            : "Bundled app resource"
     }
 
     var runtimeEvidenceChecks: [RuntimeEvidenceCheck] {
@@ -1284,6 +1292,9 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         Expected Diagnostics:
         \(runtimeEvidenceExpectedDiagnostics)
+
+        Diagnostics Command Source:
+        \(runtimeDiagnosticsCommandSource)
 
         Diagnostics Command:
         \(runtimeDiagnosticsCommand)
@@ -2621,6 +2632,7 @@ private struct RuntimeEvidencePanel: View {
 
                 DetailRow(title: "Current Readiness", value: manager.requestReadinessStatus)
                 DetailRow(title: "Next Action", value: manager.requestReadinessNextAction)
+                DetailRow(title: "Command Source", value: manager.runtimeDiagnosticsCommandSource)
                 DetailRow(title: "Diagnostics Command", value: manager.runtimeDiagnosticsCommand, monospaced: true)
 
                 VStack(spacing: 0) {
@@ -2917,6 +2929,7 @@ private struct DetailsPanel: View {
                 DetailRow(title: "App Quarantine", value: manager.appQuarantineStatus.title)
                 DetailRow(title: "App Quarantine Detail", value: manager.appQuarantineStatus.detail, monospaced: true)
                 DetailRow(title: "Request Readiness", value: manager.requestReadinessStatus)
+                DetailRow(title: "Runtime Command Source", value: manager.runtimeDiagnosticsCommandSource)
                 DetailRow(title: "Pending Request", value: manager.pendingRequestStatus)
                 if let stateGuidanceDetail = manager.stateGuidanceDetail {
                     DetailRow(title: "State Guidance", value: stateGuidanceDetail)
