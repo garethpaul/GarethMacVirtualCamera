@@ -76,6 +76,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     private let expectedExtensionBundleIdentifier = "com.garethpaul.GarethVideoCam.Extension"
     private let expectedApplicationBundlePath = "/Applications/GarethVideoCam.app"
     private let requiredSystemExtensionInstallEntitlement = "com.apple.developer.system-extension.install"
+    private let requiredApplicationGroupBaseIdentifier = "com.garethpaul.GarethVideoCam"
+    private let applicationGroupsEntitlement = "com.apple.security.application-groups"
 
     enum InstallState: Equatable {
         case idle
@@ -309,7 +311,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     enum CodeSigningStatus: Equatable {
-        case valid(String, String?, Set<String>)
+        case valid(String, String?, Set<String>, Set<String>)
         case invalid(String)
 
         var title: String {
@@ -323,7 +325,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         var detail: String {
             switch self {
-            case .valid(let detail, _, _):
+            case .valid(let detail, _, _, _):
                 return detail
             case .invalid(let detail):
                 return detail
@@ -341,7 +343,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         var teamIdentifier: String? {
             switch self {
-            case .valid(_, let teamIdentifier, _):
+            case .valid(_, let teamIdentifier, _, _):
                 return teamIdentifier
             case .invalid:
                 return nil
@@ -350,10 +352,19 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         func hasEnabledEntitlement(_ entitlement: String) -> Bool {
             switch self {
-            case .valid(_, _, let enabledEntitlementKeys):
+            case .valid(_, _, let enabledEntitlementKeys, _):
                 return enabledEntitlementKeys.contains(entitlement)
             case .invalid:
                 return false
+            }
+        }
+
+        var applicationGroupIdentifiers: Set<String> {
+            switch self {
+            case .valid(_, _, _, let applicationGroupIdentifiers):
+                return applicationGroupIdentifiers
+            case .invalid:
+                return []
             }
         }
     }
@@ -572,6 +583,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             && bundledVideoReadinessDetail == nil
             && extensionCodeSigningStatus.isValid
             && extensionHostOnlyEntitlementReadinessDetail == nil
+            && applicationGroupReadinessDetail == nil
             && signingTeamReadinessDetail == nil
     }
 
@@ -618,6 +630,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         if extensionHostOnlyEntitlementReadinessDetail != nil {
             return "System extension requests require the embedded extension to omit the host System Extension entitlement."
+        }
+
+        if applicationGroupReadinessDetail != nil {
+            return "System extension requests require matching app group entitlements."
         }
 
         if signingTeamReadinessDetail != nil {
@@ -688,6 +704,19 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             extensionHostOnlyEntitlementDetail = "A valid extension signature is required before extension entitlements can be checked."
         }
 
+        let applicationGroupStatus: ReadinessCheck.Status
+        let applicationGroupDetail: String
+        if !appCodeSigningStatus.isValid || !extensionCodeSigningStatus.isValid {
+            applicationGroupStatus = .pending
+            applicationGroupDetail = "Valid app and extension signatures are required before app groups can be compared."
+        } else if let applicationGroupReadinessDetail {
+            applicationGroupStatus = .blocked
+            applicationGroupDetail = applicationGroupReadinessDetail
+        } else {
+            applicationGroupStatus = .passing
+            applicationGroupDetail = "App and extension share \(sharedApplicationGroupDescription)."
+        }
+
         let teamStatus: ReadinessCheck.Status
         let teamDetail: String
         if !appCodeSigningStatus.isValid || !extensionCodeSigningStatus.isValid {
@@ -756,6 +785,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                            title: "Extension Host Entitlement",
                            detail: extensionHostOnlyEntitlementDetail,
                            status: extensionHostOnlyEntitlementStatus),
+            ReadinessCheck(id: "application-group",
+                           title: "Application Group",
+                           detail: applicationGroupDetail,
+                           status: applicationGroupStatus),
             ReadinessCheck(id: "extension-metadata",
                            title: "Extension Metadata",
                            detail: extensionMetadataDetail,
@@ -826,6 +859,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return extensionHostOnlyEntitlementReadinessDetail
         }
 
+        if let applicationGroupReadinessDetail {
+            return applicationGroupReadinessDetail
+        }
+
         if let signingTeamReadinessDetail {
             return signingTeamReadinessDetail
         }
@@ -870,6 +907,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return "Remove the host-only \(requiredSystemExtensionInstallEntitlement) entitlement from the embedded system extension. \(extensionHostOnlyEntitlementReadinessDetail)"
         }
 
+        if let applicationGroupReadinessDetail {
+            return "Sign the app and embedded system extension with the same \(applicationGroupsEntitlement) value ending in \(requiredApplicationGroupBaseIdentifier). \(applicationGroupReadinessDetail)"
+        }
+
         if let signingTeamReadinessDetail {
             return "Sign the app and embedded system extension with the same Apple Developer Team ID. \(signingTeamReadinessDetail)"
         }
@@ -906,6 +947,37 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
 
         return extensionCodeSigningStatus.hasEnabledEntitlement(requiredSystemExtensionInstallEntitlement) ? "Present" : "Absent"
+    }
+
+    var appApplicationGroups: String {
+        guard appCodeSigningStatus.isValid else {
+            return "Unknown"
+        }
+
+        return Self.displayApplicationGroups(appCodeSigningStatus.applicationGroupIdentifiers)
+    }
+
+    var extensionApplicationGroups: String {
+        guard extensionCodeSigningStatus.isValid else {
+            return "Unknown"
+        }
+
+        return Self.displayApplicationGroups(extensionCodeSigningStatus.applicationGroupIdentifiers)
+    }
+
+    var applicationGroupStatus: String {
+        guard appCodeSigningStatus.isValid, extensionCodeSigningStatus.isValid else {
+            return "Unknown"
+        }
+
+        return applicationGroupReadinessDetail == nil ? "Shared" : "Mismatch"
+    }
+
+    var sharedApplicationGroupDescription: String {
+        let sharedGroups = Self.expectedSharedApplicationGroups(appCodeSigningStatus.applicationGroupIdentifiers,
+                                                                extensionCodeSigningStatus.applicationGroupIdentifiers,
+                                                                baseIdentifier: requiredApplicationGroupBaseIdentifier)
+        return Self.displayApplicationGroups(sharedGroups)
     }
 
     var bundleVersionStatus: String {
@@ -1054,12 +1126,16 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         App Code Signing: \(appCodeSigningStatus.title)
         App Code Signing Detail: \(appCodeSigningStatus.detail)
         App System Extension Entitlement: \(appSystemExtensionEntitlementStatus)
+        App Application Groups: \(appApplicationGroups)
         App Team ID: \(appTeamIdentifier)
         Extension Code Signing: \(extensionCodeSigningStatus.title)
         Extension Code Signing Detail: \(extensionCodeSigningStatus.detail)
         Extension Quarantine: \(extensionQuarantineStatus.title)
         Extension Quarantine Detail: \(extensionQuarantineStatus.detail)
         Extension Host-Only Entitlement: \(extensionHostOnlyEntitlementStatus)
+        Extension Application Groups: \(extensionApplicationGroups)
+        Application Group Check: \(applicationGroupStatus)
+        Shared Application Group: \(sharedApplicationGroupDescription)
         Extension Team ID: \(extensionTeamIdentifier)
         Extension CMIO Mach Service Resolved: \(extensionMachServiceResolvedStatus)
         Extension CMIO Mach Service Identifier Match: \(extensionMachServiceIdentifierMatchStatus)
@@ -1388,6 +1464,13 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return nil
         }
 
+        if let applicationGroupReadinessDetail {
+            recordReadinessBlock(state: .needsSigning,
+                                 title: "Application Group Required",
+                                 detail: applicationGroupReadinessDetail)
+            return nil
+        }
+
         if let signingTeamReadinessDetail {
             recordReadinessBlock(state: .needsSigning,
                                  title: "Team Identifier Required",
@@ -1423,6 +1506,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             || appEntitlementReadinessDetail != nil
             || !extensionCodeSigningStatus.isValid
             || extensionHostOnlyEntitlementReadinessDetail != nil
+            || applicationGroupReadinessDetail != nil
             || signingTeamReadinessDetail != nil {
             return .needsSigning
         }
@@ -1497,6 +1581,51 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         guard !extensionCodeSigningStatus.hasEnabledEntitlement(requiredSystemExtensionInstallEntitlement) else {
             return "The embedded system extension signature includes the host-only \(requiredSystemExtensionInstallEntitlement) entitlement."
+        }
+
+        return nil
+    }
+
+    private var applicationGroupReadinessDetail: String? {
+        guard appCodeSigningStatus.isValid, extensionCodeSigningStatus.isValid else {
+            return nil
+        }
+
+        let appGroups = appCodeSigningStatus.applicationGroupIdentifiers
+        let extensionGroups = extensionCodeSigningStatus.applicationGroupIdentifiers
+        guard !appGroups.isEmpty else {
+            return "The app signature does not include any \(applicationGroupsEntitlement) values."
+        }
+
+        guard !extensionGroups.isEmpty else {
+            return "The embedded system extension signature does not include any \(applicationGroupsEntitlement) values."
+        }
+
+        if let unresolvedGroup = appGroups.first(where: Self.containsUnresolvedBuildSetting) {
+            return "The app signature contains an unresolved application group value: \(unresolvedGroup)."
+        }
+
+        if let unresolvedGroup = extensionGroups.first(where: Self.containsUnresolvedBuildSetting) {
+            return "The embedded system extension signature contains an unresolved application group value: \(unresolvedGroup)."
+        }
+
+        let appExpectedGroups = Self.expectedApplicationGroups(appGroups,
+                                                               baseIdentifier: requiredApplicationGroupBaseIdentifier)
+        guard !appExpectedGroups.isEmpty else {
+            return "The app signature does not include an application group ending in \(requiredApplicationGroupBaseIdentifier); signed groups are \(Self.displayApplicationGroups(appGroups))."
+        }
+
+        let extensionExpectedGroups = Self.expectedApplicationGroups(extensionGroups,
+                                                                     baseIdentifier: requiredApplicationGroupBaseIdentifier)
+        guard !extensionExpectedGroups.isEmpty else {
+            return "The embedded system extension signature does not include an application group ending in \(requiredApplicationGroupBaseIdentifier); signed groups are \(Self.displayApplicationGroups(extensionGroups))."
+        }
+
+        let sharedGroups = Self.expectedSharedApplicationGroups(appGroups,
+                                                                extensionGroups,
+                                                                baseIdentifier: requiredApplicationGroupBaseIdentifier)
+        guard !sharedGroups.isEmpty else {
+            return "The app and embedded system extension do not share the same expected application group; app groups are \(Self.displayApplicationGroups(appGroups)), extension groups are \(Self.displayApplicationGroups(extensionGroups))."
         }
 
         return nil
@@ -1587,7 +1716,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         let signingDictionary = signingInformation(for: staticCode)
         return .valid(validDetail,
                       teamIdentifier(in: signingDictionary),
-                      enabledEntitlementKeys(in: signingDictionary))
+                      enabledEntitlementKeys(in: signingDictionary),
+                      applicationGroupIdentifiers(in: signingDictionary))
     }
 
     private static func errorMessage(for status: OSStatus) -> String {
@@ -1636,6 +1766,55 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
             return nil
         })
+    }
+
+    private static func applicationGroupIdentifiers(in signingDictionary: [String: Any]?) -> Set<String> {
+        guard let signingDictionary,
+              let entitlementDictionary = signingDictionary[kSecCodeInfoEntitlementsDict as String] as? [String: Any],
+              let entitlementValue = entitlementDictionary["com.apple.security.application-groups"] else {
+            return []
+        }
+
+        if let groupIdentifiers = entitlementValue as? [String] {
+            return Set(groupIdentifiers.filter { !$0.isEmpty })
+        }
+
+        if let groupIdentifiers = entitlementValue as? [Any] {
+            return Set(groupIdentifiers.compactMap { value in
+                guard let groupIdentifier = value as? String, !groupIdentifier.isEmpty else {
+                    return nil
+                }
+
+                return groupIdentifier
+            })
+        }
+
+        if let groupIdentifier = entitlementValue as? String, !groupIdentifier.isEmpty {
+            return [groupIdentifier]
+        }
+
+        return []
+    }
+
+    private static func displayApplicationGroups(_ groups: Set<String>) -> String {
+        let sortedGroups = groups.sorted()
+        return sortedGroups.isEmpty ? "None" : sortedGroups.joined(separator: ", ")
+    }
+
+    private static func isExpectedApplicationGroupIdentifier(_ groupIdentifier: String, baseIdentifier: String) -> Bool {
+        return groupIdentifier == baseIdentifier || groupIdentifier.hasSuffix(".\(baseIdentifier)")
+    }
+
+    private static func expectedApplicationGroups(_ groups: Set<String>, baseIdentifier: String) -> Set<String> {
+        return Set(groups.filter { isExpectedApplicationGroupIdentifier($0, baseIdentifier: baseIdentifier) })
+    }
+
+    private static func expectedSharedApplicationGroups(_ appGroups: Set<String>,
+                                                        _ extensionGroups: Set<String>,
+                                                        baseIdentifier: String) -> Set<String> {
+        let appExpectedGroups = expectedApplicationGroups(appGroups, baseIdentifier: baseIdentifier)
+        let extensionExpectedGroups = expectedApplicationGroups(extensionGroups, baseIdentifier: baseIdentifier)
+        return appExpectedGroups.intersection(extensionExpectedGroups)
     }
 
     private static func quarantineStatus(for url: URL) -> QuarantineStatus {
@@ -2198,6 +2377,7 @@ private struct DetailsPanel: View {
                     DetailRow(title: "App Signature Detail", value: manager.appCodeSigningStatus.detail)
                 }
                 DetailRow(title: "System Extension Entitlement", value: manager.appSystemExtensionEntitlementStatus)
+                DetailRow(title: "App Application Groups", value: manager.appApplicationGroups, monospaced: true)
                 DetailRow(title: "App Team ID", value: manager.appTeamIdentifier)
                 DetailRow(title: "Extension Signature", value: manager.extensionCodeSigningStatus.title)
                 if !manager.extensionCodeSigningStatus.isValid {
@@ -2206,6 +2386,9 @@ private struct DetailsPanel: View {
                 DetailRow(title: "Extension Quarantine", value: manager.extensionQuarantineStatus.title)
                 DetailRow(title: "Extension Quarantine Detail", value: manager.extensionQuarantineStatus.detail, monospaced: true)
                 DetailRow(title: "Extension Host-Only Entitlement", value: manager.extensionHostOnlyEntitlementStatus)
+                DetailRow(title: "Extension Application Groups", value: manager.extensionApplicationGroups, monospaced: true)
+                DetailRow(title: "Application Group Check", value: manager.applicationGroupStatus)
+                DetailRow(title: "Shared Application Group", value: manager.sharedApplicationGroupDescription, monospaced: true)
                 DetailRow(title: "Extension Team ID", value: manager.extensionTeamIdentifier)
                 DetailRow(title: "Extension Metadata", value: manager.extensionMetadataStatus)
                 DetailRow(title: "Extension CMIO Mach Service Resolved", value: manager.extensionMachServiceResolvedStatus)

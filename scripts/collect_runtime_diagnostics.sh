@@ -10,6 +10,8 @@ EXTENSION_PATH="${APP_PATH}/Contents/Library/SystemExtensions/${EXTENSION_ID}.sy
 VIDEO_PATH="${EXTENSION_PATH}/Contents/Resources/video.mp4"
 LOG_SUBSYSTEM="com.garethpaul.GarethVideoCam"
 HOST_SYSTEM_EXTENSION_ENTITLEMENT="com.apple.developer.system-extension.install"
+APP_GROUP_ENTITLEMENT="com.apple.security.application-groups"
+APP_GROUP_BASE_ID="com.garethpaul.GarethVideoCam"
 EXTENSION_INFO_PLIST="${EXTENSION_PATH}/Contents/Info.plist"
 
 section() {
@@ -190,6 +192,134 @@ has_boolean_entitlement() {
   [ "$entitlement_value" = "true" ]
 }
 
+read_application_groups() {
+  local bundle_path="$1"
+  local entitlements_file
+  local python_bin=""
+
+  entitlements_file="$(/usr/bin/mktemp -t gareth-entitlements.XXXXXX)" || return 1
+
+  if ! /usr/bin/codesign -d --entitlements :- "$bundle_path" >"$entitlements_file" 2>/dev/null; then
+    /bin/rm -f "$entitlements_file"
+    return 1
+  fi
+
+  if [ -x /usr/bin/python3 ]; then
+    python_bin="/usr/bin/python3"
+  elif command -v python3 >/dev/null 2>&1; then
+    python_bin="$(command -v python3)"
+  fi
+
+  if [ -n "$python_bin" ]; then
+    "$python_bin" - "$entitlements_file" "$APP_GROUP_ENTITLEMENT" <<'PY' || true
+import plistlib
+import sys
+
+with open(sys.argv[1], "rb") as entitlements_file:
+    entitlements = plistlib.load(entitlements_file)
+
+groups = entitlements.get(sys.argv[2], [])
+if isinstance(groups, str):
+    groups = [groups]
+
+for group in groups:
+    if isinstance(group, str) and group:
+        print(group)
+PY
+  elif [ -x /usr/libexec/PlistBuddy ]; then
+    /usr/libexec/PlistBuddy -c "Print :${APP_GROUP_ENTITLEMENT}" "$entitlements_file" 2>/dev/null \
+      | /usr/bin/awk '
+        /^[[:space:]]*Array[[:space:]]*\{/ { next }
+        /^[[:space:]]*\}/ { next }
+        NF { sub(/^[[:space:]]+/, ""); print }
+      ' || true
+  fi
+
+  /bin/rm -f "$entitlements_file"
+}
+
+format_application_groups() {
+  local groups="$1"
+
+  printf '%s\n' "$groups" | /usr/bin/awk '
+    NF {
+      if (out) {
+        out = out ", " $0
+      } else {
+        out = $0
+      }
+    }
+    END {
+      if (out) {
+        print out
+      } else {
+        print "none"
+      }
+    }'
+}
+
+application_group_matches_expected_identifier() {
+  local application_group="$1"
+
+  if [ "$application_group" = "$APP_GROUP_BASE_ID" ] || [[ "$application_group" == *".$APP_GROUP_BASE_ID" ]]; then
+    return 0
+  fi
+
+  return 1
+}
+
+application_groups_expected_present_value() {
+  local groups="$1"
+
+  while IFS= read -r application_group; do
+    [ -n "$application_group" ] || continue
+    if ! contains_unresolved_build_setting "$application_group" \
+      && application_group_matches_expected_identifier "$application_group"; then
+      printf 'yes\n'
+      return
+    fi
+  done <<EOF
+$groups
+EOF
+
+  printf 'no\n'
+}
+
+application_groups_share_expected_value() {
+  local app_groups="$1"
+  local extension_groups="$2"
+
+  while IFS= read -r app_group; do
+    [ -n "$app_group" ] || continue
+    if contains_unresolved_build_setting "$app_group" \
+      || ! application_group_matches_expected_identifier "$app_group"; then
+      continue
+    fi
+
+    if printf '%s\n' "$extension_groups" | /usr/bin/grep -F -x -- "$app_group" >/dev/null; then
+      printf 'yes\n'
+      return
+    fi
+  done <<EOF
+$app_groups
+EOF
+
+  printf 'no\n'
+}
+
+application_groups_ready_value() {
+  local app_groups="$1"
+  local extension_groups="$2"
+
+  if [ "$(application_groups_expected_present_value "$app_groups")" = "yes" ] \
+    && [ "$(application_groups_expected_present_value "$extension_groups")" = "yes" ] \
+    && [ "$(application_groups_share_expected_value "$app_groups" "$extension_groups")" = "yes" ]; then
+    printf 'yes\n'
+  else
+    printf 'no\n'
+  fi
+}
+
 file_byte_count() {
   local file_path="$1"
 
@@ -317,6 +447,18 @@ run_mach_service_self_test() {
   printf 'Mach service missing fixture ready: %s\n' "$(mach_service_readiness_value "" "$EXTENSION_ID")"
 }
 
+run_application_group_self_test() {
+  local shared_group="ABCDE12345.$APP_GROUP_BASE_ID"
+  local other_team_group="ZYXWV98765.$APP_GROUP_BASE_ID"
+  local wrong_group="ABCDE12345.com.example.Other"
+
+  printf 'Application group shared fixture ready: %s\n' "$(application_groups_ready_value "$shared_group" "$shared_group")"
+  printf 'Application group missing fixture ready: %s\n' "$(application_groups_ready_value "" "$shared_group")"
+  printf 'Application group mismatched fixture ready: %s\n' "$(application_groups_ready_value "$shared_group" "$other_team_group")"
+  printf 'Application group wrong suffix fixture ready: %s\n' "$(application_groups_ready_value "$wrong_group" "$wrong_group")"
+  printf 'Application group unresolved fixture ready: %s\n' "$(application_groups_ready_value '$(TeamIdentifierPrefix)com.garethpaul.GarethVideoCam' '$(TeamIdentifierPrefix)com.garethpaul.GarethVideoCam')"
+}
+
 case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
   readiness-rollup|readiness-rollup-blocked)
     run_readiness_rollup_blocked_self_test
@@ -336,6 +478,10 @@ case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
     ;;
   mach-service)
     run_mach_service_self_test
+    exit 0
+    ;;
+  application-group)
+    run_application_group_self_test
     exit 0
     ;;
 esac
@@ -587,14 +733,21 @@ fi
 
 section "Entitlement Check"
 printf 'Expected app System Extension entitlement: %s\n' "$HOST_SYSTEM_EXTENSION_ENTITLEMENT"
+printf 'Expected application group suffix: %s\n' "$APP_GROUP_BASE_ID"
 if [ -d "$APP_PATH" ]; then
   if has_boolean_entitlement "$APP_PATH" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT"; then
     printf 'App System Extension entitlement present: yes\n'
   else
     printf 'App System Extension entitlement present: no\n'
   fi
+
+  app_application_groups="$(read_application_groups "$APP_PATH" || true)"
+  printf 'App application groups: %s\n' "$(format_application_groups "$app_application_groups")"
+  printf 'App expected application group present: %s\n' "$(application_groups_expected_present_value "$app_application_groups")"
 else
   printf 'App System Extension entitlement present: unknown; app bundle is missing.\n'
+  printf 'App application groups: unknown; app bundle is missing.\n'
+  printf 'App expected application group present: unknown\n'
 fi
 
 if [ -d "$EXTENSION_PATH" ]; then
@@ -603,8 +756,20 @@ if [ -d "$EXTENSION_PATH" ]; then
   else
     printf 'Extension carries host-only System Extension entitlement: no\n'
   fi
+
+  extension_application_groups="$(read_application_groups "$EXTENSION_PATH" || true)"
+  printf 'Extension application groups: %s\n' "$(format_application_groups "$extension_application_groups")"
+  printf 'Extension expected application group present: %s\n' "$(application_groups_expected_present_value "$extension_application_groups")"
 else
   printf 'Extension carries host-only System Extension entitlement: unknown; embedded extension is missing.\n'
+  printf 'Extension application groups: unknown; embedded extension is missing.\n'
+  printf 'Extension expected application group present: unknown\n'
+fi
+
+if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
+  printf 'Application groups share expected value: %s\n' "$(application_groups_share_expected_value "$app_application_groups" "$extension_application_groups")"
+else
+  printf 'Application groups share expected value: unknown\n'
 fi
 
 section "Runtime Readiness Summary"
@@ -713,6 +878,14 @@ if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
   fi
 else
   print_readiness_check "Signing Team match ready" "unknown"
+fi
+
+if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
+  app_application_groups="$(read_application_groups "$APP_PATH" || true)"
+  extension_application_groups="$(read_application_groups "$EXTENSION_PATH" || true)"
+  print_readiness_check "Application group match ready" "$(application_groups_ready_value "$app_application_groups" "$extension_application_groups")"
+else
+  print_readiness_check "Application group match ready" "unknown"
 fi
 
 if [ -f "$VIDEO_PATH" ]; then
