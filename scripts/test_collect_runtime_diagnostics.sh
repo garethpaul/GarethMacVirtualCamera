@@ -58,6 +58,7 @@ require_output "$mach_service_output" "Mach service direct fixture resolved: yes
 require_output "$mach_service_output" "Mach service direct fixture matches expected: yes"
 require_output "$mach_service_output" "Mach service direct fixture ready: yes"
 require_output "$mach_service_output" "Mach service team-prefixed fixture ready: yes"
+require_output "$mach_service_output" "Mach service dotted-prefix fixture ready: no"
 require_output "$mach_service_output" "Mach service unresolved fixture resolved: no"
 require_output "$mach_service_output" "Mach service wrong fixture matches expected: no"
 require_output "$mach_service_output" "Mach service missing fixture ready: no"

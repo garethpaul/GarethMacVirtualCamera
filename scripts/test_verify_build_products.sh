@@ -234,6 +234,20 @@ if ! grep -q "Unexpected Debug extension CMIOExtensionMachServiceName" "$TMP_DIR
   exit 1
 fi
 
+DOTTED_PREFIX_CMIO_PRODUCTS="$TMP_DIR/dotted-prefix-cmio/Products"
+write_product_fixture "$DOTTED_PREFIX_CMIO_PRODUCTS" Debug "$EXTENSION_ID" "com.example.$EXTENSION_ID"
+
+if PRODUCTS_PATH="$DOTTED_PREFIX_CMIO_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/dotted-prefix-cmio.out" 2>"$TMP_DIR/dotted-prefix-cmio.err"; then
+  printf 'Expected verifier to reject a CMIO Mach service name with a dotted non-Team-ID prefix.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Unexpected Debug extension CMIOExtensionMachServiceName" "$TMP_DIR/dotted-prefix-cmio.err"; then
+  printf 'Verifier failure did not explain the dotted-prefix CMIO extension metadata.\n' >&2
+  cat "$TMP_DIR/dotted-prefix-cmio.err" >&2
+  exit 1
+fi
+
 SHORT_VERSION_MISMATCH_PRODUCTS="$TMP_DIR/short-version-mismatch/Products"
 write_product_fixture "$SHORT_VERSION_MISMATCH_PRODUCTS" Debug "$EXTENSION_ID" "$EXTENSION_ID" "1.0" "2.0"
 

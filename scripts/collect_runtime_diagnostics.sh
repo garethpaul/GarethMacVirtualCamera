@@ -136,11 +136,20 @@ mach_service_resolved_value() {
 mach_service_matches_expected_value() {
   local mach_service_name="$1"
   local extension_identifier="$2"
+  local team_prefixed_suffix=".$extension_identifier"
+  local team_prefix
 
   if [ -z "$mach_service_name" ]; then
     printf 'unknown\n'
-  elif [ "$mach_service_name" = "$extension_identifier" ] || [[ "$mach_service_name" == *".$extension_identifier" ]]; then
+  elif [ "$mach_service_name" = "$extension_identifier" ]; then
     printf 'yes\n'
+  elif [[ "$mach_service_name" == *"$team_prefixed_suffix" ]]; then
+    team_prefix="${mach_service_name%"$team_prefixed_suffix"}"
+    if [[ "$team_prefix" =~ ^[[:alnum:]]+$ ]]; then
+      printf 'yes\n'
+    else
+      printf 'no\n'
+    fi
   else
     printf 'no\n'
   fi
@@ -622,6 +631,7 @@ run_mach_service_self_test() {
   printf 'Mach service direct fixture matches expected: %s\n' "$(mach_service_matches_expected_value "$EXTENSION_ID" "$EXTENSION_ID")"
   printf 'Mach service direct fixture ready: %s\n' "$(mach_service_readiness_value "$EXTENSION_ID" "$EXTENSION_ID")"
   printf 'Mach service team-prefixed fixture ready: %s\n' "$(mach_service_readiness_value "ABCDE12345.$EXTENSION_ID" "$EXTENSION_ID")"
+  printf 'Mach service dotted-prefix fixture ready: %s\n' "$(mach_service_readiness_value "com.example.$EXTENSION_ID" "$EXTENSION_ID")"
   printf 'Mach service unresolved fixture resolved: %s\n' "$(mach_service_resolved_value '$(TeamIdentifierPrefix)$(PRODUCT_BUNDLE_IDENTIFIER)')"
   printf 'Mach service wrong fixture matches expected: %s\n' "$(mach_service_matches_expected_value "com.example.WrongMachService" "$EXTENSION_ID")"
   printf 'Mach service missing fixture ready: %s\n' "$(mach_service_readiness_value "" "$EXTENSION_ID")"

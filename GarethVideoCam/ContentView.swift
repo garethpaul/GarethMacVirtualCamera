@@ -2001,7 +2001,13 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     private static func isExpectedMachServiceName(_ machServiceName: String, for extensionIdentifier: String) -> Bool {
-        return machServiceName == extensionIdentifier || machServiceName.hasSuffix(".\(extensionIdentifier)")
+        if machServiceName == extensionIdentifier {
+            return true
+        }
+
+        let escapedExtensionIdentifier = NSRegularExpression.escapedPattern(for: extensionIdentifier)
+        let teamPrefixedPattern = "^[A-Za-z0-9]+\\.\(escapedExtensionIdentifier)$"
+        return machServiceName.range(of: teamPrefixedPattern, options: .regularExpression) != nil
     }
 
     private func handleReadinessFailure(_ error: Error) {

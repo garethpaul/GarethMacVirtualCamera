@@ -82,6 +82,26 @@ if mach_service_name:
 PY
 }
 
+mach_service_matches_expected_identifier() {
+  local mach_service_name="$1"
+  local extension_identifier="$2"
+  local team_prefixed_suffix=".$extension_identifier"
+  local team_prefix
+
+  if [ "$mach_service_name" = "$extension_identifier" ]; then
+    return 0
+  fi
+
+  if [[ "$mach_service_name" == *"$team_prefixed_suffix" ]]; then
+    team_prefix="${mach_service_name%"$team_prefixed_suffix"}"
+    if [[ "$team_prefix" =~ ^[[:alnum:]]+$ ]]; then
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
 verify_bundle_executable() {
   local configuration="$1"
   local bundle_label="$2"
@@ -147,7 +167,7 @@ verify_extension_cmio_metadata() {
     exit 1
   fi
 
-  if [ "$mach_service_name" != "$EXTENSION_ID" ] && [[ "$mach_service_name" != *".$EXTENSION_ID" ]]; then
+  if ! mach_service_matches_expected_identifier "$mach_service_name" "$EXTENSION_ID"; then
     printf 'Unexpected %s extension CMIOExtensionMachServiceName: %s\n' "$configuration" "$mach_service_name" >&2
     exit 1
   fi
