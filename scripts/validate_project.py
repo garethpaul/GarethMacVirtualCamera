@@ -456,8 +456,8 @@ def main():
     require("didOpenSettings" in host_source and "System Settings Unavailable" in host_source,
             "host app should report System Settings launch failures",
             failures)
-    require("CI-equivalent unsigned compile" in readme_text and "-target GarethVideoCam" in readme_text,
-            "README should document the CI-equivalent unsigned target build",
+    require("CI-equivalent unsigned compile" in readme_text and "-target GarethVideoCam" in readme_text and "for configuration in Debug Release" in readme_text and "build-${configuration}.log" in readme_text and "./scripts/scan_build_log.py \"build-${configuration}.log\"" in readme_text,
+            "README should document the CI-equivalent unsigned Debug and Release target builds with log scanning",
             failures)
     require("Runtime Activation" in readme_text and "valid Apple Developer signing identity" in readme_text,
             "README should document signed runtime activation requirements",
