@@ -53,18 +53,22 @@ jobs:
         run: |
           set -o pipefail
           runner_arch="$(uname -m)"
-          xcodebuild \
-            -project GarethVideoCam.xcodeproj \
-            -target GarethVideoCam \
-            -configuration Debug \
-            ARCHS="${runner_arch}" \
-            ONLY_ACTIVE_ARCH=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            DEVELOPMENT_TEAM="" \
-            COMPILER_INDEX_STORE_ENABLE=NO \
-            build 2>&1 | tee build.log
+          for configuration in Debug Release; do
+            xcodebuild \
+              -project GarethVideoCam.xcodeproj \
+              -target GarethVideoCam \
+              -configuration "${configuration}" \
+              ARCHS="${runner_arch}" \
+              ONLY_ACTIVE_ARCH=NO \
+              CODE_SIGNING_ALLOWED=NO \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGN_IDENTITY="" \
+              DEVELOPMENT_TEAM="" \
+              COMPILER_INDEX_STORE_ENABLE=NO \
+              build 2>&1 | tee "build-${configuration}.log"
+          done
 
       - name: Scan build log for source warnings
-        run: ./scripts/scan_build_log.py build.log
+        run: |
+          ./scripts/scan_build_log.py build-Debug.log
+          ./scripts/scan_build_log.py build-Release.log

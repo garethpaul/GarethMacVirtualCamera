@@ -264,11 +264,14 @@ def main():
         require("runner_arch=\"$(uname -m)\"" in workflow_text and "ARCHS=\"${runner_arch}\"" in workflow_text,
                 "macOS build workflow should build the target for the runner architecture",
                 failures)
-        require("tee build.log" in workflow_text,
-                "macOS build workflow should capture xcodebuild output",
+        require("for configuration in Debug Release" in workflow_text,
+                "macOS build workflow should build both Debug and Release configurations",
                 failures)
-        require("./scripts/scan_build_log.py build.log" in workflow_text,
-                "macOS build workflow should scan captured xcodebuild output",
+        require("build-Debug.log" in workflow_text and "build-Release.log" in workflow_text,
+                "macOS build workflow should capture separate Debug and Release logs",
+                failures)
+        require("./scripts/scan_build_log.py build-Debug.log" in workflow_text and "./scripts/scan_build_log.py build-Release.log" in workflow_text,
+                "macOS build workflow should scan captured Debug and Release xcodebuild output",
                 failures)
 
     if failures:
