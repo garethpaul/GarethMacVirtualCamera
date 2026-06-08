@@ -63,6 +63,7 @@ def main():
     host_source = (ROOT / "GarethVideoCam/ContentView.swift").read_text()
     extension_source = (ROOT / "Extension/ExtensionProvider.swift").read_text()
     extension_main_source = (ROOT / "Extension/main.swift").read_text()
+    readme_text = (ROOT / "README.md").read_text()
     require(f"PRODUCT_BUNDLE_IDENTIFIER = {APP_BUNDLE_ID};" in project_text,
             "project is missing the host app bundle identifier",
             failures)
@@ -106,6 +107,12 @@ def main():
             failures)
     require(".disabled(manager.isBusy || !manager.canSubmitSystemExtensionRequests)" in host_source,
             "host app should disable install controls when system-extension requests cannot be submitted",
+            failures)
+    require("CI-equivalent unsigned compile" in readme_text and "-target GarethVideoCam" in readme_text,
+            "README should document the CI-equivalent unsigned target build",
+            failures)
+    require("Runtime Activation" in readme_text and "valid Apple Developer signing identity" in readme_text,
+            "README should document signed runtime activation requirements",
             failures)
 
     scheme_path = ROOT / "GarethVideoCam.xcodeproj/xcshareddata/xcschemes/GarethVideoCam.xcscheme"

@@ -24,12 +24,28 @@ This workspace does not require Xcode for metadata checks:
 ./scripts/validate_project.py
 ```
 
-On macOS with Xcode installed, also run:
+For a CI-equivalent unsigned compile on macOS with Xcode installed:
 
 ```sh
-xcodebuild -project GarethVideoCam.xcodeproj -scheme GarethVideoCam -configuration Debug build
+runner_arch="$(uname -m)"
+xcodebuild \
+  -project GarethVideoCam.xcodeproj \
+  -target GarethVideoCam \
+  -configuration Debug \
+  ARCHS="${runner_arch}" \
+  ONLY_ACTIVE_ARCH=NO \
+  CODE_SIGNING_ALLOWED=NO \
+  CODE_SIGNING_REQUIRED=NO \
+  CODE_SIGN_IDENTITY="" \
+  DEVELOPMENT_TEAM="" \
+  COMPILER_INDEX_STORE_ENABLE=NO \
+  build
 ```
 
-Pushes and pull requests to `main` also run `.github/workflows/macos-build.yml` on GitHub's `macos-26` runner. That workflow validates metadata and performs an unsigned Debug build so CI can catch Apple SDK compile regressions without requiring a signing certificate.
+Pushes and pull requests to `main` also run `.github/workflows/macos-build.yml` on GitHub's `macos-26` runner. That workflow validates metadata, performs the unsigned Debug target build, captures the Xcode log, and fails on source warnings. Xcode 26.5 currently emits an AppIntents metadata processor notice for targets without AppIntents; CI filters only that known tool notice.
+
+## Runtime Activation
+
+Runtime activation still requires a macOS host with a valid Apple Developer signing identity, the System Extension entitlement, and user approval in System Settings. The app must run from `/Applications/GarethVideoCam.app`; the shared Xcode scheme copies the built app there before launch for local testing.
 
 After approving the camera extension in System Settings, it should appear in camera pickers as `Gareth Video Cam`.
