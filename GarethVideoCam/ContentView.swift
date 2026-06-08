@@ -854,17 +854,17 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         let readyCount = checks.filter { $0.status == .passing }.count
         let blockedCount = checks.filter { $0.status == .blocked }.count
         let pendingCount = checks.filter { $0.status == .pending }.count
-        let baseSummary = "\(readyCount)/\(checks.count) checks ready"
+        var summaryParts = ["\(readyCount)/\(checks.count) checks ready"]
 
         if blockedCount > 0 {
-            return "\(baseSummary), \(blockedCount) blocked"
+            summaryParts.append("\(blockedCount) blocked")
         }
 
         if pendingCount > 0 {
-            return "\(baseSummary), \(pendingCount) pending"
+            summaryParts.append("\(pendingCount) pending")
         }
 
-        return baseSummary
+        return summaryParts.joined(separator: ", ")
     }
 
     var requestReadinessDetail: String? {
