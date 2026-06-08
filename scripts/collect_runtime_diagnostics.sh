@@ -415,13 +415,13 @@ mdls_metadata_value() {
   local metadata_output="$1"
   local metadata_key="$2"
 
-  printf '%s\n' "$metadata_output" | /usr/bin/awk -v metadata_key="$metadata_key" '
+  /usr/bin/awk -v metadata_key="$metadata_key" '
     index($0, metadata_key " = ") == 1 {
       sub(/^[^=]*= /, "")
       gsub(/^"|"$/, "")
       print
       exit
-    }'
+    }' <<< "$metadata_output"
 }
 
 mp4_parser_metadata_output() {
@@ -444,6 +444,7 @@ import importlib.util
 import sys
 from pathlib import Path
 
+sys.dont_write_bytecode = True
 parser_path = Path(sys.argv[1])
 video_path = Path(sys.argv[2])
 spec = importlib.util.spec_from_file_location("gareth_validate_project", parser_path)
@@ -769,6 +770,28 @@ run_video_metadata_self_test() {
   printf 'Video metadata zero duration fixture: %s\n' "$(video_metadata_readiness_value "1280" "720" "24" "0")"
 }
 
+run_video_parser_self_test() {
+  local video_fixture="${GARETH_DIAGNOSTICS_VIDEO_FIXTURE:-$VIDEO_PATH}"
+  local parser_output
+  local parser_width
+  local parser_height
+  local parser_frame_rate
+  local parser_duration
+
+  parser_output="$(mp4_parser_metadata_output "$video_fixture" 2>&1 || true)"
+  printf '%s\n' "$parser_output"
+  parser_width="$(mdls_metadata_value "$parser_output" "MP4 parser pixel width")"
+  parser_height="$(mdls_metadata_value "$parser_output" "MP4 parser pixel height")"
+  parser_frame_rate="$(mdls_metadata_value "$parser_output" "MP4 parser frame rate")"
+  parser_duration="$(mdls_metadata_value "$parser_output" "MP4 parser duration seconds")"
+
+  printf 'Video parser pixel width fixture: %s\n' "$parser_width"
+  printf 'Video parser pixel height fixture: %s\n' "$parser_height"
+  printf 'Video parser frame rate fixture: %s\n' "$parser_frame_rate"
+  printf 'Video parser duration fixture: %s\n' "$parser_duration"
+  printf 'Video parser metadata ready fixture: %s\n' "$(video_metadata_readiness_value "$parser_width" "$parser_height" "$parser_frame_rate" "$parser_duration")"
+}
+
 run_registration_self_test() {
   local active_output
   local waiting_output
@@ -822,6 +845,10 @@ case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
     ;;
   video-metadata)
     run_video_metadata_self_test
+    exit 0
+    ;;
+  video-parser)
+    run_video_parser_self_test
     exit 0
     ;;
   registration)

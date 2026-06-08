@@ -160,6 +160,7 @@ verify_app_diagnostics_resources() {
   local app_path="$2"
   local script_path="$app_path/Contents/Resources/collect_runtime_diagnostics.sh"
   local parser_path="$app_path/Contents/Resources/validate_project.py"
+  local parser_self_test_output
 
   if [ ! -f "$script_path" ]; then
     printf 'Missing %s app runtime diagnostics script: %s\n' "$configuration" "$script_path" >&2
@@ -178,6 +179,18 @@ verify_app_diagnostics_resources() {
 
   if ! /usr/bin/grep -F "mp4_video_metadata" "$parser_path" >/dev/null; then
     printf 'Unexpected %s app runtime diagnostics parser content: %s\n' "$configuration" "$parser_path" >&2
+    exit 1
+  fi
+
+  if ! parser_self_test_output="$(GARETH_DIAGNOSTICS_SELF_TEST=video-parser GARETH_DIAGNOSTICS_VIDEO_FIXTURE="$ROOT/Extension/video.mp4" /bin/bash "$script_path" "$app_path" 1m 2>&1)"; then
+    printf 'Failed %s app bundled runtime diagnostics parser self-test.\n' "$configuration" >&2
+    printf '%s\n' "$parser_self_test_output" >&2
+    exit 1
+  fi
+
+  if ! printf '%s\n' "$parser_self_test_output" | /usr/bin/grep -F "Video parser metadata ready fixture: yes" >/dev/null; then
+    printf 'Unexpected %s app bundled runtime diagnostics parser self-test output.\n' "$configuration" >&2
+    printf '%s\n' "$parser_self_test_output" >&2
     exit 1
   fi
 }

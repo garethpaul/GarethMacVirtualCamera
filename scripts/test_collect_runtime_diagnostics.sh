@@ -22,6 +22,7 @@ mach_service_output="$(GARETH_DIAGNOSTICS_SELF_TEST=mach-service "$ROOT/scripts/
 application_group_output="$(GARETH_DIAGNOSTICS_SELF_TEST=application-group "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 camera_device_output="$(GARETH_DIAGNOSTICS_SELF_TEST=camera-device "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 video_metadata_output="$(GARETH_DIAGNOSTICS_SELF_TEST=video-metadata "$ROOT/scripts/collect_runtime_diagnostics.sh")"
+video_parser_output="$(GARETH_DIAGNOSTICS_SELF_TEST=video-parser GARETH_DIAGNOSTICS_VIDEO_FIXTURE="$ROOT/Extension/video.mp4" "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 registration_output="$(GARETH_DIAGNOSTICS_SELF_TEST=registration "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 activation_evidence_output="$(GARETH_DIAGNOSTICS_SELF_TEST=activation-evidence "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 
@@ -83,6 +84,11 @@ require_output "$video_metadata_output" "Video metadata wrong frame rate fixture
 require_output "$video_metadata_output" "Video metadata missing frame rate fixture: unknown"
 require_output "$video_metadata_output" "Video metadata missing duration fixture: unknown"
 require_output "$video_metadata_output" "Video metadata zero duration fixture: no"
+
+require_output "$video_parser_output" "Video parser pixel width fixture: 1280"
+require_output "$video_parser_output" "Video parser pixel height fixture: 720"
+require_output "$video_parser_output" "Video parser frame rate fixture: 24"
+require_output "$video_parser_output" "Video parser metadata ready fixture: yes"
 
 require_output "$registration_output" "Registration active fixture present: yes"
 require_output "$registration_output" "Registration active fixture activated enabled: yes"
