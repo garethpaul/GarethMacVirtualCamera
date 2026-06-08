@@ -453,6 +453,9 @@ def main():
     require("applicationGroupsEntitlement" in host_source and "applicationGroupReadinessDetail" in host_source and "Application Group Required" in host_source and "Application Group" in host_source and "App Application Groups:" in host_source and "Extension Application Groups:" in host_source and "Application Group Check:" in host_source and "Shared Application Group:" in host_source,
             "host app should verify, show, and copy matching app-group entitlements before submitting requests",
             failures)
+    require("NSRegularExpression.escapedPattern(for: baseIdentifier)" in host_source and "^[A-Za-z0-9]+\\\\." in host_source,
+            "host app should only accept direct or single Team-ID-prefixed app-group identifiers",
+            failures)
     require("case needsSigning" in host_source and "requestReadinessMessage" in host_source and "App Signature" in host_source and "Extension Signature" in host_source,
             "host app should surface signing readiness in state, controls, and details",
             failures)
@@ -698,6 +701,9 @@ def main():
             failures)
     require("Mach service dotted-prefix fixture ready: no" in runtime_diagnostics_test_source and "com.example.$EXTENSION_ID" in runtime_diagnostics_source and "^[[:alnum:]]+$" in runtime_diagnostics_source,
             "runtime diagnostics test should reject CMIO Mach service names with dotted non-Team-ID prefixes",
+            failures)
+    require("Application group dotted-prefix fixture ready: no" in runtime_diagnostics_test_source and "dotted_prefix_group" in runtime_diagnostics_source and "application_group_matches_expected_identifier" in runtime_diagnostics_source,
+            "runtime diagnostics test should reject app groups with dotted non-Team-ID prefixes",
             failures)
     require(runtime_diagnostics_test_path.stat().st_mode & 0o111,
             "runtime diagnostics test script should be executable",

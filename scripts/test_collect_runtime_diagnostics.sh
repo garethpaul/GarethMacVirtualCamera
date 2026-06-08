@@ -67,6 +67,7 @@ require_output "$application_group_output" "Application group shared fixture rea
 require_output "$application_group_output" "Application group missing fixture ready: no"
 require_output "$application_group_output" "Application group mismatched fixture ready: no"
 require_output "$application_group_output" "Application group wrong suffix fixture ready: no"
+require_output "$application_group_output" "Application group dotted-prefix fixture ready: no"
 require_output "$application_group_output" "Application group unresolved fixture ready: no"
 
 require_output "$camera_device_output" "Camera device present fixture: yes"

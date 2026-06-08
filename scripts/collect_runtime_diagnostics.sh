@@ -272,9 +272,18 @@ format_application_groups() {
 
 application_group_matches_expected_identifier() {
   local application_group="$1"
+  local team_prefixed_suffix=".$APP_GROUP_BASE_ID"
+  local team_prefix
 
-  if [ "$application_group" = "$APP_GROUP_BASE_ID" ] || [[ "$application_group" == *".$APP_GROUP_BASE_ID" ]]; then
+  if [ "$application_group" = "$APP_GROUP_BASE_ID" ]; then
     return 0
+  fi
+
+  if [[ "$application_group" == *"$team_prefixed_suffix" ]]; then
+    team_prefix="${application_group%"$team_prefixed_suffix"}"
+    if [[ "$team_prefix" =~ ^[[:alnum:]]+$ ]]; then
+      return 0
+    fi
   fi
 
   return 1
@@ -641,11 +650,13 @@ run_application_group_self_test() {
   local shared_group="ABCDE12345.$APP_GROUP_BASE_ID"
   local other_team_group="ZYXWV98765.$APP_GROUP_BASE_ID"
   local wrong_group="ABCDE12345.com.example.Other"
+  local dotted_prefix_group="com.example.$APP_GROUP_BASE_ID"
 
   printf 'Application group shared fixture ready: %s\n' "$(application_groups_ready_value "$shared_group" "$shared_group")"
   printf 'Application group missing fixture ready: %s\n' "$(application_groups_ready_value "" "$shared_group")"
   printf 'Application group mismatched fixture ready: %s\n' "$(application_groups_ready_value "$shared_group" "$other_team_group")"
   printf 'Application group wrong suffix fixture ready: %s\n' "$(application_groups_ready_value "$wrong_group" "$wrong_group")"
+  printf 'Application group dotted-prefix fixture ready: %s\n' "$(application_groups_ready_value "$dotted_prefix_group" "$dotted_prefix_group")"
   printf 'Application group unresolved fixture ready: %s\n' "$(application_groups_ready_value '$(TeamIdentifierPrefix)com.garethpaul.GarethVideoCam' '$(TeamIdentifierPrefix)com.garethpaul.GarethVideoCam')"
 }
 

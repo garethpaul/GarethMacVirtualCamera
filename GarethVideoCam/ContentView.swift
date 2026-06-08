@@ -1909,7 +1909,13 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     private static func isExpectedApplicationGroupIdentifier(_ groupIdentifier: String, baseIdentifier: String) -> Bool {
-        return groupIdentifier == baseIdentifier || groupIdentifier.hasSuffix(".\(baseIdentifier)")
+        if groupIdentifier == baseIdentifier {
+            return true
+        }
+
+        let escapedBaseIdentifier = NSRegularExpression.escapedPattern(for: baseIdentifier)
+        let teamPrefixedPattern = "^[A-Za-z0-9]+\\.\(escapedBaseIdentifier)$"
+        return groupIdentifier.range(of: teamPrefixedPattern, options: .regularExpression) != nil
     }
 
     private static func expectedApplicationGroups(_ groups: Set<String>, baseIdentifier: String) -> Set<String> {
