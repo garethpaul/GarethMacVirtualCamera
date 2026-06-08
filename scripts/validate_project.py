@@ -565,13 +565,13 @@ def main():
     require("didOpenSettings" in host_source and "System Settings Unavailable" in host_source,
             "host app should report System Settings launch failures",
             failures)
-    require("./scripts/check_project.sh" in readme_text and "project metadata validation, build-log scanner tests, build-product verifier tests, shell syntax checks, and whitespace checks" in readme_text,
+    require("./scripts/check_project.sh" in readme_text and "project metadata validation, build-log scanner tests, build-product verifier tests, shell syntax checks, and whitespace checks" in readme_text and "bundle identifiers, declared executables, and the bundled video resource" in readme_text,
             "README should document the local pre-push project check",
             failures)
     require("CI-equivalent unsigned compile" in readme_text and "./scripts/build_unsigned.sh" in readme_text and "./scripts/scan_build_log.py build-Debug.log build-Release.log" in readme_text and ".build/Xcode" in readme_text and "BUILD_OUTPUT_PATH" in readme_text,
             "README should document the CI-equivalent unsigned Debug and Release target builds with log scanning",
             failures)
-    require("verifies the built app products contain the embedded system extension and bundled video" in readme_text,
+    require("verifies the built app products contain the embedded system extension, declared executables, and bundled video" in readme_text,
             "README should document CI build-product verification",
             failures)
     require("parseable dimensions, frame rate, and positive video duration" in readme_text,
@@ -604,14 +604,14 @@ def main():
     require(build_unsigned_path.stat().st_mode & 0o111,
             "unsigned build script should be executable",
             failures)
-    require("GarethVideoCam.app" in verify_build_products_source and "com.garethpaul.GarethVideoCam.Extension.systemextension" in verify_build_products_source and "Contents/Library/SystemExtensions" in verify_build_products_source and "Contents/Resources/video.mp4" in verify_build_products_source and "read_bundle_identifier" in verify_build_products_source and "Contents/Info.plist" in verify_build_products_source and "plistlib" in verify_build_products_source and "PlistBuddy" not in verify_build_products_source and "Debug Release" in verify_build_products_source,
-            "build-product verifier should check app, embedded extension, bundle identifiers, and bundled video",
+    require("GarethVideoCam.app" in verify_build_products_source and "com.garethpaul.GarethVideoCam.Extension.systemextension" in verify_build_products_source and "Contents/Library/SystemExtensions" in verify_build_products_source and "Contents/Resources/video.mp4" in verify_build_products_source and "read_bundle_identifier" in verify_build_products_source and "read_bundle_executable" in verify_build_products_source and "verify_bundle_executable" in verify_build_products_source and "Contents/Info.plist" in verify_build_products_source and "Contents/MacOS" in verify_build_products_source and "CFBundleExecutable" in verify_build_products_source and "plistlib" in verify_build_products_source and "PlistBuddy" not in verify_build_products_source and "Debug Release" in verify_build_products_source,
+            "build-product verifier should check app, embedded extension, bundle identifiers, declared executables, and bundled video",
             failures)
     require(verify_build_products_path.stat().st_mode & 0o111,
             "build-product verifier script should be executable",
             failures)
-    require("write_product_fixture" in verify_build_products_test_source and "com.example.WrongExtension" in verify_build_products_test_source and "Unexpected Debug extension bundle identifier" in verify_build_products_test_source and "Missing or empty Debug bundled video resource" in verify_build_products_test_source and "Build-product verifier tests passed." in verify_build_products_test_source,
-            "build-product verifier should have fixture coverage for passing products, bundle identifier failures, and missing bundled video",
+    require("write_product_fixture" in verify_build_products_test_source and "write_executable_fixture" in verify_build_products_test_source and "com.example.WrongExtension" in verify_build_products_test_source and "Unexpected Debug extension bundle identifier" in verify_build_products_test_source and "Missing or empty Debug bundled video resource" in verify_build_products_test_source and "Missing or non-executable Debug extension executable" in verify_build_products_test_source and "Build-product verifier tests passed." in verify_build_products_test_source,
+            "build-product verifier should have fixture coverage for passing products, bundle identifier failures, missing executables, and missing bundled video",
             failures)
     require(verify_build_products_test_path.stat().st_mode & 0o111,
             "build-product verifier test script should be executable",

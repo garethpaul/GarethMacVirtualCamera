@@ -14,24 +14,57 @@ else
   configurations=(Debug Release)
 fi
 
-read_bundle_identifier() {
+read_info_plist_string() {
   local bundle_path="$1"
+  local key="$2"
   local info_plist="$bundle_path/Contents/Info.plist"
 
   if [ ! -f "$info_plist" ]; then
     return
   fi
 
-  python3 - "$info_plist" 2>/dev/null <<'PY' || true
+  python3 - "$info_plist" "$key" 2>/dev/null <<'PY' || true
 import plistlib
 import sys
 
 with open(sys.argv[1], "rb") as info_file:
-    bundle_identifier = plistlib.load(info_file).get("CFBundleIdentifier", "")
+    value = plistlib.load(info_file).get(sys.argv[2], "")
 
-if bundle_identifier:
-    print(bundle_identifier)
+if value:
+    print(value)
 PY
+}
+
+read_bundle_identifier() {
+  local bundle_path="$1"
+
+  read_info_plist_string "$bundle_path" CFBundleIdentifier
+}
+
+read_bundle_executable() {
+  local bundle_path="$1"
+
+  read_info_plist_string "$bundle_path" CFBundleExecutable
+}
+
+verify_bundle_executable() {
+  local configuration="$1"
+  local bundle_label="$2"
+  local bundle_path="$3"
+  local executable_name
+  local executable_path
+
+  executable_name="$(read_bundle_executable "$bundle_path")"
+  if [ -z "$executable_name" ]; then
+    printf 'Missing %s %s CFBundleExecutable.\n' "$configuration" "$bundle_label" >&2
+    exit 1
+  fi
+
+  executable_path="$bundle_path/Contents/MacOS/$executable_name"
+  if [ ! -f "$executable_path" ] || [ ! -x "$executable_path" ]; then
+    printf 'Missing or non-executable %s %s executable: %s\n' "$configuration" "$bundle_label" "$executable_path" >&2
+    exit 1
+  fi
 }
 
 for configuration in "${configurations[@]}"; do
@@ -50,6 +83,8 @@ for configuration in "${configurations[@]}"; do
     exit 1
   fi
 
+  verify_bundle_executable "$configuration" "app" "$app_path"
+
   if [ ! -d "$extension_path" ]; then
     printf 'Missing %s embedded system extension: %s\n' "$configuration" "$extension_path" >&2
     exit 1
@@ -61,10 +96,12 @@ for configuration in "${configurations[@]}"; do
     exit 1
   fi
 
+  verify_bundle_executable "$configuration" "extension" "$extension_path"
+
   if [ ! -s "$video_path" ]; then
     printf 'Missing or empty %s bundled video resource: %s\n' "$configuration" "$video_path" >&2
     exit 1
   fi
 
-  printf 'Verified %s app product, embedded system extension, and bundled video.\n' "$configuration"
+  printf 'Verified %s app product, embedded system extension, executables, and bundled video.\n' "$configuration"
 done
