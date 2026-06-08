@@ -6,3 +6,4 @@ set -euo pipefail
 bash -n ./scripts/collect_runtime_diagnostics.sh
 bash -n ./scripts/build_unsigned.sh
 git diff --check
+git diff-tree --check --root --no-commit-id -r HEAD

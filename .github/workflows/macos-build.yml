@@ -54,6 +54,9 @@ jobs:
       - name: Validate project metadata
         run: ./scripts/validate_project.py
 
+      - name: Check committed whitespace
+        run: git diff-tree --check --root --no-commit-id -r HEAD
+
       - name: Build GarethVideoCam
         run: ./scripts/build_unsigned.sh
 

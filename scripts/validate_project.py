@@ -576,7 +576,7 @@ def main():
     require(build_unsigned_path.stat().st_mode & 0o111,
             "unsigned build script should be executable",
             failures)
-    require("./scripts/validate_project.py" in check_project_source and "./scripts/test_scan_build_log.py" in check_project_source and "bash -n ./scripts/collect_runtime_diagnostics.sh" in check_project_source and "bash -n ./scripts/build_unsigned.sh" in check_project_source and "git diff --check" in check_project_source,
+    require("./scripts/validate_project.py" in check_project_source and "./scripts/test_scan_build_log.py" in check_project_source and "bash -n ./scripts/collect_runtime_diagnostics.sh" in check_project_source and "bash -n ./scripts/build_unsigned.sh" in check_project_source and "git diff --check" in check_project_source and "git diff-tree --check --root --no-commit-id -r HEAD" in check_project_source,
             "project check script should run validation, scanner tests, shell syntax checks, and whitespace checks",
             failures)
     require(check_project_path.stat().st_mode & 0o111,
@@ -620,6 +620,9 @@ def main():
                 failures)
         require("bash -n ./scripts/collect_runtime_diagnostics.sh" in workflow_text and "bash -n ./scripts/build_unsigned.sh" in workflow_text,
                 "macOS build workflow should syntax-check the runtime diagnostics and unsigned build scripts",
+                failures)
+        require("git diff-tree --check --root --no-commit-id -r HEAD" in workflow_text,
+                "macOS build workflow should check committed whitespace",
                 failures)
         require("./scripts/build_unsigned.sh" in workflow_text,
                 "macOS build workflow should perform the shared unsigned xcodebuild script",
