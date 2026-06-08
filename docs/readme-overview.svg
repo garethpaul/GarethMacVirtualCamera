@@ -1,85 +1,44 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
-  <title id="title">Gareth Mac Virtual Camera project overview</title>
-  <desc id="desc">Overview of the SwiftUI host app, embedded CoreMediaIO camera extension, validation workflow, and signed runtime evidence path.</desc>
-  <defs>
-    <style>
-      .label { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-      .small { font-size: 18px; fill: #374151; }
-      .body { font-size: 22px; fill: #111827; }
-      .heading { font-size: 27px; font-weight: 700; fill: #111827; }
-      .pill { font-size: 18px; font-weight: 700; fill: #111827; }
-      .muted { fill: #6b7280; font-size: 18px; }
-    </style>
-  </defs>
+  <title id="title">GarethMacVirtualCamera project overview</title>
+  <desc id="desc">Generated overview of the repository purpose, code shape, entry points, and verification surfaces.</desc>
+  <rect width="1200" height="675" fill="#f8fafc"/>
+  <rect x="32" y="32" width="1136" height="611" rx="24" fill="#ffffff" stroke="#d1d5db" stroke-width="2"/>
+  <rect x="32" y="32" width="1136" height="126" rx="24" fill="#111827"/>
+  <path d="M32 134h1136v24H32z" fill="#111827"/>
+  <circle cx="1062" cy="82" r="18" fill="#2563eb"/>
+  <circle cx="1110" cy="82" r="18" fill="#10b981"/>
+  <circle cx="1014" cy="82" r="18" fill="#f97316"/>
+  <text x="76" y="82" font-size="36" fill="#ffffff" font-weight="700">GarethMacVirtualCamera</text>
+  <text x="76" y="124" font-size="20" fill="#cbd5e1">Apple platform application or</text>
+<text x="76" y="156" font-size="20" fill="#cbd5e1">Objective-C/Swift sample</text>
+  <text x="76" y="206" font-size="24" fill="#111827">VirtualCamera for Mac that Plays MP4 in Loop</text>
 
-  <rect width="1200" height="675" fill="#f6f7f9"/>
-  <rect x="28" y="28" width="1144" height="619" rx="8" fill="#ffffff" stroke="#d6dae1" stroke-width="2"/>
+  <rect x="76" y="286" width="316" height="276" rx="14" fill="#eff6ff" stroke="#bfdbfe"/>
+  <text x="102" y="328" font-size="24" font-weight="700" fill="#1d4ed8">Code Shape</text>
+  <text x="102" y="370" font-size="19" fill="#1f2937">Languages: shell (6), Swift (4),</text>
+<text x="102" y="394" font-size="19" fill="#1f2937">Python (3)</text>
+  <text x="102" y="430" font-size="19" fill="#1f2937">Source: .github, Extension,</text>
+<text x="102" y="454" font-size="19" fill="#1f2937">GarethVideoCam, scripts</text>
+  <text x="102" y="490" font-size="19" fill="#1f2937">Manifests: None detected</text>
 
-  <rect x="56" y="56" width="1092" height="118" rx="8" fill="#111827"/>
-  <text class="label" x="92" y="105" font-size="38" font-weight="800" fill="#ffffff">Gareth Mac Virtual Camera</text>
-  <text class="label" x="92" y="143" font-size="21" fill="#d1d5db">SwiftUI host app plus CoreMediaIO camera extension publishing a bundled MP4 as Gareth Video Cam.</text>
+  <rect x="442" y="286" width="316" height="276" rx="14" fill="#ecfdf5" stroke="#bbf7d0"/>
+  <text x="468" y="328" font-size="24" font-weight="700" fill="#047857">How It Runs</text>
+  <text x="468" y="370" font-size="19" fill="#1f2937">Entry points:</text>
+<text x="468" y="394" font-size="19" fill="#1f2937">GarethVideoCam.xcodeproj</text>
+  <text x="468" y="466" font-size="19" fill="#1f2937">Tests: scripts/test_collect_runti</text>
+<text x="468" y="490" font-size="19" fill="#1f2937">me_diagnostics.sh,</text>
+<text x="468" y="514" font-size="19" fill="#1f2937">scripts/test_scan_build_log.py, s</text>
 
-  <g transform="translate(76 220)">
-    <rect x="0" y="0" width="300" height="126" rx="8" fill="#eef2ff" stroke="#c7d2fe"/>
-    <circle cx="40" cy="42" r="22" fill="#4f46e5"/>
-    <path d="M31 34h32v24H31z" fill="#ffffff"/>
-    <circle cx="41" cy="46" r="5" fill="#4f46e5"/>
-    <text class="label heading" x="78" y="43">Host App</text>
-    <text class="label small" x="78" y="76">GarethVideoCam.app</text>
-    <text class="label small" x="78" y="103">runs from /Applications</text>
-  </g>
+  <rect x="808" y="286" width="316" height="276" rx="14" fill="#fff7ed" stroke="#fed7aa"/>
+  <text x="834" y="328" font-size="24" font-weight="700" fill="#c2410c">Review Focus</text>
+  <text x="834" y="370" font-size="19" fill="#1f2937">Integrations: None detected</text>
+  <text x="834" y="466" font-size="19" fill="#1f2937">Sensitive surfaces:</text>
+<text x="834" y="490" font-size="19" fill="#1f2937">authentication, database,</text>
+<text x="834" y="514" font-size="19" fill="#1f2937">file_parsing, mobile_privacy,</text>
 
-  <path d="M400 283h42" stroke="#9ca3af" stroke-width="5" stroke-linecap="round"/>
-  <path d="M429 268l23 15-23 15z" fill="#9ca3af"/>
-
-  <g transform="translate(452 220)">
-    <rect x="0" y="0" width="300" height="126" rx="8" fill="#ecfdf5" stroke="#a7f3d0"/>
-    <circle cx="40" cy="42" r="22" fill="#059669"/>
-    <path d="M30 35h40v10H30zm0 17h40v10H30z" fill="#ffffff"/>
-    <text class="label heading" x="78" y="43">CMIO Extension</text>
-    <text class="label small" x="78" y="76">embedded system extension</text>
-    <text class="label small" x="78" y="103">streams bundled MP4</text>
-  </g>
-
-  <path d="M776 283h42" stroke="#9ca3af" stroke-width="5" stroke-linecap="round"/>
-  <path d="M805 268l23 15-23 15z" fill="#9ca3af"/>
-
-  <g transform="translate(828 220)">
-    <rect x="0" y="0" width="300" height="126" rx="8" fill="#fff7ed" stroke="#fed7aa"/>
-    <circle cx="40" cy="42" r="22" fill="#ea580c"/>
-    <circle cx="40" cy="42" r="11" fill="#ffffff"/>
-    <circle cx="40" cy="42" r="5" fill="#ea580c"/>
-    <text class="label heading" x="78" y="43">Virtual Camera</text>
-    <text class="label small" x="78" y="76">Gareth Video Cam</text>
-    <text class="label small" x="78" y="103">visible after approval</text>
-  </g>
-
-  <g transform="translate(76 404)">
-    <rect x="0" y="0" width="330" height="144" rx="8" fill="#f9fafb" stroke="#d1d5db"/>
-    <text class="label heading" x="26" y="42">Current Target</text>
-    <text class="label body" x="26" y="76">Xcode 26.5 / macOS 26.5 SDK</text>
-    <text class="label body" x="26" y="106">Swift 6, macOS 14.0 or later</text>
-  </g>
-
-  <g transform="translate(434 404)">
-    <rect x="0" y="0" width="330" height="144" rx="8" fill="#f9fafb" stroke="#d1d5db"/>
-    <text class="label heading" x="26" y="42">Validation</text>
-    <text class="label body" x="26" y="76">check_project.sh plus CI build</text>
-    <text class="label body" x="26" y="106">bundle, signing, video metadata</text>
-  </g>
-
-  <g transform="translate(792 404)">
-    <rect x="0" y="0" width="330" height="144" rx="8" fill="#f9fafb" stroke="#d1d5db"/>
-    <text class="label heading" x="26" y="42">Runtime Evidence</text>
-    <text class="label body" x="26" y="76">signed host, entitlement, approval</text>
-    <text class="label body" x="26" y="106">diagnostics and camera inventory</text>
-  </g>
-
-  <g transform="translate(76 590)">
-    <rect x="0" y="-30" width="340" height="42" rx="8" fill="#e0f2fe" stroke="#7dd3fc"/>
-    <text class="label pill" x="18" y="-4">com.garethpaul.GarethVideoCam</text>
-    <rect x="440" y="-30" width="290" height="42" rx="8" fill="#dcfce7" stroke="#86efac"/>
-    <text class="label pill" x="458" y="-4">GarethVideoCam.Extension</text>
-    <text class="label muted" x="772" y="-4">Documented gates: build, validation, activation.</text>
-  </g>
+  <path d="M392 424h50" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"/>
+  <path d="M430 412l18 12-18 12z" fill="#94a3b8"/>
+  <path d="M758 424h50" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"/>
+  <path d="M796 412l18 12-18 12z" fill="#94a3b8"/>
+  <text x="76" y="608" font-size="18" fill="#475569">Generated from repository source, manifests, README, and GitHub metadata.</text>
 </svg>
