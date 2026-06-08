@@ -74,225 +74,132 @@ write_executable_fixture() {
   chmod +x "$executable_path"
 }
 
-write_stale_team_id_diagnostics_fixture() {
-  local products_path="$1"
-  local configuration="$2"
-  local script_path="$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh"
+write_diagnostics_fixture_script() {
+  local script_path="$1"
+  local stale_self_test="$2"
 
-  python3 - "$script_path" <<'PY'
+  python3 - "$script_path" "$stale_self_test" <<'PY'
 from pathlib import Path
 import sys
 
 script_path = Path(sys.argv[1])
+stale_self_test = sys.argv[2]
+
+passing_outputs = {
+    "resource-discovery": [
+        "Diagnostics parser source: adjacent script resource",
+        "Diagnostics parser available: yes",
+    ],
+    "executable-readiness": [
+        "Executable ready fixture: yes",
+        "Executable non-executable fixture: no",
+    ],
+    "team-id": [
+        "Team ID match fixture: yes",
+        "Team ID mismatch fixture: no",
+    ],
+    "application-identity": [
+        "App path match fixture: yes",
+        "Bundle identifier missing fixture: no",
+    ],
+    "video-metadata": [
+        "Video metadata spaced width fixture: 1280",
+        "Video metadata quoted duration fixture: 12.5",
+        "Video metadata negative duration fixture: no",
+    ],
+    "application-group": [
+        "Application group shared fixture ready: yes",
+        "Application group dotted-prefix fixture ready: no",
+        "Application group list format fixture: ABCDE12345.com.garethpaul.GarethVideoCam, ZYXWV98765.com.garethpaul.GarethVideoCam",
+    ],
+    "mach-service": [
+        "Mach service direct fixture ready: yes",
+        "Mach service dotted-prefix fixture ready: no",
+        "Mach service unresolved fixture resolved: no",
+    ],
+    "video-parser": [
+        "Video parser metadata ready fixture: yes",
+    ],
+}
+
+stale_outputs = {
+    "team-id": [
+        "Team ID match fixture: no",
+        "Team ID mismatch fixture: no",
+    ],
+    "application-identity": [
+        "App path match fixture: no",
+        "Bundle identifier missing fixture: yes",
+    ],
+    "video-metadata": [
+        "Video metadata spaced width fixture: 640",
+        "Video metadata quoted duration fixture: 0",
+        "Video metadata negative duration fixture: yes",
+    ],
+    "application-group": [
+        "Application group shared fixture ready: no",
+        "Application group dotted-prefix fixture ready: yes",
+        "Application group list format fixture: none",
+    ],
+    "mach-service": [
+        "Mach service direct fixture ready: no",
+        "Mach service dotted-prefix fixture ready: yes",
+        "Mach service unresolved fixture resolved: yes",
+    ],
+}
+
+if stale_self_test not in stale_outputs:
+    raise SystemExit(f"Unknown stale diagnostics fixture: {stale_self_test}")
+
+outputs = dict(passing_outputs)
+outputs[stale_self_test] = stale_outputs[stale_self_test]
+
+case_lines = []
+for self_test, lines in outputs.items():
+    case_lines.append(f"  {self_test})")
+    for line in lines:
+        case_lines.append(f"    printf '{line}\\n'")
+    case_lines.append("    ;;")
+
 script_path.write_text("""#!/usr/bin/env bash
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VALIDATE_PROJECT_SCRIPT="${SCRIPT_DIR}/validate_project.py"
 case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
-  resource-discovery)
-    printf 'Diagnostics parser source: adjacent script resource\n'
-    printf 'Diagnostics parser available: yes\n'
-    ;;
-  executable-readiness)
-    printf 'Executable ready fixture: yes\n'
-    printf 'Executable non-executable fixture: no\n'
-    ;;
-  team-id)
-    printf 'Team ID match fixture: no\n'
-    printf 'Team ID mismatch fixture: no\n'
-    ;;
-  video-parser)
-    printf 'Video parser metadata ready fixture: yes\n'
-    ;;
+""" + "\n".join(case_lines) + """
 esac
 """)
 PY
+}
+
+write_stale_team_id_diagnostics_fixture() {
+  local products_path="$1"
+  local configuration="$2"
+  write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "team-id"
 }
 
 write_stale_application_identity_diagnostics_fixture() {
   local products_path="$1"
   local configuration="$2"
-  local script_path="$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh"
-
-  python3 - "$script_path" <<'PY'
-from pathlib import Path
-import sys
-
-script_path = Path(sys.argv[1])
-script_path.write_text("""#!/usr/bin/env bash
-set -euo pipefail
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VALIDATE_PROJECT_SCRIPT="${SCRIPT_DIR}/validate_project.py"
-case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
-  resource-discovery)
-    printf 'Diagnostics parser source: adjacent script resource\n'
-    printf 'Diagnostics parser available: yes\n'
-    ;;
-  executable-readiness)
-    printf 'Executable ready fixture: yes\n'
-    printf 'Executable non-executable fixture: no\n'
-    ;;
-  team-id)
-    printf 'Team ID match fixture: yes\n'
-    printf 'Team ID mismatch fixture: no\n'
-    ;;
-  application-identity)
-    printf 'App path match fixture: no\n'
-    printf 'Bundle identifier missing fixture: yes\n'
-    ;;
-  video-parser)
-    printf 'Video parser metadata ready fixture: yes\n'
-    ;;
-esac
-""")
-PY
+  write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "application-identity"
 }
 
 write_stale_video_metadata_diagnostics_fixture() {
   local products_path="$1"
   local configuration="$2"
-  local script_path="$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh"
-
-  python3 - "$script_path" <<'PY'
-from pathlib import Path
-import sys
-
-script_path = Path(sys.argv[1])
-script_path.write_text("""#!/usr/bin/env bash
-set -euo pipefail
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VALIDATE_PROJECT_SCRIPT="${SCRIPT_DIR}/validate_project.py"
-case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
-  resource-discovery)
-    printf 'Diagnostics parser source: adjacent script resource\n'
-    printf 'Diagnostics parser available: yes\n'
-    ;;
-  executable-readiness)
-    printf 'Executable ready fixture: yes\n'
-    printf 'Executable non-executable fixture: no\n'
-    ;;
-  team-id)
-    printf 'Team ID match fixture: yes\n'
-    printf 'Team ID mismatch fixture: no\n'
-    ;;
-  application-identity)
-    printf 'App path match fixture: yes\n'
-    printf 'Bundle identifier missing fixture: no\n'
-    ;;
-  video-metadata)
-    printf 'Video metadata spaced width fixture: 640\n'
-    printf 'Video metadata quoted duration fixture: 0\n'
-    printf 'Video metadata negative duration fixture: yes\n'
-    ;;
-  video-parser)
-    printf 'Video parser metadata ready fixture: yes\n'
-    ;;
-esac
-""")
-PY
+  write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "video-metadata"
 }
 
 write_stale_application_group_diagnostics_fixture() {
   local products_path="$1"
   local configuration="$2"
-  local script_path="$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh"
-
-  python3 - "$script_path" <<'PY'
-from pathlib import Path
-import sys
-
-script_path = Path(sys.argv[1])
-script_path.write_text("""#!/usr/bin/env bash
-set -euo pipefail
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VALIDATE_PROJECT_SCRIPT="${SCRIPT_DIR}/validate_project.py"
-case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
-  resource-discovery)
-    printf 'Diagnostics parser source: adjacent script resource\n'
-    printf 'Diagnostics parser available: yes\n'
-    ;;
-  executable-readiness)
-    printf 'Executable ready fixture: yes\n'
-    printf 'Executable non-executable fixture: no\n'
-    ;;
-  team-id)
-    printf 'Team ID match fixture: yes\n'
-    printf 'Team ID mismatch fixture: no\n'
-    ;;
-  application-identity)
-    printf 'App path match fixture: yes\n'
-    printf 'Bundle identifier missing fixture: no\n'
-    ;;
-  video-metadata)
-    printf 'Video metadata spaced width fixture: 1280\n'
-    printf 'Video metadata quoted duration fixture: 12.5\n'
-    printf 'Video metadata negative duration fixture: no\n'
-    ;;
-  application-group)
-    printf 'Application group shared fixture ready: no\n'
-    printf 'Application group dotted-prefix fixture ready: yes\n'
-    printf 'Application group list format fixture: none\n'
-    ;;
-  video-parser)
-    printf 'Video parser metadata ready fixture: yes\n'
-    ;;
-esac
-""")
-PY
+  write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "application-group"
 }
 
 write_stale_mach_service_diagnostics_fixture() {
   local products_path="$1"
   local configuration="$2"
-  local script_path="$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh"
-
-  python3 - "$script_path" <<'PY'
-from pathlib import Path
-import sys
-
-script_path = Path(sys.argv[1])
-script_path.write_text("""#!/usr/bin/env bash
-set -euo pipefail
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VALIDATE_PROJECT_SCRIPT="${SCRIPT_DIR}/validate_project.py"
-case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
-  resource-discovery)
-    printf 'Diagnostics parser source: adjacent script resource\n'
-    printf 'Diagnostics parser available: yes\n'
-    ;;
-  executable-readiness)
-    printf 'Executable ready fixture: yes\n'
-    printf 'Executable non-executable fixture: no\n'
-    ;;
-  team-id)
-    printf 'Team ID match fixture: yes\n'
-    printf 'Team ID mismatch fixture: no\n'
-    ;;
-  application-identity)
-    printf 'App path match fixture: yes\n'
-    printf 'Bundle identifier missing fixture: no\n'
-    ;;
-  video-metadata)
-    printf 'Video metadata spaced width fixture: 1280\n'
-    printf 'Video metadata quoted duration fixture: 12.5\n'
-    printf 'Video metadata negative duration fixture: no\n'
-    ;;
-  application-group)
-    printf 'Application group shared fixture ready: yes\n'
-    printf 'Application group dotted-prefix fixture ready: no\n'
-    printf 'Application group list format fixture: ABCDE12345.com.garethpaul.GarethVideoCam, ZYXWV98765.com.garethpaul.GarethVideoCam\n'
-    ;;
-  mach-service)
-    printf 'Mach service direct fixture ready: no\n'
-    printf 'Mach service dotted-prefix fixture ready: yes\n'
-    printf 'Mach service unresolved fixture resolved: yes\n'
-    ;;
-  video-parser)
-    printf 'Video parser metadata ready fixture: yes\n'
-    ;;
-esac
-""")
-PY
+  write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "mach-service"
 }
 
 remove_info_plist_key() {
