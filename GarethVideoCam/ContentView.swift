@@ -2045,20 +2045,20 @@ private struct DetailsPanel: View {
                 DetailRow(title: "Application Path", value: manager.applicationBundlePath, monospaced: true)
 
                 if let bundlePath = manager.extensionInfo?.bundlePath {
-                    DetailRow(title: "Bundle Path", value: bundlePath, monospaced: true)
+                    DetailRow(title: "Extension Bundle Path", value: bundlePath, monospaced: true)
                 }
                 if let executableName = manager.extensionInfo?.executableName {
-                    DetailRow(title: "Executable", value: executableName, monospaced: true)
+                    DetailRow(title: "Extension Executable", value: executableName, monospaced: true)
                 }
                 if let executablePath = manager.extensionInfo?.executablePath {
-                    DetailRow(title: "Executable Path", value: executablePath, monospaced: true)
+                    DetailRow(title: "Extension Executable Path", value: executablePath, monospaced: true)
                 }
                 if let machServiceName = manager.extensionInfo?.machServiceName {
-                    DetailRow(title: "CMIO Mach Service", value: machServiceName, monospaced: true)
+                    DetailRow(title: "Extension CMIO Mach Service", value: machServiceName, monospaced: true)
                 }
                 if let videoPath = manager.extensionInfo?.videoPath {
-                    DetailRow(title: "Video Path", value: videoPath, monospaced: true)
-                    DetailRow(title: "Video Size", value: manager.bundledVideoSize)
+                    DetailRow(title: "Bundled Video Path", value: videoPath, monospaced: true)
+                    DetailRow(title: "Bundled Video Size", value: manager.bundledVideoSize)
                 }
 
                 DetailsActions(manager: manager)

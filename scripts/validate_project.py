@@ -483,7 +483,7 @@ def main():
     require("extensionInfo != nil" in host_source and "extensionMetadataReadinessDetail == nil" in host_source and "bundledVideoReadinessDetail == nil" in host_source and "isExtensionMetadataFailureDetail" in host_source and "isBundledVideoFailureDetail" in host_source,
             "host app should make extension metadata and bundled-video readiness explicit system-extension request gates",
             failures)
-    require("Extension Executable:" in host_source and "Extension Executable Path:" in host_source and "Extension CMIO Mach Service:" in host_source and "CMIO Mach Service" in host_source and "Bundled Video Path" in host_source and "Bundled Video Size" in host_source and "Video Path" in host_source and "Video Size" in host_source,
+    require("Extension Executable:" in host_source and "Extension Executable Path:" in host_source and "Extension CMIO Mach Service:" in host_source and "Extension Bundle Path" in host_source and "Extension Executable" in host_source and "Extension Executable Path" in host_source and "Extension CMIO Mach Service" in host_source and "Bundled Video Path" in host_source and "Bundled Video Size" in host_source,
             "host app should show and copy extension metadata and bundled-video diagnostics",
             failures)
     require("nsError.domain" in host_source and "unknown code \\(errorCode)" in host_source,
