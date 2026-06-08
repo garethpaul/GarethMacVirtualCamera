@@ -32,6 +32,11 @@ done
   printf '\n'
 } >>"$XCODEBUILD_CALL_LOG"
 printf 'xcodebuild fixture for %s\n' "$configuration"
+
+if [ "${XCODEBUILD_SHOULD_FAIL:-}" = "1" ]; then
+  printf 'xcodebuild fixture failure for %s\n' "$configuration"
+  exit 65
+fi
 SH
 chmod +x "$FAKE_BIN/xcodebuild"
 
@@ -76,5 +81,34 @@ require_file_contains "$CALL_LOG" $'CODE_SIGNING_REQUIRED=NO'
 require_file_contains "$CALL_LOG" $'COMPILER_INDEX_STORE_ENABLE=NO'
 require_file_contains "$WORK_DIR/build-Debug.log" "xcodebuild fixture for Debug"
 require_file_contains "$WORK_DIR/build-Release.log" "xcodebuild fixture for Release"
+
+FAIL_WORK_DIR="$TMP_DIR/failure-work"
+FAIL_CALL_LOG="$TMP_DIR/xcodebuild-failure-calls.log"
+mkdir -p "$FAIL_WORK_DIR"
+
+set +e
+(
+  cd "$FAIL_WORK_DIR"
+  PATH="$FAKE_BIN:$PATH" \
+    XCODEBUILD_CALL_LOG="$FAIL_CALL_LOG" \
+    XCODEBUILD_SHOULD_FAIL=1 \
+    "$ROOT/scripts/build_unsigned.sh" Debug >"$TMP_DIR/build-unsigned-failure.out" 2>"$TMP_DIR/build-unsigned-failure.err"
+)
+failure_status=$?
+set -e
+
+if [ "$failure_status" -eq 0 ]; then
+  printf 'Expected unsigned build script to propagate xcodebuild failure.\n' >&2
+  exit 1
+fi
+
+if [ "$failure_status" -ne 65 ]; then
+  printf 'Expected unsigned build script to exit 65, got %s.\n' "$failure_status" >&2
+  cat "$TMP_DIR/build-unsigned-failure.out" >&2
+  cat "$TMP_DIR/build-unsigned-failure.err" >&2
+  exit 1
+fi
+
+require_file_contains "$FAIL_WORK_DIR/build-Debug.log" "xcodebuild fixture failure for Debug"
 
 printf 'Unsigned build script tests passed.\n'
