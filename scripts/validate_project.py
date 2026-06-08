@@ -518,6 +518,9 @@ def main():
     require("@Environment(\\.scenePhase)" in host_source and ".onChange(of: scenePhase)" in host_source and "newScenePhase == .active" in host_source,
             "host app should refresh readiness when it becomes active after external approval changes",
             failures)
+    require("#Preview" in host_source and "PreviewProvider" not in host_source,
+            "host app should use the modern SwiftUI preview syntax",
+            failures)
     require("case .idle, .ready, .needsApplicationLocation, .needsBundleIdentifier, .needsSigning, .deactivated, .failed:" in host_source,
             "host app should let a successful refresh recover from stale readiness failures",
             failures)

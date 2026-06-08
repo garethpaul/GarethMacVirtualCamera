@@ -43,10 +43,8 @@ struct ContentView: View {
     }
 }
 
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView(systemExtensionRequestManager: SystemExtensionRequestManager(logText: ""))
-    }
+#Preview {
+    ContentView(systemExtensionRequestManager: SystemExtensionRequestManager(logText: ""))
 }
 
 private enum DashboardSection: String, CaseIterable, Hashable {
