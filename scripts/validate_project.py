@@ -815,6 +815,9 @@ def main():
     require("GARETH_DIAGNOSTICS_SELF_TEST=executable-readiness" in runtime_diagnostics_test_source and "Executable missing name fixture: no" in runtime_diagnostics_test_source and "Executable missing file fixture: no" in runtime_diagnostics_test_source and "Executable non-executable fixture: no" in runtime_diagnostics_test_source and "Executable ready fixture: yes" in runtime_diagnostics_test_source,
             "runtime diagnostics test should cover executable readiness comparisons",
             failures)
+    require("GARETH_DIAGNOSTICS_SELF_TEST=application-identity" in runtime_diagnostics_test_source and "App path match fixture: yes" in runtime_diagnostics_test_source and "App path mismatch fixture: no" in runtime_diagnostics_test_source and "Bundle identifier match fixture: yes" in runtime_diagnostics_test_source and "Bundle identifier mismatch fixture: no" in runtime_diagnostics_test_source and "Bundle identifier missing fixture: no" in runtime_diagnostics_test_source,
+            "runtime diagnostics test should cover application path and bundle identifier readiness comparisons",
+            failures)
     require("GARETH_DIAGNOSTICS_SELF_TEST=team-id" in runtime_diagnostics_test_source and "Team ID match fixture: yes" in runtime_diagnostics_test_source and "Team ID mismatch fixture: no" in runtime_diagnostics_test_source and "Team ID missing app fixture: unknown" in runtime_diagnostics_test_source and "Team ID missing extension fixture: unknown" in runtime_diagnostics_test_source,
             "runtime diagnostics test should cover signing Team ID readiness comparisons",
             failures)
@@ -835,6 +838,9 @@ def main():
             failures)
     require("executable_readiness_value" in runtime_diagnostics_source and "run_executable_readiness_self_test" in runtime_diagnostics_source and "executable-readiness" in runtime_diagnostics_source and "Executable ready fixture: %s" in runtime_diagnostics_source and "App executable ready\" \"$(executable_readiness_value" in runtime_diagnostics_source and "Extension executable ready\" \"$(executable_readiness_value" in runtime_diagnostics_source,
             "runtime diagnostics script should test and reuse executable readiness comparisons",
+            failures)
+    require("path_matches_expected_value" in runtime_diagnostics_source and "bundle_identifier_matches_expected_value" in runtime_diagnostics_source and "run_application_identity_self_test" in runtime_diagnostics_source and "application-identity" in runtime_diagnostics_source and "Application location ready\" \"$(path_matches_expected_value" in runtime_diagnostics_source and "App bundle identifier ready\" \"$(bundle_identifier_matches_expected_value" in runtime_diagnostics_source and "Extension bundle identifier ready\" \"$(bundle_identifier_matches_expected_value" in runtime_diagnostics_source,
+            "runtime diagnostics script should test and reuse application path and bundle identifier readiness comparisons",
             failures)
     require("team_identifiers_match_value" in runtime_diagnostics_source and "run_team_identifier_self_test" in runtime_diagnostics_source and "team-id" in runtime_diagnostics_source and "Team identifiers match: %s" in runtime_diagnostics_source and "Signing Team match ready\" \"$(team_identifiers_match_value" in runtime_diagnostics_source,
             "runtime diagnostics script should test and reuse signing Team ID readiness comparisons",

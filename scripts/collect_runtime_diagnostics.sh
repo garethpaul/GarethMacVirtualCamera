@@ -93,6 +93,28 @@ read_bundle_identifier() {
   read_info_plist_value "$bundle_path" CFBundleIdentifier
 }
 
+path_matches_expected_value() {
+  local actual_path="$1"
+  local expected_path="$2"
+
+  if [ "$actual_path" = "$expected_path" ]; then
+    printf 'yes\n'
+  else
+    printf 'no\n'
+  fi
+}
+
+bundle_identifier_matches_expected_value() {
+  local bundle_identifier="$1"
+  local expected_identifier="$2"
+
+  if [ -n "$bundle_identifier" ] && [ "$bundle_identifier" = "$expected_identifier" ]; then
+    printf 'yes\n'
+  else
+    printf 'no\n'
+  fi
+}
+
 executable_readiness_value() {
   local executable_name="$1"
   local executable_path="$2"
@@ -786,6 +808,14 @@ run_executable_readiness_self_test() {
   /bin/rm -rf "$temp_dir"
 }
 
+run_application_identity_self_test() {
+  printf 'App path match fixture: %s\n' "$(path_matches_expected_value "/Applications/GarethVideoCam.app" "/Applications/GarethVideoCam.app")"
+  printf 'App path mismatch fixture: %s\n' "$(path_matches_expected_value "/Users/example/GarethVideoCam.app" "/Applications/GarethVideoCam.app")"
+  printf 'Bundle identifier match fixture: %s\n' "$(bundle_identifier_matches_expected_value "$APP_ID" "$APP_ID")"
+  printf 'Bundle identifier mismatch fixture: %s\n' "$(bundle_identifier_matches_expected_value "com.example.WrongApp" "$APP_ID")"
+  printf 'Bundle identifier missing fixture: %s\n' "$(bundle_identifier_matches_expected_value "" "$APP_ID")"
+}
+
 run_team_identifier_self_test() {
   printf 'Team ID match fixture: %s\n' "$(team_identifiers_match_value "ABCDE12345" "ABCDE12345")"
   printf 'Team ID mismatch fixture: %s\n' "$(team_identifiers_match_value "ABCDE12345" "ZYXWV98765")"
@@ -916,6 +946,10 @@ case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
     ;;
   executable-readiness)
     run_executable_readiness_self_test
+    exit 0
+    ;;
+  application-identity)
+    run_application_identity_self_test
     exit 0
     ;;
   team-id)
@@ -1266,26 +1300,12 @@ else
 fi
 
 section "Runtime Readiness Summary"
-readiness_ready_count=0
-readiness_blocked_count=0
-readiness_unknown_count=0
-readiness_total_count=0
-readiness_first_blocked_label=""
-readiness_first_unknown_label=""
-
-if [ "$APP_PATH" = "$EXPECTED_APP_PATH" ]; then
-  print_readiness_check "Application location ready" "yes"
-else
-  print_readiness_check "Application location ready" "no"
-fi
+reset_readiness_rollup_counters
+print_readiness_check "Application location ready" "$(path_matches_expected_value "$APP_PATH" "$EXPECTED_APP_PATH")"
 
 if [ -d "$APP_PATH" ]; then
   app_bundle_identifier="$(read_bundle_identifier "$APP_PATH")"
-  if [ "$app_bundle_identifier" = "$APP_ID" ]; then
-    print_readiness_check "App bundle identifier ready" "yes"
-  else
-    print_readiness_check "App bundle identifier ready" "no"
-  fi
+  print_readiness_check "App bundle identifier ready" "$(bundle_identifier_matches_expected_value "$app_bundle_identifier" "$APP_ID")"
 
   if /usr/bin/codesign --verify --deep --strict "$APP_PATH" >/dev/null 2>&1; then
     print_readiness_check "App signature ready" "yes"
@@ -1312,11 +1332,7 @@ if [ -d "$EXTENSION_PATH" ]; then
   extension_bundle_identifier="$(read_bundle_identifier "$EXTENSION_PATH")"
   extension_executable="$(read_info_plist_value "$EXTENSION_PATH" CFBundleExecutable)"
   extension_mach_service_name="$(read_extension_mach_service_name)"
-  if [ "$extension_bundle_identifier" = "$EXTENSION_ID" ]; then
-    print_readiness_check "Extension bundle identifier ready" "yes"
-  else
-    print_readiness_check "Extension bundle identifier ready" "no"
-  fi
+  print_readiness_check "Extension bundle identifier ready" "$(bundle_identifier_matches_expected_value "$extension_bundle_identifier" "$EXTENSION_ID")"
 
   if /usr/bin/codesign --verify --strict "$EXTENSION_PATH" >/dev/null 2>&1; then
     print_readiness_check "Extension signature ready" "yes"

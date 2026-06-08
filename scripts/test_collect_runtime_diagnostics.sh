@@ -20,6 +20,7 @@ unknown_output="$(GARETH_DIAGNOSTICS_SELF_TEST=readiness-rollup-unknown "$ROOT/s
 ready_output="$(GARETH_DIAGNOSTICS_SELF_TEST=readiness-rollup-ready "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 bundle_version_output="$(GARETH_DIAGNOSTICS_SELF_TEST=bundle-version-match "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 executable_readiness_output="$(GARETH_DIAGNOSTICS_SELF_TEST=executable-readiness "$ROOT/scripts/collect_runtime_diagnostics.sh")"
+application_identity_output="$(GARETH_DIAGNOSTICS_SELF_TEST=application-identity "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 team_id_output="$(GARETH_DIAGNOSTICS_SELF_TEST=team-id "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 mach_service_output="$(GARETH_DIAGNOSTICS_SELF_TEST=mach-service "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 application_group_output="$(GARETH_DIAGNOSTICS_SELF_TEST=application-group "$ROOT/scripts/collect_runtime_diagnostics.sh")"
@@ -68,6 +69,12 @@ require_output "$executable_readiness_output" "Executable missing name fixture: 
 require_output "$executable_readiness_output" "Executable missing file fixture: no"
 require_output "$executable_readiness_output" "Executable non-executable fixture: no"
 require_output "$executable_readiness_output" "Executable ready fixture: yes"
+
+require_output "$application_identity_output" "App path match fixture: yes"
+require_output "$application_identity_output" "App path mismatch fixture: no"
+require_output "$application_identity_output" "Bundle identifier match fixture: yes"
+require_output "$application_identity_output" "Bundle identifier mismatch fixture: no"
+require_output "$application_identity_output" "Bundle identifier missing fixture: no"
 
 require_output "$team_id_output" "Team ID match fixture: yes"
 require_output "$team_id_output" "Team ID mismatch fixture: no"
