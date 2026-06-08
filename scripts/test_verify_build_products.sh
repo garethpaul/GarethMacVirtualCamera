@@ -90,6 +90,21 @@ passing_outputs = {
         "Diagnostics parser source: adjacent script resource",
         "Diagnostics parser available: yes",
     ],
+    "readiness-rollup": [
+        "Runtime readiness result: blocked",
+        "Runtime readiness checks ready: 1/3",
+        "Runtime readiness next action: resolve Blocked fixture",
+    ],
+    "readiness-rollup-unknown": [
+        "Runtime readiness result: incomplete",
+        "Runtime readiness checks ready: 1/2",
+        "Runtime readiness next action: inspect Unknown fixture",
+    ],
+    "readiness-rollup-ready": [
+        "Runtime readiness result: ready",
+        "Runtime readiness checks ready: 1/1",
+        "Runtime readiness next action: submit the system extension request",
+    ],
     "executable-readiness": [
         "Executable ready fixture: yes",
         "Executable non-executable fixture: no",
@@ -145,6 +160,11 @@ passing_outputs = {
 }
 
 stale_outputs = {
+    "readiness-rollup": [
+        "Runtime readiness result: ready",
+        "Runtime readiness checks ready: 3/3",
+        "Runtime readiness next action: none",
+    ],
     "team-id": [
         "Team ID match fixture: no",
         "Team ID mismatch fixture: no",
@@ -221,6 +241,12 @@ write_stale_team_id_diagnostics_fixture() {
   local products_path="$1"
   local configuration="$2"
   write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "team-id"
+}
+
+write_stale_readiness_rollup_diagnostics_fixture() {
+  local products_path="$1"
+  local configuration="$2"
+  write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "readiness-rollup"
 }
 
 write_stale_application_identity_diagnostics_fixture() {
@@ -406,6 +432,21 @@ fi
 if ! grep -q "Missing Debug app runtime diagnostics parser" "$TMP_DIR/missing-diagnostics-parser.err"; then
   printf 'Verifier failure did not explain the missing runtime diagnostics parser.\n' >&2
   cat "$TMP_DIR/missing-diagnostics-parser.err" >&2
+  exit 1
+fi
+
+STALE_READINESS_ROLLUP_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-readiness-rollup-diagnostics/Products"
+write_product_fixture "$STALE_READINESS_ROLLUP_DIAGNOSTICS_PRODUCTS" Debug
+write_stale_readiness_rollup_diagnostics_fixture "$STALE_READINESS_ROLLUP_DIAGNOSTICS_PRODUCTS" Debug
+
+if PRODUCTS_PATH="$STALE_READINESS_ROLLUP_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stale-readiness-rollup-diagnostics.out" 2>"$TMP_DIR/stale-readiness-rollup-diagnostics.err"; then
+  printf 'Expected verifier to reject stale bundled runtime diagnostics readiness-rollup self-test output.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Unexpected Debug app bundled runtime diagnostics readiness-rollup self-test output" "$TMP_DIR/stale-readiness-rollup-diagnostics.err"; then
+  printf 'Verifier failure did not explain the stale bundled runtime diagnostics readiness-rollup self-test output.\n' >&2
+  cat "$TMP_DIR/stale-readiness-rollup-diagnostics.err" >&2
   exit 1
 fi
 

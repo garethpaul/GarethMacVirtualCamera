@@ -226,6 +226,21 @@ verify_app_diagnostics_resources() {
     "Diagnostics parser source: adjacent script resource" \
     "Diagnostics parser available: yes"
 
+  verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "readiness-rollup" "readiness-rollup" \
+    "Runtime readiness result: blocked" \
+    "Runtime readiness checks ready: 1/3" \
+    "Runtime readiness next action: resolve Blocked fixture"
+
+  verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "readiness-rollup-unknown" "readiness-rollup-unknown" \
+    "Runtime readiness result: incomplete" \
+    "Runtime readiness checks ready: 1/2" \
+    "Runtime readiness next action: inspect Unknown fixture"
+
+  verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "readiness-rollup-ready" "readiness-rollup-ready" \
+    "Runtime readiness result: ready" \
+    "Runtime readiness checks ready: 1/1" \
+    "Runtime readiness next action: submit the system extension request"
+
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "executable-readiness" "executable-readiness" \
     "Executable ready fixture: yes" \
     "Executable non-executable fixture: no"
