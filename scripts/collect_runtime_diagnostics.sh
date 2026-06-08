@@ -451,6 +451,65 @@ print_readiness_rollup() {
   fi
 }
 
+print_activation_evidence_summary() {
+  local registration_present_value="$1"
+  local registration_activated_enabled_value="$2"
+  local camera_device_present_value="$3"
+  local activation_ready_count=0
+  local activation_blocked_count=0
+  local activation_unknown_count=0
+  local activation_total_count=0
+  local activation_first_blocked_label=""
+  local activation_first_unknown_label=""
+  local activation_result="active"
+  local label
+  local value
+
+  while IFS='|' read -r label value; do
+    activation_total_count=$((activation_total_count + 1))
+
+    case "$value" in
+      yes)
+        activation_ready_count=$((activation_ready_count + 1))
+        ;;
+      no)
+        activation_blocked_count=$((activation_blocked_count + 1))
+        if [ -z "$activation_first_blocked_label" ]; then
+          activation_first_blocked_label="$label"
+        fi
+        ;;
+      *)
+        activation_unknown_count=$((activation_unknown_count + 1))
+        if [ -z "$activation_first_unknown_label" ]; then
+          activation_first_unknown_label="$label"
+        fi
+        ;;
+    esac
+  done <<EOF
+Extension registration entry present|$registration_present_value
+Extension registration activated enabled|$registration_activated_enabled_value
+Expected virtual camera device present|$camera_device_present_value
+EOF
+
+  if [ "$activation_blocked_count" -gt 0 ]; then
+    activation_result="blocked"
+  elif [ "$activation_unknown_count" -gt 0 ]; then
+    activation_result="incomplete"
+  fi
+
+  printf 'Runtime activation evidence result: %s\n' "$activation_result"
+  printf 'Runtime activation evidence checks ready: %s/%s\n' "$activation_ready_count" "$activation_total_count"
+  printf 'Runtime activation evidence checks blocked: %s\n' "$activation_blocked_count"
+  printf 'Runtime activation evidence checks unknown: %s\n' "$activation_unknown_count"
+  if [ -n "$activation_first_blocked_label" ]; then
+    printf 'Runtime activation evidence next action: resolve %s\n' "$activation_first_blocked_label"
+  elif [ -n "$activation_first_unknown_label" ]; then
+    printf 'Runtime activation evidence next action: inspect %s\n' "$activation_first_unknown_label"
+  else
+    printf 'Runtime activation evidence next action: open a camera picker and confirm Gareth Video Cam is selectable\n'
+  fi
+}
+
 reset_readiness_rollup_counters() {
   readiness_ready_count=0
   readiness_blocked_count=0
@@ -541,6 +600,12 @@ run_registration_self_test() {
   printf 'Registration empty fixture present: %s\n' "$(extension_registration_present_value "" "$EXTENSION_ID")"
 }
 
+run_activation_evidence_self_test() {
+  print_activation_evidence_summary "yes" "yes" "yes"
+  print_activation_evidence_summary "no" "no" "yes"
+  print_activation_evidence_summary "yes" "unknown" "yes"
+}
+
 case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
   readiness-rollup|readiness-rollup-blocked)
     run_readiness_rollup_blocked_self_test
@@ -572,6 +637,10 @@ case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
     ;;
   registration)
     run_registration_self_test
+    exit 0
+    ;;
+  activation-evidence)
+    run_activation_evidence_self_test
     exit 0
     ;;
 esac
@@ -991,13 +1060,19 @@ fi
 
 print_readiness_rollup
 
+registration_present="unknown"
+registration_activated_enabled="unknown"
+camera_device_present="unknown"
+
 section "System Extension Registration"
 if [ -x /usr/bin/systemextensionsctl ]; then
   registration_output="$(/usr/bin/systemextensionsctl list 2>&1 || true)"
   registration_entries="$(extension_registration_entries "$registration_output" "$EXTENSION_ID")"
+  registration_present="$(extension_registration_present_value "$registration_output" "$EXTENSION_ID")"
+  registration_activated_enabled="$(extension_registration_activated_enabled_value "$registration_output" "$EXTENSION_ID")"
 
-  print_yes_no_unknown "Extension registration entry present" "$(extension_registration_present_value "$registration_output" "$EXTENSION_ID")"
-  print_yes_no_unknown "Extension registration activated enabled" "$(extension_registration_activated_enabled_value "$registration_output" "$EXTENSION_ID")"
+  print_yes_no_unknown "Extension registration entry present" "$registration_present"
+  print_yes_no_unknown "Extension registration activated enabled" "$registration_activated_enabled"
 
   printf 'Matching system extension registration entries:\n'
   if [ -n "$registration_entries" ]; then
@@ -1022,7 +1097,8 @@ section "Camera Devices"
 printf 'Expected virtual camera device: %s\n' "$EXPECTED_CAMERA_NAME"
 if command -v system_profiler >/dev/null 2>&1; then
   camera_inventory="$(system_profiler SPCameraDataType 2>&1 || true)"
-  print_yes_no_unknown "Expected virtual camera device present" "$(camera_device_present_value "$camera_inventory" "$EXPECTED_CAMERA_NAME")"
+  camera_device_present="$(camera_device_present_value "$camera_inventory" "$EXPECTED_CAMERA_NAME")"
+  print_yes_no_unknown "Expected virtual camera device present" "$camera_device_present"
   printf 'Full system_profiler SPCameraDataType output:\n'
   if [ -n "$camera_inventory" ]; then
     printf '%s\n' "$camera_inventory"
@@ -1033,6 +1109,9 @@ else
   printf 'system_profiler is not available on this host.\n'
   print_yes_no_unknown "Expected virtual camera device present" "unknown"
 fi
+
+section "Runtime Activation Evidence"
+print_activation_evidence_summary "$registration_present" "$registration_activated_enabled" "$camera_device_present"
 
 section "Running App and Extension Processes"
 if [ -x /bin/ps ]; then

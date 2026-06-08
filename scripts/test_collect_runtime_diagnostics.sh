@@ -22,6 +22,7 @@ mach_service_output="$(GARETH_DIAGNOSTICS_SELF_TEST=mach-service "$ROOT/scripts/
 application_group_output="$(GARETH_DIAGNOSTICS_SELF_TEST=application-group "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 camera_device_output="$(GARETH_DIAGNOSTICS_SELF_TEST=camera-device "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 registration_output="$(GARETH_DIAGNOSTICS_SELF_TEST=registration "$ROOT/scripts/collect_runtime_diagnostics.sh")"
+activation_evidence_output="$(GARETH_DIAGNOSTICS_SELF_TEST=activation-evidence "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 
 require_output "$blocked_output" "Ready fixture: yes"
 require_output "$blocked_output" "Blocked fixture: no"
@@ -75,5 +76,13 @@ require_output "$registration_output" "Registration active fixture activated ena
 require_output "$registration_output" "Registration waiting fixture activated enabled: no"
 require_output "$registration_output" "Registration missing fixture present: no"
 require_output "$registration_output" "Registration empty fixture present: unknown"
+
+require_output "$activation_evidence_output" "Runtime activation evidence result: active"
+require_output "$activation_evidence_output" "Runtime activation evidence checks ready: 3/3"
+require_output "$activation_evidence_output" "Runtime activation evidence next action: open a camera picker and confirm Gareth Video Cam is selectable"
+require_output "$activation_evidence_output" "Runtime activation evidence result: blocked"
+require_output "$activation_evidence_output" "Runtime activation evidence next action: resolve Extension registration entry present"
+require_output "$activation_evidence_output" "Runtime activation evidence result: incomplete"
+require_output "$activation_evidence_output" "Runtime activation evidence next action: inspect Extension registration activated enabled"
 
 printf 'Runtime diagnostics tests passed.\n'
