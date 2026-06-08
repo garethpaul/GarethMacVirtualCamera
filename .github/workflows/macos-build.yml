@@ -52,11 +52,12 @@ jobs:
       - name: Test build product verifier
         run: ./scripts/test_verify_build_products.sh
 
-      - name: Check runtime diagnostics script
+      - name: Check shell scripts
         run: |
           bash -n ./scripts/collect_runtime_diagnostics.sh
           bash -n ./scripts/build_unsigned.sh
           bash -n ./scripts/verify_build_products.sh
+          bash -n ./scripts/check_project.sh
           bash -n ./scripts/test_collect_runtime_diagnostics.sh
           bash -n ./scripts/test_verify_build_products.sh
 

@@ -633,7 +633,7 @@ def main():
     require(runtime_diagnostics_test_path.stat().st_mode & 0o111,
             "runtime diagnostics test script should be executable",
             failures)
-    require("./scripts/validate_project.py" in check_project_source and "./scripts/test_scan_build_log.py" in check_project_source and "./scripts/test_collect_runtime_diagnostics.sh" in check_project_source and "./scripts/test_verify_build_products.sh" in check_project_source and "bash -n ./scripts/collect_runtime_diagnostics.sh" in check_project_source and "bash -n ./scripts/build_unsigned.sh" in check_project_source and "bash -n ./scripts/verify_build_products.sh" in check_project_source and "bash -n ./scripts/test_collect_runtime_diagnostics.sh" in check_project_source and "bash -n ./scripts/test_verify_build_products.sh" in check_project_source and "git diff --check" in check_project_source and "git diff-tree --check --root --no-commit-id -r HEAD" in check_project_source,
+    require("./scripts/validate_project.py" in check_project_source and "./scripts/test_scan_build_log.py" in check_project_source and "./scripts/test_collect_runtime_diagnostics.sh" in check_project_source and "./scripts/test_verify_build_products.sh" in check_project_source and "bash -n ./scripts/collect_runtime_diagnostics.sh" in check_project_source and "bash -n ./scripts/build_unsigned.sh" in check_project_source and "bash -n ./scripts/verify_build_products.sh" in check_project_source and "bash -n ./scripts/check_project.sh" in check_project_source and "bash -n ./scripts/test_collect_runtime_diagnostics.sh" in check_project_source and "bash -n ./scripts/test_verify_build_products.sh" in check_project_source and "git diff --check" in check_project_source and "git diff-tree --check --root --no-commit-id -r HEAD" in check_project_source,
             "project check script should run validation, scanner tests, shell syntax checks, and whitespace checks",
             failures)
     require(check_project_path.stat().st_mode & 0o111,
@@ -681,7 +681,7 @@ def main():
         require("./scripts/test_collect_runtime_diagnostics.sh" in workflow_text and "Test runtime diagnostics" in workflow_text,
                 "macOS build workflow should test runtime diagnostics helpers",
                 failures)
-        require("bash -n ./scripts/collect_runtime_diagnostics.sh" in workflow_text and "bash -n ./scripts/build_unsigned.sh" in workflow_text and "bash -n ./scripts/verify_build_products.sh" in workflow_text and "bash -n ./scripts/test_collect_runtime_diagnostics.sh" in workflow_text and "bash -n ./scripts/test_verify_build_products.sh" in workflow_text,
+        require("bash -n ./scripts/collect_runtime_diagnostics.sh" in workflow_text and "bash -n ./scripts/build_unsigned.sh" in workflow_text and "bash -n ./scripts/verify_build_products.sh" in workflow_text and "bash -n ./scripts/check_project.sh" in workflow_text and "bash -n ./scripts/test_collect_runtime_diagnostics.sh" in workflow_text and "bash -n ./scripts/test_verify_build_products.sh" in workflow_text,
                 "macOS build workflow should syntax-check the runtime diagnostics, unsigned build, and build-product verifier scripts",
                 failures)
         require("git diff-tree --check --root --no-commit-id -r HEAD" in workflow_text,

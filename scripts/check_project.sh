@@ -8,6 +8,7 @@ set -euo pipefail
 bash -n ./scripts/collect_runtime_diagnostics.sh
 bash -n ./scripts/build_unsigned.sh
 bash -n ./scripts/verify_build_products.sh
+bash -n ./scripts/check_project.sh
 bash -n ./scripts/test_collect_runtime_diagnostics.sh
 bash -n ./scripts/test_verify_build_products.sh
 git diff --check
