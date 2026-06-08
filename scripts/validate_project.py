@@ -946,6 +946,9 @@ def main():
         require("FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true" in workflow_text,
                 "macOS build workflow should opt JavaScript actions into Node 24",
                 failures)
+        require("permissions:\n  contents: read" in workflow_text,
+                "macOS build workflow should limit repository token permissions to read-only contents",
+                failures)
         require("Xcode_26.5" in workflow_text,
                 "macOS build workflow should explicitly select Xcode 26.5",
                 failures)
