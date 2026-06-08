@@ -360,6 +360,27 @@ fi
 section "Camera Devices"
 run_if_available system_profiler SPCameraDataType
 
+section "Running App and Extension Processes"
+if [ -x /bin/ps ]; then
+  /bin/ps -axo pid,ppid,stat,comm,args | /usr/bin/awk -v app_id="$APP_ID" -v extension_id="$EXTENSION_ID" '
+    NR == 1 {
+      print
+      next
+    }
+    index($0, "GarethVideoCam") || index($0, app_id) || index($0, extension_id) {
+      print
+      matches += 1
+    }
+    END {
+      if (matches == 0) {
+        print "No running GarethVideoCam app or extension processes found."
+      }
+    }
+  ' || true
+else
+  printf 'ps is not available on this host.\n'
+fi
+
 section "Recent Gareth Video Cam Logs"
 if command -v log >/dev/null 2>&1; then
   /usr/bin/log show --last "$LOG_WINDOW" --style compact --predicate "subsystem == '${LOG_SUBSYSTEM}'" 2>/dev/null || true
