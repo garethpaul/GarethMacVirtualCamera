@@ -302,6 +302,8 @@ def main():
     check_project_source = check_project_path.read_text()
     build_unsigned_path = ROOT / "scripts/build_unsigned.sh"
     build_unsigned_source = build_unsigned_path.read_text()
+    build_unsigned_test_path = ROOT / "scripts/test_build_unsigned.sh"
+    build_unsigned_test_source = build_unsigned_test_path.read_text()
     verify_build_products_path = ROOT / "scripts/verify_build_products.sh"
     verify_build_products_source = verify_build_products_path.read_text()
     verify_build_products_test_path = ROOT / "scripts/test_verify_build_products.sh"
@@ -764,7 +766,7 @@ def main():
     require("didOpenSettings" in host_source and "System Settings Unavailable" in host_source,
             "host app should report System Settings launch failures",
             failures)
-    require("./scripts/check_project.sh" in readme_text and "project metadata validation, build-log scanner tests, runtime diagnostics tests, build-product verifier tests, shell syntax checks, and whitespace checks" in readme_text and "bundle identifiers, aligned bundle versions, declared executables, display metadata, product-specific privacy usage strings, bundled runtime diagnostics self-tests, resolved CoreMediaIO extension metadata, and bundled-video resource metadata" in readme_text and "exact host and extension entitlement keys, shared app-group values, Xcode entitlement file bindings" in readme_text,
+    require("./scripts/check_project.sh" in readme_text and "project metadata validation, build-log scanner tests, unsigned build script tests, runtime diagnostics tests, build-product verifier tests, shell syntax checks, and whitespace checks" in readme_text and "bundle identifiers, aligned bundle versions, declared executables, display metadata, product-specific privacy usage strings, bundled runtime diagnostics self-tests, resolved CoreMediaIO extension metadata, and bundled-video resource metadata" in readme_text and "exact host and extension entitlement keys, shared app-group values, Xcode entitlement file bindings" in readme_text,
             "README should document the local pre-push project check",
             failures)
     require("CI-equivalent unsigned compile" in readme_text and "./scripts/build_unsigned.sh" in readme_text and "./scripts/scan_build_log.py build-Debug.log build-Release.log" in readme_text and ".build/Xcode" in readme_text and "BUILD_OUTPUT_PATH" in readme_text,
@@ -808,6 +810,12 @@ def main():
             failures)
     require("xcodebuild" in build_unsigned_source and "-target \"$TARGET_NAME\"" in build_unsigned_source and "CODE_SIGNING_ALLOWED=NO" in build_unsigned_source and "CODE_SIGNING_REQUIRED=NO" in build_unsigned_source and "BUILD_ARCH" in build_unsigned_source and "RUNNER_ARCH" not in build_unsigned_source and "BUILD_OUTPUT_PATH" in build_unsigned_source and "SYMROOT=\"$BUILD_OUTPUT_PATH/Products\"" in build_unsigned_source and "OBJROOT=\"$BUILD_OUTPUT_PATH/Intermediates\"" in build_unsigned_source and "-derivedDataPath" not in build_unsigned_source and "configurations=(Debug Release)" in build_unsigned_source and "build-${configuration}.log" in build_unsigned_source,
             "unsigned build script should perform Debug and Release app target builds without code signing",
+            failures)
+    require("FAKE_BIN" in build_unsigned_test_source and "XCODEBUILD_CALL_LOG" in build_unsigned_test_source and "PROJECT_PATH=\"Fixture.xcodeproj\"" in build_unsigned_test_source and "TARGET_NAME=\"FixtureCamera\"" in build_unsigned_test_source and "BUILD_ARCH=\"arm64\"" in build_unsigned_test_source and "BUILD_OUTPUT_PATH=\"$TMP_DIR/XcodeProducts\"" in build_unsigned_test_source and "CODE_SIGNING_ALLOWED=NO" in build_unsigned_test_source and "CODE_SIGNING_REQUIRED=NO" in build_unsigned_test_source and "COMPILER_INDEX_STORE_ENABLE=NO" in build_unsigned_test_source and "build-Debug.log" in build_unsigned_test_source and "build-Release.log" in build_unsigned_test_source,
+            "unsigned build script test should stub xcodebuild and verify project, target, architecture, signing, output path, and log arguments",
+            failures)
+    require(build_unsigned_test_path.stat().st_mode & 0o111,
+            "unsigned build script test should be executable",
             failures)
     require(build_unsigned_path.stat().st_mode & 0o111,
             "unsigned build script should be executable",
@@ -878,7 +886,7 @@ def main():
     require("team_identifiers_match_value" in runtime_diagnostics_source and "run_team_identifier_self_test" in runtime_diagnostics_source and "team-id" in runtime_diagnostics_source and "Team identifiers match: %s" in runtime_diagnostics_source and "Signing Team match ready\" \"$(team_identifiers_match_value" in runtime_diagnostics_source,
             "runtime diagnostics script should test and reuse signing Team ID readiness comparisons",
             failures)
-    require("./scripts/validate_project.py" in check_project_source and "./scripts/test_scan_build_log.py" in check_project_source and "./scripts/test_collect_runtime_diagnostics.sh" in check_project_source and "./scripts/test_verify_build_products.sh" in check_project_source and "bash -n ./scripts/collect_runtime_diagnostics.sh" in check_project_source and "bash -n ./scripts/build_unsigned.sh" in check_project_source and "bash -n ./scripts/verify_build_products.sh" in check_project_source and "bash -n ./scripts/check_project.sh" in check_project_source and "bash -n ./scripts/test_collect_runtime_diagnostics.sh" in check_project_source and "bash -n ./scripts/test_verify_build_products.sh" in check_project_source and "git diff --check" in check_project_source and "git diff-tree --check --root --no-commit-id -r HEAD" in check_project_source,
+    require("./scripts/validate_project.py" in check_project_source and "./scripts/test_scan_build_log.py" in check_project_source and "./scripts/test_build_unsigned.sh" in check_project_source and "./scripts/test_collect_runtime_diagnostics.sh" in check_project_source and "./scripts/test_verify_build_products.sh" in check_project_source and "bash -n ./scripts/collect_runtime_diagnostics.sh" in check_project_source and "bash -n ./scripts/build_unsigned.sh" in check_project_source and "bash -n ./scripts/test_build_unsigned.sh" in check_project_source and "bash -n ./scripts/verify_build_products.sh" in check_project_source and "bash -n ./scripts/check_project.sh" in check_project_source and "bash -n ./scripts/test_collect_runtime_diagnostics.sh" in check_project_source and "bash -n ./scripts/test_verify_build_products.sh" in check_project_source and "git diff --check" in check_project_source and "git diff-tree --check --root --no-commit-id -r HEAD" in check_project_source,
             "project check script should run validation, scanner tests, shell syntax checks, and whitespace checks",
             failures)
     require(check_project_path.stat().st_mode & 0o111,
