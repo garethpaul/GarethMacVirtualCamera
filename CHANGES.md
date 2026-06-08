@@ -14,3 +14,4 @@
 - Covered executable declaration, executable permission, extension display metadata, direct app-group, and missing build-log edge cases in validation fixtures.
 - Limited CI workflow token permissions to read-only repository contents.
 - Added activity feedback for automatic foreground refreshes when visible readiness state changes after returning to the app.
+- Covered non-executable host app binaries and missing extension executable declarations in build-product verifier fixtures.
