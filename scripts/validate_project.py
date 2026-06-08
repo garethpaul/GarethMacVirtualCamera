@@ -88,6 +88,12 @@ def main():
     require("tracks(withMediaType:" not in extension_source and "AVAsset(url:" not in extension_source,
             "extension should use modern asynchronous AVAsset loading APIs",
             failures)
+    require("streamGeneration" in extension_source and "isCurrentStreamPreparation" in extension_source,
+            "extension should ignore stale asynchronous stream preparation completions",
+            failures)
+    require("isPreparingStream" not in extension_source,
+            "extension should not keep unused stream preparation state",
+            failures)
     require("case needsApplicationLocation" in host_source and "canSubmitSystemExtensionRequests" in host_source,
             "host app should model the /Applications requirement before submitting system-extension requests",
             failures)

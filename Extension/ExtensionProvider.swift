@@ -150,10 +150,12 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
             resetTiming()
             self.videoURL = videoURL
             _streamingCounter = 1
-            isPreparingStream = true
+            streamGeneration &+= 1
+            let generation = streamGeneration
+
             streamPreparationTask?.cancel()
             streamPreparationTask = Task { [weak self] in
-                await self?.prepareAndStartStreaming(with: videoURL)
+                await self?.prepareAndStartStreaming(with: videoURL, generation: generation)
             }
         }
     }
@@ -182,7 +184,7 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
     private var videoTrack: AVAssetTrack?
     private var trackOutput: AVAssetReaderTrackOutput?
     private var videoURL: URL?
-    private var isPreparingStream = false
+    private var streamGeneration: UInt64 = 0
     private var streamPreparationTask: Task<Void, Never>?
 
     private var _timer: DispatchSourceTimer?
@@ -191,7 +193,7 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
     private var lastPresentationTime: CMTime?
     private var timestampOffset: CMTime = .zero
 
-    private func prepareAndStartStreaming(with videoURL: URL) async {
+    private func prepareAndStartStreaming(with videoURL: URL, generation: UInt64) async {
         do {
             let loadedAsset = try await loadVideoAsset(from: videoURL)
             if Task.isCancelled { return }
@@ -203,13 +205,11 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
             _timerQueue.async { [weak self] in
                 guard let self else { return }
 
-                self.streamPreparationTask = nil
-                self.isPreparingStream = false
-
-                guard self._streamingCounter > 0, self.videoURL == videoURL else {
+                guard self.isCurrentStreamPreparation(generation: generation, videoURL: videoURL) else {
                     return
                 }
 
+                self.streamPreparationTask = nil
                 self.asset = loadedAsset.asset
                 self.assetDuration = loadedAsset.duration
                 self.videoTrack = loadedAsset.videoTrack
@@ -221,8 +221,11 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
             _timerQueue.async { [weak self] in
                 guard let self else { return }
 
+                guard self.isCurrentStreamPreparation(generation: generation, videoURL: videoURL) else {
+                    return
+                }
+
                 self.streamPreparationTask = nil
-                self.isPreparingStream = false
                 logger.error("Failed to prepare bundled video: \(error.localizedDescription, privacy: .public)")
                 self.stopStreamingSession()
             }
@@ -286,6 +289,10 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
     private func installAssetReaderState(_ readerState: AssetReaderState) {
         assetReader = readerState.assetReader
         trackOutput = readerState.trackOutput
+    }
+
+    private func isCurrentStreamPreparation(generation: UInt64, videoURL: URL) -> Bool {
+        return streamGeneration == generation && _streamingCounter > 0 && self.videoURL == videoURL
     }
 
     private func startTimer() {
@@ -413,9 +420,9 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
     }
 
     private func stopStreamingSession() {
+        streamGeneration &+= 1
         streamPreparationTask?.cancel()
         streamPreparationTask = nil
-        isPreparingStream = false
 
         _timer?.setEventHandler {}
         _timer?.cancel()
