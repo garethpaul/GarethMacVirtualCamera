@@ -11,3 +11,4 @@
 - Added the expected runtime evidence copy action to the Build details actions so it matches the Runtime Evidence panel and Camera menu.
 - Covered missing extension usage strings, wrong app camera usage strings, and unsigned build failure propagation in fixture tests.
 - Covered bundled-video metadata fallback behavior in runtime diagnostics self-tests.
+- Covered executable declaration, executable permission, extension display metadata, direct app-group, and missing build-log edge cases in validation fixtures.
