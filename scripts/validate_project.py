@@ -317,6 +317,12 @@ def main():
     require("LastUpgradeCheck = 2600;" in project_text,
             "project is not marked as upgraded for Xcode 26",
             failures)
+    require(project_text.count("MACOSX_DEPLOYMENT_TARGET = 14.0;") == 6,
+            "project app, extension, and project build configurations should keep the macOS 14.0 deployment target",
+            failures)
+    require(project_text.count("SDKROOT = macosx;") == 2,
+            "project Debug and Release build configurations should use the macOS SDK",
+            failures)
     require(".build/" in gitignore_text and "build-*.log" in gitignore_text and "*.xcresult" in gitignore_text,
             "gitignore should exclude local Xcode build products, logs, and result bundles",
             failures)
