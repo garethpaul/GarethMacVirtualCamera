@@ -382,6 +382,14 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
                        detail: applicationBundlePath)
     }
 
+    func openSystemSettings() {
+        let settingsURL = URL(fileURLWithPath: "/System/Applications/System Settings.app")
+        _ = NSWorkspace.shared.open(settingsURL)
+        appendActivity(level: .info,
+                       title: "System Settings Opened",
+                       detail: "Approve the camera extension if macOS is waiting for user approval.")
+    }
+
     private func loadBundledExtensionInfo() throws -> ExtensionInfo {
         let extensionsDirectoryURL = URL(fileURLWithPath: "Contents/Library/SystemExtensions", relativeTo: Bundle.main.bundleURL)
 
@@ -706,6 +714,11 @@ private struct DetailsPanel: View {
                 }
 
                 HStack(spacing: 10) {
+                    Button(action: manager.openSystemSettings) {
+                        Label("System Settings", systemImage: "gearshape")
+                    }
+                    .buttonStyle(.bordered)
+
                     Button(action: manager.copyDiagnostics) {
                         Label("Copy Diagnostics", systemImage: "doc.on.doc")
                     }

@@ -148,6 +148,9 @@ def main():
     require("activateFileViewerSelecting" in host_source and "Reveal App" in host_source,
             "host app should let users reveal the running app bundle in Finder",
             failures)
+    require("openSystemSettings" in host_source and "System Settings" in host_source and "/System/Applications/System Settings.app" in host_source,
+            "host app should provide a System Settings shortcut for extension approval",
+            failures)
     require("CI-equivalent unsigned compile" in readme_text and "-target GarethVideoCam" in readme_text,
             "README should document the CI-equivalent unsigned target build",
             failures)
