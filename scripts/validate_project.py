@@ -300,6 +300,9 @@ def main():
     require("tooManyStreamingClients" in extension_source and "_streamingCounter < UInt32.max" in extension_source,
             "extension should guard the active streaming client counter from overflow",
             failures)
+    require("guard _timer == nil else" in extension_source and "Duplicate stream timer start ignored" in extension_source,
+            "extension should keep stream timer startup idempotent",
+            failures)
     require("advanceLoopTiming(by: assetDuration)" in extension_source and "private func advanceLoopTiming(by duration: CMTime)" in extension_source,
             "extension should advance timestamps explicitly at bundled-video loop boundaries",
             failures)

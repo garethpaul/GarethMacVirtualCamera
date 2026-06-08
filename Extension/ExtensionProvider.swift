@@ -363,6 +363,11 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
     }
 
     private func startTimer() {
+        guard _timer == nil else {
+            logger.warning("Duplicate stream timer start ignored")
+            return
+        }
+
         let interval = DispatchTimeInterval.nanoseconds(Int(Double(NSEC_PER_SEC) / Double(CameraExtensionConfiguration.frameRate)))
         let timer = DispatchSource.makeTimerSource(queue: _timerQueue)
         timer.schedule(deadline: .now(), repeating: interval, leeway: .milliseconds(3))
