@@ -13,6 +13,18 @@ APP_GROUP = "$(TeamIdentifierPrefix)com.garethpaul.GarethVideoCam"
 APP_BUNDLE_ID = "com.garethpaul.GarethVideoCam"
 EXTENSION_BUNDLE_ID = "com.garethpaul.GarethVideoCam.Extension"
 LEGACY_EXTENSION_BUNDLE_ID = "com.gareth.GarethVideoCam.Extension"
+HOST_SYSTEM_EXTENSION_ENTITLEMENT = "com.apple.developer.system-extension.install"
+APP_SANDBOX_ENTITLEMENT = "com.apple.security.app-sandbox"
+APP_GROUP_ENTITLEMENT = "com.apple.security.application-groups"
+EXPECTED_APP_ENTITLEMENT_KEYS = {
+    HOST_SYSTEM_EXTENSION_ENTITLEMENT,
+    APP_SANDBOX_ENTITLEMENT,
+    APP_GROUP_ENTITLEMENT,
+}
+EXPECTED_EXTENSION_ENTITLEMENT_KEYS = {
+    APP_SANDBOX_ENTITLEMENT,
+    APP_GROUP_ENTITLEMENT,
+}
 
 
 def load_plist(relative_path):
@@ -185,22 +197,28 @@ def main():
     app_icon = load_json("GarethVideoCam/Assets.xcassets/AppIcon.appiconset/Contents.json")
     accent_color = load_json("GarethVideoCam/Assets.xcassets/AccentColor.colorset/Contents.json")
 
-    require(app_entitlements.get("com.apple.developer.system-extension.install") is True,
+    require(set(app_entitlements.keys()) == EXPECTED_APP_ENTITLEMENT_KEYS,
+            "host app entitlements should contain only the System Extension, app sandbox, and shared app-group keys",
+            failures)
+    require(set(extension_entitlements.keys()) == EXPECTED_EXTENSION_ENTITLEMENT_KEYS,
+            "extension entitlements should contain only app sandbox and shared app-group keys",
+            failures)
+    require(app_entitlements.get(HOST_SYSTEM_EXTENSION_ENTITLEMENT) is True,
             "host app is missing the System Extension entitlement",
             failures)
-    require(app_entitlements.get("com.apple.security.app-sandbox") is True,
+    require(app_entitlements.get(APP_SANDBOX_ENTITLEMENT) is True,
             "host app should remain sandboxed",
             failures)
-    require(extension_entitlements.get("com.apple.security.app-sandbox") is True,
+    require(extension_entitlements.get(APP_SANDBOX_ENTITLEMENT) is True,
             "extension should remain sandboxed",
             failures)
-    require(APP_GROUP in app_entitlements.get("com.apple.security.application-groups", []),
-            "host app is missing the shared app group",
+    require(app_entitlements.get(APP_GROUP_ENTITLEMENT) == [APP_GROUP],
+            "host app should declare exactly the shared expected app group",
             failures)
-    require(APP_GROUP in extension_entitlements.get("com.apple.security.application-groups", []),
-            "extension is missing the shared app group",
+    require(extension_entitlements.get(APP_GROUP_ENTITLEMENT) == [APP_GROUP],
+            "extension should declare exactly the shared expected app group",
             failures)
-    require("com.apple.developer.system-extension.install" not in extension_entitlements,
+    require(HOST_SYSTEM_EXTENSION_ENTITLEMENT not in extension_entitlements,
             "extension should not carry the host-only System Extension entitlement",
             failures)
 
@@ -291,6 +309,12 @@ def main():
             failures)
     require(project_text.count("ENABLE_HARDENED_RUNTIME = YES;") >= 4,
             "all app and extension configurations should enable hardened runtime",
+            failures)
+    require(project_text.count("CODE_SIGN_ENTITLEMENTS = GarethVideoCam/Entitlements.entitlements;") == 2,
+            "host app Debug and Release configurations should use the host entitlements file",
+            failures)
+    require(project_text.count("CODE_SIGN_ENTITLEMENTS = Extension/Extension.entitlements;") == 2,
+            "extension Debug and Release configurations should use the extension entitlements file",
             failures)
     require("$(SYSTEM_EXTENSIONS_FOLDER_PATH)" in project_text and "Embed System Extensions" in project_text,
             "project should embed the extension in the app SystemExtensions folder",
@@ -588,7 +612,7 @@ def main():
     require("didOpenSettings" in host_source and "System Settings Unavailable" in host_source,
             "host app should report System Settings launch failures",
             failures)
-    require("./scripts/check_project.sh" in readme_text and "project metadata validation, build-log scanner tests, runtime diagnostics tests, build-product verifier tests, shell syntax checks, and whitespace checks" in readme_text and "bundle identifiers, aligned bundle versions, declared executables, display metadata, privacy usage strings, resolved CoreMediaIO extension metadata, and the bundled video resource" in readme_text,
+    require("./scripts/check_project.sh" in readme_text and "project metadata validation, build-log scanner tests, runtime diagnostics tests, build-product verifier tests, shell syntax checks, and whitespace checks" in readme_text and "bundle identifiers, aligned bundle versions, declared executables, display metadata, privacy usage strings, resolved CoreMediaIO extension metadata, and the bundled video resource" in readme_text and "exact host and extension entitlement keys, shared app-group values, Xcode entitlement file bindings" in readme_text,
             "README should document the local pre-push project check",
             failures)
     require("CI-equivalent unsigned compile" in readme_text and "./scripts/build_unsigned.sh" in readme_text and "./scripts/scan_build_log.py build-Debug.log build-Release.log" in readme_text and ".build/Xcode" in readme_text and "BUILD_OUTPUT_PATH" in readme_text,

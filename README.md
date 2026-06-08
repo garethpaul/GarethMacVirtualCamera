@@ -25,7 +25,7 @@ This workspace does not require Xcode for local validation checks:
 ./scripts/check_project.sh
 ```
 
-The check script runs project metadata validation, build-log scanner tests, runtime diagnostics tests, build-product verifier tests, shell syntax checks, and whitespace checks. The build-product verifier checks bundle identifiers, aligned bundle versions, declared executables, display metadata, privacy usage strings, resolved CoreMediaIO extension metadata, and the bundled video resource. The validator also checks the bundled `Extension/video.mp4` for parseable dimensions, frame rate, and positive video duration so resource regressions fail before runtime activation.
+The check script runs project metadata validation, build-log scanner tests, runtime diagnostics tests, build-product verifier tests, shell syntax checks, and whitespace checks. The build-product verifier checks bundle identifiers, aligned bundle versions, declared executables, display metadata, privacy usage strings, resolved CoreMediaIO extension metadata, and the bundled video resource. The validator also checks exact host and extension entitlement keys, shared app-group values, Xcode entitlement file bindings, and the bundled `Extension/video.mp4` for parseable dimensions, frame rate, and positive video duration so resource regressions fail before runtime activation.
 
 For a CI-equivalent unsigned compile on macOS with Xcode installed:
 
