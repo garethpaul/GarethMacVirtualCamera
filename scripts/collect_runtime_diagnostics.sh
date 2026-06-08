@@ -10,6 +10,7 @@ EXTENSION_PATH="${APP_PATH}/Contents/Library/SystemExtensions/${EXTENSION_ID}.sy
 VIDEO_PATH="${EXTENSION_PATH}/Contents/Resources/video.mp4"
 LOG_SUBSYSTEM="com.garethpaul.GarethVideoCam"
 HOST_SYSTEM_EXTENSION_ENTITLEMENT="com.apple.developer.system-extension.install"
+EXTENSION_INFO_PLIST="${EXTENSION_PATH}/Contents/Info.plist"
 
 section() {
   printf '\n== %s ==\n' "$1"
@@ -68,6 +69,23 @@ read_bundle_identifier() {
   local bundle_path="$1"
 
   read_info_plist_value "$bundle_path" CFBundleIdentifier
+}
+
+read_extension_mach_service_name() {
+  local info_plist="$EXTENSION_INFO_PLIST"
+  local value=""
+
+  if [ -f "$info_plist" ]; then
+    if [ -x /usr/libexec/PlistBuddy ]; then
+      value="$(/usr/libexec/PlistBuddy -c "Print :CMIOExtension:CMIOExtensionMachServiceName" "$info_plist" 2>/dev/null || true)"
+    fi
+
+    if [ -z "$value" ] && [ -x /usr/bin/plutil ]; then
+      value="$(/usr/bin/plutil -extract CMIOExtension.CMIOExtensionMachServiceName raw -o - "$info_plist" 2>/dev/null || true)"
+    fi
+  fi
+
+  printf '%s\n' "$value"
 }
 
 read_team_identifier() {
@@ -209,6 +227,37 @@ else
   printf 'Expected embedded system extension was not found.\n'
 fi
 
+section "Embedded Extension Runtime Metadata"
+printf 'Extension Info.plist path: %s\n' "$EXTENSION_INFO_PLIST"
+if [ -d "$EXTENSION_PATH" ]; then
+  extension_executable="$(read_info_plist_value "$EXTENSION_PATH" CFBundleExecutable)"
+  extension_executable_path="${EXTENSION_PATH}/Contents/MacOS/${extension_executable}"
+  extension_mach_service_name="$(read_extension_mach_service_name)"
+
+  printf 'Extension CFBundleExecutable: %s\n' "${extension_executable:-unknown}"
+  if [ -n "$extension_executable" ]; then
+    printf 'Extension executable path: %s\n' "$extension_executable_path"
+    if [ -f "$extension_executable_path" ]; then
+      printf 'Extension executable exists: yes\n'
+      if [ -x "$extension_executable_path" ]; then
+        printf 'Extension executable is executable: yes\n'
+      else
+        printf 'Extension executable is executable: no\n'
+      fi
+    else
+      printf 'Extension executable exists: no\n'
+      printf 'Extension executable is executable: no\n'
+    fi
+  else
+    printf 'Extension executable path: unknown\n'
+    printf 'Extension executable exists: unknown\n'
+    printf 'Extension executable is executable: unknown\n'
+  fi
+  printf 'Extension CMIO Mach service: %s\n' "${extension_mach_service_name:-unknown}"
+else
+  printf 'Extension runtime metadata requires the embedded system extension bundle.\n'
+fi
+
 section "Bundled Video"
 printf 'Video path: %s\n' "$VIDEO_PATH"
 if [ -f "$VIDEO_PATH" ]; then
@@ -348,6 +397,8 @@ fi
 
 if [ -d "$EXTENSION_PATH" ]; then
   extension_bundle_identifier="$(read_bundle_identifier "$EXTENSION_PATH")"
+  extension_executable="$(read_info_plist_value "$EXTENSION_PATH" CFBundleExecutable)"
+  extension_mach_service_name="$(read_extension_mach_service_name)"
   if [ "$extension_bundle_identifier" = "$EXTENSION_ID" ]; then
     print_yes_no_unknown "Extension bundle identifier ready" "yes"
   else
@@ -365,10 +416,24 @@ if [ -d "$EXTENSION_PATH" ]; then
   else
     print_yes_no_unknown "Extension host-only entitlement absent" "yes"
   fi
+
+  if [ -n "$extension_executable" ] && [ -f "${EXTENSION_PATH}/Contents/MacOS/${extension_executable}" ] && [ -x "${EXTENSION_PATH}/Contents/MacOS/${extension_executable}" ]; then
+    print_yes_no_unknown "Extension executable ready" "yes"
+  else
+    print_yes_no_unknown "Extension executable ready" "no"
+  fi
+
+  if [ -n "$extension_mach_service_name" ]; then
+    print_yes_no_unknown "Extension CMIO Mach service ready" "yes"
+  else
+    print_yes_no_unknown "Extension CMIO Mach service ready" "no"
+  fi
 else
   print_yes_no_unknown "Extension bundle identifier ready" "unknown"
   print_yes_no_unknown "Extension signature ready" "unknown"
   print_yes_no_unknown "Extension host-only entitlement absent" "unknown"
+  print_yes_no_unknown "Extension executable ready" "unknown"
+  print_yes_no_unknown "Extension CMIO Mach service ready" "unknown"
 fi
 
 if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
