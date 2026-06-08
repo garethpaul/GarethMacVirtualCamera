@@ -70,6 +70,7 @@ def main():
     extension_source = (ROOT / "Extension/ExtensionProvider.swift").read_text()
     extension_main_source = (ROOT / "Extension/main.swift").read_text()
     readme_text = (ROOT / "README.md").read_text()
+    build_log_scanner_source = (ROOT / "scripts/scan_build_log.py").read_text()
     require(f"PRODUCT_BUNDLE_IDENTIFIER = {APP_BUNDLE_ID};" in project_text,
             "project is missing the host app bundle identifier",
             failures)
@@ -144,6 +145,9 @@ def main():
     require("Runtime Activation" in readme_text and "valid Apple Developer signing identity" in readme_text,
             "README should document signed runtime activation requirements",
             failures)
+    require("ACTIONABLE_PATTERN" in build_log_scanner_source and "appintentsmetadataprocessor" in build_log_scanner_source,
+            "build-log scanner should fail on warnings while ignoring Xcode AppIntents metadata noise",
+            failures)
 
     scheme_path = ROOT / "GarethVideoCam.xcodeproj/xcshareddata/xcschemes/GarethVideoCam.xcscheme"
     scheme = ET.parse(scheme_path).getroot()
@@ -183,8 +187,8 @@ def main():
         require("tee build.log" in workflow_text,
                 "macOS build workflow should capture xcodebuild output",
                 failures)
-        require("grep -Ei \"warning:|error:\"" in workflow_text and "appintentsmetadataprocessor" in workflow_text,
-                "macOS build workflow should fail on source warnings while ignoring Xcode AppIntents metadata noise",
+        require("./scripts/scan_build_log.py build.log" in workflow_text,
+                "macOS build workflow should scan captured xcodebuild output",
                 failures)
 
     if failures:

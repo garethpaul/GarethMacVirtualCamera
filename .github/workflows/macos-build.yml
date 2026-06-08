@@ -61,15 +61,4 @@ jobs:
             build 2>&1 | tee build.log
 
       - name: Scan build log for source warnings
-        run: |
-          filtered_warnings="$(
-            grep -Ei "warning:|error:" build.log \
-              | grep -vi "appintentsmetadataprocessor" \
-              | grep -vi "Metadata extraction skipped. No AppIntents.framework dependency found." \
-              || true
-          )"
-
-          if [ -n "$filtered_warnings" ]; then
-            echo "$filtered_warnings"
-            exit 1
-          fi
+        run: ./scripts/scan_build_log.py build.log
