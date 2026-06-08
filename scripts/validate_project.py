@@ -857,6 +857,9 @@ def main():
     require("GARETH_DIAGNOSTICS_SELF_TEST=application-identity" in verify_build_products_source and "App path match fixture: yes" in verify_build_products_source and "Bundle identifier missing fixture: no" in verify_build_products_source,
             "build-product verifier should run the bundled runtime diagnostics application-identity self-test",
             failures)
+    require("GARETH_DIAGNOSTICS_SELF_TEST=video-metadata" in verify_build_products_source and "Video metadata spaced width fixture: 1280" in verify_build_products_source and "Video metadata quoted duration fixture: 12.5" in verify_build_products_source and "Video metadata negative duration fixture: no" in verify_build_products_source,
+            "build-product verifier should run the bundled runtime diagnostics video-metadata self-test",
+            failures)
     require("APP_CAMERA_USAGE_DESCRIPTION" in verify_build_products_source and "APP_SYSTEM_EXTENSION_USAGE_DESCRIPTION" in verify_build_products_source and "EXTENSION_CAMERA_USAGE_DESCRIPTION" in verify_build_products_source and "EXTENSION_SYSTEM_EXTENSION_USAGE_DESCRIPTION" in verify_build_products_source and "verify_info_plist_value \"$configuration\" \"app\" \"$app_path\" \"NSCameraUsageDescription\"" in verify_build_products_source and "verify_info_plist_value \"$configuration\" \"extension\" \"$extension_path\" \"NSCameraUsageDescription\"" in verify_build_products_source,
             "build-product verifier should require exact product-specific app and extension privacy usage strings",
             failures)
@@ -871,6 +874,9 @@ def main():
             failures)
     require("write_stale_application_identity_diagnostics_fixture" in verify_build_products_test_source and "stale-application-identity-diagnostics" in verify_build_products_test_source and "Unexpected Debug app bundled runtime diagnostics application-identity self-test output" in verify_build_products_test_source,
             "build-product verifier tests should reject stale bundled runtime diagnostics application-identity self-test output",
+            failures)
+    require("write_stale_video_metadata_diagnostics_fixture" in verify_build_products_test_source and "stale-video-metadata-diagnostics" in verify_build_products_test_source and "Unexpected Debug app bundled runtime diagnostics video-metadata self-test output" in verify_build_products_test_source,
+            "build-product verifier tests should reject stale bundled runtime diagnostics video-metadata self-test output",
             failures)
     require(verify_build_products_test_path.stat().st_mode & 0o111,
             "build-product verifier test script should be executable",

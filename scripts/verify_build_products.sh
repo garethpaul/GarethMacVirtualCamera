@@ -173,6 +173,7 @@ verify_app_diagnostics_resources() {
   local executable_self_test_output
   local team_identifier_self_test_output
   local application_identity_self_test_output
+  local video_metadata_self_test_output
   local parser_self_test_output
 
   if [ ! -f "$script_path" ]; then
@@ -244,6 +245,20 @@ verify_app_diagnostics_resources() {
     || ! printf '%s\n' "$application_identity_self_test_output" | /usr/bin/grep -F "Bundle identifier missing fixture: no" >/dev/null; then
     printf 'Unexpected %s app bundled runtime diagnostics application-identity self-test output.\n' "$configuration" >&2
     printf '%s\n' "$application_identity_self_test_output" >&2
+    exit 1
+  fi
+
+  if ! video_metadata_self_test_output="$(GARETH_DIAGNOSTICS_SELF_TEST=video-metadata /bin/bash "$script_path" "$app_path" 1m 2>&1)"; then
+    printf 'Failed %s app bundled runtime diagnostics video-metadata self-test.\n' "$configuration" >&2
+    printf '%s\n' "$video_metadata_self_test_output" >&2
+    exit 1
+  fi
+
+  if ! printf '%s\n' "$video_metadata_self_test_output" | /usr/bin/grep -F "Video metadata spaced width fixture: 1280" >/dev/null \
+    || ! printf '%s\n' "$video_metadata_self_test_output" | /usr/bin/grep -F "Video metadata quoted duration fixture: 12.5" >/dev/null \
+    || ! printf '%s\n' "$video_metadata_self_test_output" | /usr/bin/grep -F "Video metadata negative duration fixture: no" >/dev/null; then
+    printf 'Unexpected %s app bundled runtime diagnostics video-metadata self-test output.\n' "$configuration" >&2
+    printf '%s\n' "$video_metadata_self_test_output" >&2
     exit 1
   fi
 
