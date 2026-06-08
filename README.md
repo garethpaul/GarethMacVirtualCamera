@@ -44,7 +44,16 @@ Runtime activation still requires a macOS host with a valid Apple Developer sign
 
 The app disables install and uninstall actions when it is not running from `/Applications/GarethVideoCam.app`, when the host app bundle identifier does not match the expected identifier, when its app signature is invalid, when the signed app is missing the System Extension entitlement, when the app and embedded extension bundle versions do not match, when the embedded extension executable or CMIO Mach service metadata is missing, unresolved, or unexpected, when the embedded `video.mp4` resource is missing or empty, when the bundled system extension signature is invalid, when the embedded system extension carries the host-only System Extension entitlement, when the app and extension do not share an expected app-group entitlement, or when the app and extension signing Team IDs are missing or do not match. It reports extension metadata and bundled-video packaging blockers as distinct readiness states, refreshes readiness when the app becomes active, shows and copies a readiness summary, next action, and checklist for those activation gates, exposes a primary System Settings approval shortcut when macOS is waiting for user approval, can reveal the app and embedded extension in Finder, and can copy a diagnostics snapshot with a generation timestamp, macOS version, bundle identifiers, exact app and extension short/build bundle versions, bundle short/build version match status, the expected and current app paths, app and extension quarantine status, app and extension signing status, extension host-only entitlement status, signed app-group values and match status, Team IDs, bundled extension executable, resolved CMIO Mach service status, CMIO Mach service identifier match status, the pending request direction, the last recorded failure, and timestamped recent request activity with severity.
 
-After approving the camera extension in System Settings, it should appear in camera pickers as `Gareth Video Cam`.
+Signed runtime activation checklist:
+
+1. Build with an Apple Developer team that has the System Extension entitlement and app-group entitlement.
+2. Run the shared Xcode scheme so it replaces `/Applications/GarethVideoCam.app`, then open the app from that path.
+3. Confirm the in-app readiness summary has no blocked checks, then choose Install.
+4. Approve the pending camera extension in System Settings if macOS requests approval.
+5. Run `./scripts/collect_runtime_diagnostics.sh /Applications/GarethVideoCam.app 1h`.
+6. Confirm the diagnostics report `Runtime readiness result: ready`, `Extension registration entry present: yes`, and `Application group match ready: yes`.
+
+After approval, camera pickers should list `Gareth Video Cam`.
 
 To collect runtime evidence from a signed macOS host:
 
