@@ -333,6 +333,9 @@ def main():
     require("Unable to loop the bundled video: \\(error.localizedDescription" in extension_source,
             "extension should log loop restart failures with actionable error details",
             failures)
+    require("CMSampleBufferDataIsReady(sampleBuffer)" in extension_source and "Skipping sample buffer that is not ready" in extension_source,
+            "extension should skip asset-reader sample buffers that are not ready",
+            failures)
     require("CMTimeConvertScale(hostTime" in extension_source and "CMTimeGetSeconds(hostTime)" not in extension_source,
             "extension should convert host timestamps with integer CoreMedia scaling",
             failures)

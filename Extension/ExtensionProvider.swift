@@ -417,6 +417,11 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
             return
         }
 
+        guard CMSampleBufferDataIsReady(sampleBuffer) else {
+            logger.error("Skipping sample buffer that is not ready")
+            return
+        }
+
         let presentationTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         guard presentationTime.flags.contains(.valid) else {
             logger.error("Skipping sample buffer with invalid presentation timestamp")
