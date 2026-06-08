@@ -105,6 +105,13 @@ print_file_sha256() {
   fi
 }
 
+print_yes_no_unknown() {
+  local label="$1"
+  local value="$2"
+
+  printf '%s: %s\n' "$label" "$value"
+}
+
 section "Host"
 printf 'Log window: %s\n' "$LOG_WINDOW"
 run_if_available sw_vers
@@ -256,6 +263,91 @@ if [ -d "$EXTENSION_PATH" ]; then
   fi
 else
   printf 'Extension carries host-only System Extension entitlement: unknown; embedded extension is missing.\n'
+fi
+
+section "Runtime Readiness Summary"
+case "$APP_PATH" in
+  /Applications/*)
+    print_yes_no_unknown "Application location ready" "yes"
+    ;;
+  *)
+    print_yes_no_unknown "Application location ready" "no"
+    ;;
+esac
+
+if [ -d "$APP_PATH" ]; then
+  app_bundle_identifier="$(read_bundle_identifier "$APP_PATH")"
+  if [ "$app_bundle_identifier" = "$APP_ID" ]; then
+    print_yes_no_unknown "App bundle identifier ready" "yes"
+  else
+    print_yes_no_unknown "App bundle identifier ready" "no"
+  fi
+
+  if /usr/bin/codesign --verify --deep --strict "$APP_PATH" >/dev/null 2>&1; then
+    print_yes_no_unknown "App signature ready" "yes"
+  else
+    print_yes_no_unknown "App signature ready" "no"
+  fi
+
+  if has_boolean_entitlement "$APP_PATH" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT"; then
+    print_yes_no_unknown "App System Extension entitlement ready" "yes"
+  else
+    print_yes_no_unknown "App System Extension entitlement ready" "no"
+  fi
+else
+  print_yes_no_unknown "App bundle identifier ready" "unknown"
+  print_yes_no_unknown "App signature ready" "unknown"
+  print_yes_no_unknown "App System Extension entitlement ready" "unknown"
+fi
+
+if [ -d "$EXTENSION_PATH" ]; then
+  extension_bundle_identifier="$(read_bundle_identifier "$EXTENSION_PATH")"
+  if [ "$extension_bundle_identifier" = "$EXTENSION_ID" ]; then
+    print_yes_no_unknown "Extension bundle identifier ready" "yes"
+  else
+    print_yes_no_unknown "Extension bundle identifier ready" "no"
+  fi
+
+  if /usr/bin/codesign --verify --strict "$EXTENSION_PATH" >/dev/null 2>&1; then
+    print_yes_no_unknown "Extension signature ready" "yes"
+  else
+    print_yes_no_unknown "Extension signature ready" "no"
+  fi
+
+  if has_boolean_entitlement "$EXTENSION_PATH" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT"; then
+    print_yes_no_unknown "Extension host-only entitlement absent" "no"
+  else
+    print_yes_no_unknown "Extension host-only entitlement absent" "yes"
+  fi
+else
+  print_yes_no_unknown "Extension bundle identifier ready" "unknown"
+  print_yes_no_unknown "Extension signature ready" "unknown"
+  print_yes_no_unknown "Extension host-only entitlement absent" "unknown"
+fi
+
+if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
+  app_team_identifier="$(read_team_identifier "$APP_PATH" || true)"
+  extension_team_identifier="$(read_team_identifier "$EXTENSION_PATH" || true)"
+  if [ -n "$app_team_identifier" ] && [ -n "$extension_team_identifier" ] && [ "$app_team_identifier" = "$extension_team_identifier" ]; then
+    print_yes_no_unknown "Signing Team match ready" "yes"
+  elif [ -n "$app_team_identifier" ] && [ -n "$extension_team_identifier" ]; then
+    print_yes_no_unknown "Signing Team match ready" "no"
+  else
+    print_yes_no_unknown "Signing Team match ready" "unknown"
+  fi
+else
+  print_yes_no_unknown "Signing Team match ready" "unknown"
+fi
+
+if [ -f "$VIDEO_PATH" ]; then
+  video_byte_count="$(file_byte_count "$VIDEO_PATH")"
+  if [ -n "$video_byte_count" ] && [ "$video_byte_count" != "0" ]; then
+    print_yes_no_unknown "Bundled video ready" "yes"
+  else
+    print_yes_no_unknown "Bundled video ready" "no"
+  fi
+else
+  print_yes_no_unknown "Bundled video ready" "no"
 fi
 
 section "System Extension Registration"
