@@ -309,6 +309,12 @@ def main():
         require(f"static let frameRate: Int32 = {video_frame_rate}" in extension_source,
                 "extension stream frame rate should match the bundled video frame rate",
                 failures)
+    require("validateVideoTrack(naturalSize:" in extension_source and "videoTrack.load(.naturalSize)" in extension_source and "videoTrack.load(.nominalFrameRate)" in extension_source,
+            "extension should validate bundled-video dimensions and frame rate before streaming",
+            failures)
+    require("unexpectedVideoDimensions" in extension_source and "unexpectedVideoFrameRate" in extension_source,
+            "extension should report actionable bundled-video track mismatches",
+            failures)
     require("Unable to loop the bundled video: \\(error.localizedDescription" in extension_source,
             "extension should log loop restart failures with actionable error details",
             failures)

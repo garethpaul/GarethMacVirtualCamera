@@ -4,6 +4,7 @@
 //
 
 import AVFoundation
+import CoreGraphics
 import CoreMedia
 import CoreMediaIO
 import CoreVideo
@@ -41,6 +42,8 @@ private enum CameraExtensionError: LocalizedError {
     case failedToCreateVideoFormatDescription(OSStatus)
     case failedToAddStream(String)
     case failedToAddDevice(String)
+    case unexpectedVideoDimensions(Int32, Int32)
+    case unexpectedVideoFrameRate(Float)
     case invalidActiveFormatIndex(Int)
     case invalidFrameDuration(CMTime)
 
@@ -64,6 +67,10 @@ private enum CameraExtensionError: LocalizedError {
             return "Failed to add the camera stream: \(detail)"
         case .failedToAddDevice(let detail):
             return "Failed to add the camera device: \(detail)"
+        case .unexpectedVideoDimensions(let width, let height):
+            return "The bundled loop video dimensions \(width)x\(height) do not match the advertised stream dimensions \(CameraExtensionConfiguration.dimensions.width)x\(CameraExtensionConfiguration.dimensions.height)."
+        case .unexpectedVideoFrameRate(let frameRate):
+            return "The bundled loop video frame rate \(frameRate) does not match the advertised stream frame rate \(CameraExtensionConfiguration.frameRate)."
         case .invalidActiveFormatIndex(let activeFormatIndex):
             return "The requested active stream format index is invalid: \(activeFormatIndex)"
         case .invalidFrameDuration(let frameDuration):
@@ -264,6 +271,11 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
             throw CameraExtensionError.missingVideoTrack
         }
 
+        let naturalSize = try await videoTrack.load(.naturalSize)
+        let nominalFrameRate = try await videoTrack.load(.nominalFrameRate)
+        try validateVideoTrack(naturalSize: naturalSize,
+                               nominalFrameRate: nominalFrameRate)
+
         guard duration.flags.contains(.valid),
               !duration.flags.contains(.indefinite),
               CMTimeCompare(duration, .zero) > 0 else {
@@ -273,6 +285,21 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
         return LoadedVideoAsset(asset: asset,
                                 videoTrack: videoTrack,
                                 duration: duration)
+    }
+
+    private func validateVideoTrack(naturalSize: CGSize, nominalFrameRate: Float) throws {
+        let width = Int32(naturalSize.width.rounded())
+        let height = Int32(naturalSize.height.rounded())
+
+        guard width == CameraExtensionConfiguration.dimensions.width,
+              height == CameraExtensionConfiguration.dimensions.height else {
+            throw CameraExtensionError.unexpectedVideoDimensions(width, height)
+        }
+
+        guard nominalFrameRate > 0,
+              abs(nominalFrameRate - Float(CameraExtensionConfiguration.frameRate)) < 0.01 else {
+            throw CameraExtensionError.unexpectedVideoFrameRate(nominalFrameRate)
+        }
     }
 
     private func makeAssetReader(asset: AVAsset, videoTrack: AVAssetTrack) throws -> AssetReaderState {
