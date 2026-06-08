@@ -447,6 +447,9 @@ def main():
     require("diagnosticGeneratedAt" in host_source and "Generated At:" in host_source and "ISO8601DateFormatter" in host_source,
             "host app copied diagnostics should include an ISO-8601 generation timestamp",
             failures)
+    require("stateGuidanceDetail" in host_source and "State Guidance:" in host_source and "DetailRow(title: \"State Guidance\"" in host_source and "requestKind.restartDetail" in host_source,
+            "host app should show and copy guidance for approval and restart-required states",
+            failures)
     require("pendingRequestStatus" in host_source and "Pending Request:" in host_source and "diagnosticTitle" in host_source and "DetailRow(title: \"Pending Request\"" in host_source,
             "host app should show and copy pending system-extension request direction diagnostics",
             failures)

@@ -494,6 +494,19 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         return pendingRequestKind?.diagnosticTitle ?? "None"
     }
 
+    var stateGuidanceDetail: String? {
+        let requestKind = pendingRequestKind ?? .activation
+
+        switch state {
+        case .needsApproval:
+            return requestKind.approvalDetail
+        case .requiresRestart:
+            return requestKind.restartDetail
+        default:
+            return nil
+        }
+    }
+
     var readinessChecks: [ReadinessCheck] {
         let appSignatureStatus: ReadinessCheck.Status = appCodeSigningStatus.isValid ? .passing : .blocked
         let extensionSignatureStatus: ReadinessCheck.Status = extensionCodeSigningStatus.isValid ? .passing : .blocked
@@ -668,6 +681,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         Request Readiness: \(requestReadinessStatus)
         Request Readiness Detail: \(requestReadinessDetail ?? "System extension requests can be submitted.")
         Pending Request: \(pendingRequestStatus)
+        State Guidance: \(stateGuidanceDetail ?? "None")
         Last Failure: \(lastFailureDetail ?? "No failure recorded.")
         Readiness Checks:
         \(readinessDescription)
@@ -1350,6 +1364,13 @@ private struct ActionPanel: View {
                         .foregroundStyle(.orange)
                 }
 
+                if let stateGuidanceDetail = manager.stateGuidanceDetail {
+                    Label(stateGuidanceDetail, systemImage: manager.state.systemImage)
+                        .font(.callout)
+                        .foregroundStyle(manager.state.tint)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
                 if manager.state == .needsApproval {
                     approvalButton
                 }
@@ -1506,6 +1527,9 @@ private struct DetailsPanel: View {
                 DetailRow(title: "Application Location", value: manager.applicationLocationStatus)
                 DetailRow(title: "Request Readiness", value: manager.requestReadinessStatus)
                 DetailRow(title: "Pending Request", value: manager.pendingRequestStatus)
+                if let stateGuidanceDetail = manager.stateGuidanceDetail {
+                    DetailRow(title: "State Guidance", value: stateGuidanceDetail)
+                }
                 if let requestReadinessDetail = manager.requestReadinessDetail {
                     DetailRow(title: "Readiness Detail", value: requestReadinessDetail)
                 }
