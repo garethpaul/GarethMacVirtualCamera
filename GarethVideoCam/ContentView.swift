@@ -82,6 +82,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         case ready
         case needsApplicationLocation
         case needsBundleIdentifier
+        case needsBundleVersion
         case needsSigning
         case locatingExtension
         case activating
@@ -102,6 +103,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                 return "Move to Applications"
             case .needsBundleIdentifier:
                 return "Bundle ID Required"
+            case .needsBundleVersion:
+                return "Version Mismatch"
             case .needsSigning:
                 return "Signing Required"
             case .locatingExtension:
@@ -131,6 +134,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                 return "exclamationmark.triangle.fill"
             case .needsBundleIdentifier:
                 return "tag.fill"
+            case .needsBundleVersion:
+                return "exclamationmark.triangle.fill"
             case .needsSigning:
                 return "lock.fill"
             case .locatingExtension, .activating, .deactivating:
@@ -157,6 +162,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             case .needsApplicationLocation:
                 return .orange
             case .needsBundleIdentifier:
+                return .orange
+            case .needsBundleVersion:
                 return .orange
             case .needsSigning:
                 return .orange
@@ -1016,7 +1023,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             extensionQuarantineStatus = Self.quarantineStatus(for: URL(fileURLWithPath: loadedExtensionInfo.bundlePath))
 
             switch state {
-            case .idle, .ready, .needsApplicationLocation, .needsBundleIdentifier, .needsSigning, .deactivated, .failed:
+            case .idle, .ready, .needsApplicationLocation, .needsBundleIdentifier, .needsBundleVersion, .needsSigning, .deactivated, .failed:
                 state = readinessState
             default:
                 break
@@ -1252,7 +1259,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
 
         if let bundleVersionReadinessDetail {
-            recordReadinessBlock(state: .needsSigning,
+            recordReadinessBlock(state: .needsBundleVersion,
                                  title: "Version Match Required",
                                  detail: bundleVersionReadinessDetail)
             return nil
@@ -1291,9 +1298,12 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return .needsBundleIdentifier
         }
 
+        if bundleVersionReadinessDetail != nil {
+            return .needsBundleVersion
+        }
+
         if !appCodeSigningStatus.isValid
             || appEntitlementReadinessDetail != nil
-            || bundleVersionReadinessDetail != nil
             || extensionMetadataReadinessDetail != nil
             || bundledVideoReadinessDetail != nil
             || !extensionCodeSigningStatus.isValid

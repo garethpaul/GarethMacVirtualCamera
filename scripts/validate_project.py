@@ -420,7 +420,7 @@ def main():
     require("requestReadinessStatus" in host_source and "requestReadinessDetail" in host_source and "requestReadinessNextAction" in host_source and "Request Readiness" in host_source and "Readiness Detail" in host_source and "Readiness Next Action" in host_source and "Request Readiness Next Action:" in host_source,
             "host app should show and copy exact system-extension request readiness blockers and next actions",
             failures)
-    require("bundleVersionReadinessDetail" in host_source and "Bundle Version Match" in host_source and "Bundle Version Check:" in host_source and "Version Match Required" in host_source and "bundleVersionStatus" in host_source,
+    require("case needsBundleVersion" in host_source and "Version Mismatch" in host_source and "bundleVersionReadinessDetail" in host_source and "Bundle Version Match" in host_source and "Bundle Version Check:" in host_source and "Version Match Required" in host_source and "recordReadinessBlock(state: .needsBundleVersion" in host_source and "bundleVersionStatus" in host_source,
             "host app should verify and copy app and embedded extension bundle version alignment before submitting requests",
             failures)
     require("HeaderView(manager: manager)" in host_source and 'Text(manager.requestReadinessDetail ?? "System extension requests can be submitted.")' in host_source,
@@ -537,7 +537,7 @@ def main():
     require("#Preview" in host_source and "PreviewProvider" not in host_source,
             "host app should use the modern SwiftUI preview syntax",
             failures)
-    require("case .idle, .ready, .needsApplicationLocation, .needsBundleIdentifier, .needsSigning, .deactivated, .failed:" in host_source,
+    require("case .idle, .ready, .needsApplicationLocation, .needsBundleIdentifier, .needsBundleVersion, .needsSigning, .deactivated, .failed:" in host_source,
             "host app should let a successful refresh recover from stale readiness failures",
             failures)
     require("private struct DetailsActions" in host_source and "ViewThatFits(in: .horizontal)" in host_source,
