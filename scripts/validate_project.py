@@ -418,7 +418,7 @@ def main():
     require("HeaderView(manager: manager)" in host_source and 'Text(manager.requestReadinessDetail ?? "System extension requests can be submitted.")' in host_source,
             "host app header should surface the current request readiness detail",
             failures)
-    require("struct ReadinessCheck" in host_source and "readinessChecks" in host_source and "readinessProgressSummary" in host_source and "ReadinessPanel(manager: manager)" in host_source and "ReadinessRow" in host_source and "Team ID Match" in host_source and "Bundled Video" in host_source and "Readiness Summary:" in host_source and "Readiness Checks:" in host_source,
+    require("struct ReadinessCheck" in host_source and "readinessChecks" in host_source and "readinessProgressSummary" in host_source and "ReadinessPanel(manager: manager)" in host_source and "ReadinessRow" in host_source and "Team ID Match" in host_source and "Extension Metadata" in host_source and "Bundled Video" in host_source and "Readiness Summary:" in host_source and "Readiness Checks:" in host_source,
             "host app should show and copy a compact readiness summary and checklist for activation gates",
             failures)
     require("let checks = manager.readinessChecks" in host_source and "ForEach(Array(checks.enumerated()), id: \\.element.id)" in host_source,
@@ -466,17 +466,17 @@ def main():
     require(f'expectedExtensionBundleIdentifier = "{EXTENSION_BUNDLE_ID}"' in host_source and "unexpectedBundleIdentifier" in host_source,
             "host app should verify the bundled system extension identifier before submitting requests",
             failures)
-    require("videoPath" in host_source and "videoByteCount" in host_source and "Contents" in host_source and "Resources" in host_source and "video.mp4" in host_source and "fileExists(atPath: videoURL.path, isDirectory:" in host_source,
-            "host app should capture bundled-video resource metadata from the embedded extension",
+    require("executableName" in host_source and "executablePath" in host_source and "machServiceName" in host_source and "CFBundleExecutable" in host_source and "validateExtensionExecutable" in host_source and "CMIOExtensionMachServiceName" in host_source and "videoPath" in host_source and "videoByteCount" in host_source and "Contents" in host_source and "MacOS" in host_source and "Resources" in host_source and "video.mp4" in host_source and "fileExists(atPath: videoURL.path, isDirectory:" in host_source,
+            "host app should capture executable, CMIO, and bundled-video resource metadata from the embedded extension",
             failures)
-    require("missingBundledVideoResource" in host_source and "emptyBundledVideoResource" in host_source and "bundledVideoByteCount" in host_source,
-            "host app should fail readiness when the embedded extension video resource is missing or empty",
+    require("missingExtensionExecutable" in host_source and "invalidExtensionExecutable" in host_source and "missingExtensionMachService" in host_source and "missingBundledVideoResource" in host_source and "emptyBundledVideoResource" in host_source and "bundledVideoByteCount" in host_source,
+            "host app should fail readiness when embedded extension metadata or video resource is missing",
             failures)
-    require("extensionInfo != nil" in host_source and "bundledVideoReadinessDetail == nil" in host_source and "isBundledVideoFailureDetail" in host_source,
-            "host app should make bundled-video readiness an explicit system-extension request gate",
+    require("extensionInfo != nil" in host_source and "extensionMetadataReadinessDetail == nil" in host_source and "bundledVideoReadinessDetail == nil" in host_source and "isExtensionMetadataFailureDetail" in host_source and "isBundledVideoFailureDetail" in host_source,
+            "host app should make extension metadata and bundled-video readiness explicit system-extension request gates",
             failures)
-    require("Bundled Video Path" in host_source and "Bundled Video Size" in host_source and "Video Path" in host_source and "Video Size" in host_source,
-            "host app should show and copy bundled-video diagnostics",
+    require("Extension Executable:" in host_source and "Extension Executable Path:" in host_source and "Extension CMIO Mach Service:" in host_source and "CMIO Mach Service" in host_source and "Bundled Video Path" in host_source and "Bundled Video Size" in host_source and "Video Path" in host_source and "Video Size" in host_source,
+            "host app should show and copy extension metadata and bundled-video diagnostics",
             failures)
     require("nsError.domain" in host_source and "unknown code \\(errorCode)" in host_source,
             "host app should preserve system-extension failure domain and code diagnostics",
@@ -580,7 +580,7 @@ def main():
     require("Runtime Activation" in readme_text and "valid Apple Developer signing identity" in readme_text,
             "README should document signed runtime activation requirements",
             failures)
-    require("not running from `/Applications/GarethVideoCam.app`" in readme_text and "refreshes readiness when the app becomes active" in readme_text and "shows and copies a readiness summary and checklist" in readme_text and "primary System Settings approval shortcut" in readme_text and "reveal the app and embedded extension in Finder" in readme_text and "diagnostics snapshot" in readme_text and "generation timestamp" in readme_text and "macOS version" in readme_text and "bundle identifiers" in readme_text and "expected and current app paths" in readme_text and "app and extension quarantine status" in readme_text and "host app bundle identifier does not match the expected identifier" in readme_text and "missing the System Extension entitlement" in readme_text and "embedded `video.mp4` resource is missing or empty" in readme_text and "bundled system extension signature is invalid" in readme_text and "Team IDs" in readme_text and "pending request direction" in readme_text and "last recorded failure" in readme_text and "timestamped recent request activity with severity" in readme_text,
+    require("not running from `/Applications/GarethVideoCam.app`" in readme_text and "refreshes readiness when the app becomes active" in readme_text and "shows and copies a readiness summary and checklist" in readme_text and "primary System Settings approval shortcut" in readme_text and "reveal the app and embedded extension in Finder" in readme_text and "diagnostics snapshot" in readme_text and "generation timestamp" in readme_text and "macOS version" in readme_text and "bundle identifiers" in readme_text and "expected and current app paths" in readme_text and "app and extension quarantine status" in readme_text and "host app bundle identifier does not match the expected identifier" in readme_text and "missing the System Extension entitlement" in readme_text and "embedded extension executable or CMIO Mach service metadata is missing" in readme_text and "embedded `video.mp4` resource is missing or empty" in readme_text and "bundled system extension signature is invalid" in readme_text and "Team IDs" in readme_text and "bundled extension executable and CMIO Mach service metadata" in readme_text and "pending request direction" in readme_text and "last recorded failure" in readme_text and "timestamped recent request activity with severity" in readme_text,
             "README should document the in-app approval and diagnostics actions",
             failures)
     require("collect_runtime_diagnostics.sh" in readme_text and "Info.plist bundle versions and identifiers" in readme_text and "bundled-video byte size, checksum, metadata" in readme_text and "expected application-location and bundle identifier checks" in readme_text and "quarantine attributes" in readme_text and "matching Team IDs" in readme_text and "Gatekeeper assessment" in readme_text and "signed entitlements" in readme_text and "explicit host System Extension entitlement checks" in readme_text and "runtime-readiness summary" in readme_text and "systemextensionsctl" in readme_text and "registration presence and full list output" in readme_text and "camera device inventory" in readme_text and "running app/extension processes" in readme_text and "unified-log window" in readme_text and "system-extension/CMIO log context" in readme_text,

@@ -177,6 +177,9 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     struct ExtensionInfo: Equatable {
         var identifier: String
         var version: String
+        var executableName: String
+        var executablePath: String
+        var machServiceName: String
         var bundlePath: String
         var videoPath: String
         var videoByteCount: Int64
@@ -518,6 +521,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             && appCodeSigningStatus.isValid
             && appEntitlementReadinessDetail == nil
             && extensionInfo != nil
+            && extensionMetadataReadinessDetail == nil
             && bundledVideoReadinessDetail == nil
             && extensionCodeSigningStatus.isValid
             && signingTeamReadinessDetail == nil
@@ -546,6 +550,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         if appEntitlementReadinessDetail != nil {
             return "System extension requests require the app System Extension entitlement."
+        }
+
+        if extensionMetadataReadinessDetail != nil {
+            return "System extension requests require complete embedded extension metadata."
         }
 
         if bundledVideoReadinessDetail != nil {
@@ -607,6 +615,19 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             teamDetail = "App and extension Team IDs match."
         }
 
+        let extensionMetadataStatus: ReadinessCheck.Status
+        let extensionMetadataDetail: String
+        if let extensionInfo {
+            extensionMetadataStatus = .passing
+            extensionMetadataDetail = "Executable \(extensionInfo.executableName), CMIO Mach service \(extensionInfo.machServiceName)."
+        } else if let extensionMetadataReadinessDetail {
+            extensionMetadataStatus = .blocked
+            extensionMetadataDetail = extensionMetadataReadinessDetail
+        } else {
+            extensionMetadataStatus = .pending
+            extensionMetadataDetail = "Embedded extension metadata is pending until the extension is loaded."
+        }
+
         let bundledVideoStatus: ReadinessCheck.Status
         let bundledVideoDetail: String
         if let extensionInfo {
@@ -641,6 +662,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                            title: "Extension Signature",
                            detail: extensionCodeSigningStatus.detail,
                            status: extensionSignatureStatus),
+            ReadinessCheck(id: "extension-metadata",
+                           title: "Extension Metadata",
+                           detail: extensionMetadataDetail,
+                           status: extensionMetadataStatus),
             ReadinessCheck(id: "bundled-video",
                            title: "Bundled Video",
                            detail: bundledVideoDetail,
@@ -685,6 +710,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         if let appEntitlementReadinessDetail {
             return appEntitlementReadinessDetail
+        }
+
+        if let extensionMetadataReadinessDetail {
+            return extensionMetadataReadinessDetail
         }
 
         if let bundledVideoReadinessDetail {
@@ -738,6 +767,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         return ByteCountFormatter.string(fromByteCount: videoByteCount, countStyle: .file)
     }
 
+    var extensionMetadataStatus: String {
+        return extensionMetadataReadinessDetail == nil && extensionInfo != nil ? "Complete" : "Missing"
+    }
+
     var bundledVideoReadinessStatus: String {
         return bundledVideoReadinessDetail == nil && extensionInfo != nil ? "Present" : "Missing"
     }
@@ -752,6 +785,9 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             extensionDescription = """
             Extension ID: \(extensionInfo.identifier)
             Extension Version: \(extensionInfo.version)
+            Extension Executable: \(extensionInfo.executableName)
+            Extension Executable Path: \(extensionInfo.executablePath)
+            Extension CMIO Mach Service: \(extensionInfo.machServiceName)
             Extension Path: \(extensionInfo.bundlePath)
             Bundled Video Path: \(extensionInfo.videoPath)
             Bundled Video Size: \(bundledVideoSize)
@@ -971,6 +1007,20 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             let buildVersion = extensionBundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String
             let version = Self.displayVersion(shortVersion: shortVersion,
                                               buildVersion: buildVersion)
+            guard let executableName = extensionBundle.object(forInfoDictionaryKey: "CFBundleExecutable") as? String,
+                  !executableName.isEmpty else {
+                throw ExtensionRequestError.missingExtensionExecutable(extensionURL.path)
+            }
+            let executableURL = extensionURL
+                .appendingPathComponent("Contents")
+                .appendingPathComponent("MacOS")
+                .appendingPathComponent(executableName)
+            try Self.validateExtensionExecutable(at: executableURL)
+            let cmioExtension = extensionBundle.object(forInfoDictionaryKey: "CMIOExtension") as? NSDictionary
+            guard let machServiceName = cmioExtension?.object(forKey: "CMIOExtensionMachServiceName") as? String,
+                  !machServiceName.isEmpty else {
+                throw ExtensionRequestError.missingExtensionMachService(extensionURL.path)
+            }
             let videoURL = extensionURL
                 .appendingPathComponent("Contents")
                 .appendingPathComponent("Resources")
@@ -979,6 +1029,9 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
             return ExtensionInfo(identifier: identifier,
                                  version: version,
+                                 executableName: executableName,
+                                 executablePath: executableURL.path,
+                                 machServiceName: machServiceName,
                                  bundlePath: extensionURL.path,
                                  videoPath: videoURL.path,
                                  videoByteCount: videoByteCount)
@@ -1011,6 +1064,16 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
 
         return byteCount.int64Value
+    }
+
+    private static func validateExtensionExecutable(at executableURL: URL) throws {
+        var isDirectory = ObjCBool(false)
+        let executablePath = executableURL.path
+        guard FileManager.default.fileExists(atPath: executablePath, isDirectory: &isDirectory),
+              !isDirectory.boolValue,
+              FileManager.default.isExecutableFile(atPath: executablePath) else {
+            throw ExtensionRequestError.invalidExtensionExecutable(executablePath)
+        }
     }
 
     private func prepareForSystemExtensionRequest() -> ExtensionInfo? {
@@ -1090,6 +1153,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         if !appCodeSigningStatus.isValid
             || appEntitlementReadinessDetail != nil
+            || extensionMetadataReadinessDetail != nil
             || bundledVideoReadinessDetail != nil
             || !extensionCodeSigningStatus.isValid
             || signingTeamReadinessDetail != nil {
@@ -1142,6 +1206,31 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         let extensionSigningDetail = extensionCodeSigningStatus.detail
         if Self.isBundledVideoFailureDetail(extensionSigningDetail) {
+            return extensionSigningDetail
+        }
+
+        return nil
+    }
+
+    private var extensionMetadataReadinessDetail: String? {
+        if let extensionInfo {
+            if extensionInfo.executableName.isEmpty {
+                return "The bundled system extension does not declare CFBundleExecutable."
+            }
+
+            if extensionInfo.executablePath.isEmpty {
+                return "The bundled system extension executable path could not be resolved."
+            }
+
+            if extensionInfo.machServiceName.isEmpty {
+                return "The bundled system extension does not declare CMIOExtensionMachServiceName."
+            }
+
+            return nil
+        }
+
+        let extensionSigningDetail = extensionCodeSigningStatus.detail
+        if Self.isExtensionMetadataFailureDetail(extensionSigningDetail) {
             return extensionSigningDetail
         }
 
@@ -1300,6 +1389,12 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             || detail.localizedCaseInsensitiveContains("video.mp4")
     }
 
+    private static func isExtensionMetadataFailureDetail(_ detail: String) -> Bool {
+        return detail.localizedCaseInsensitiveContains("CFBundleExecutable")
+            || detail.localizedCaseInsensitiveContains("CMIOExtensionMachServiceName")
+            || detail.localizedCaseInsensitiveContains("extension executable")
+    }
+
     private func handleReadinessFailure(_ error: Error) {
         let message = error.localizedDescription
         lastFailureDetail = message
@@ -1423,6 +1518,9 @@ enum ExtensionRequestError: LocalizedError {
     case missingBundledExtension
     case unreadableExtensionBundle(String)
     case missingBundleIdentifier(String)
+    case missingExtensionExecutable(String)
+    case invalidExtensionExecutable(String)
+    case missingExtensionMachService(String)
     case missingBundledVideoResource(String)
     case emptyBundledVideoResource(String)
     case unexpectedBundleIdentifier(expected: String, actual: String)
@@ -1437,6 +1535,12 @@ enum ExtensionRequestError: LocalizedError {
             return "The bundled extension at \(path) could not be opened."
         case .missingBundleIdentifier(let path):
             return "The bundled extension at \(path) does not declare a bundle identifier."
+        case .missingExtensionExecutable(let path):
+            return "The bundled extension at \(path) does not declare CFBundleExecutable."
+        case .invalidExtensionExecutable(let path):
+            return "The bundled extension executable at \(path) is missing or is not executable."
+        case .missingExtensionMachService(let path):
+            return "The bundled extension at \(path) does not declare CMIOExtensionMachServiceName."
         case .missingBundledVideoResource(let path):
             return "The bundled extension does not include the required video resource at \(path)."
         case .emptyBundledVideoResource(let path):
@@ -1756,11 +1860,21 @@ private struct DetailsPanel: View {
                 DetailRow(title: "Extension Quarantine", value: manager.extensionQuarantineStatus.title)
                 DetailRow(title: "Extension Quarantine Detail", value: manager.extensionQuarantineStatus.detail, monospaced: true)
                 DetailRow(title: "Extension Team ID", value: manager.extensionTeamIdentifier)
+                DetailRow(title: "Extension Metadata", value: manager.extensionMetadataStatus)
                 DetailRow(title: "Bundled Video", value: manager.bundledVideoReadinessStatus)
                 DetailRow(title: "Application Path", value: manager.applicationBundlePath, monospaced: true)
 
                 if let bundlePath = manager.extensionInfo?.bundlePath {
                     DetailRow(title: "Bundle Path", value: bundlePath, monospaced: true)
+                }
+                if let executableName = manager.extensionInfo?.executableName {
+                    DetailRow(title: "Executable", value: executableName, monospaced: true)
+                }
+                if let executablePath = manager.extensionInfo?.executablePath {
+                    DetailRow(title: "Executable Path", value: executablePath, monospaced: true)
+                }
+                if let machServiceName = manager.extensionInfo?.machServiceName {
+                    DetailRow(title: "CMIO Mach Service", value: machServiceName, monospaced: true)
                 }
                 if let videoPath = manager.extensionInfo?.videoPath {
                     DetailRow(title: "Video Path", value: videoPath, monospaced: true)
