@@ -72,3 +72,11 @@ jobs:
         run: |
           ./scripts/scan_build_log.py build-Debug.log
           ./scripts/scan_build_log.py build-Release.log
+
+      - name: Upload Xcode build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcode-build-logs
+          path: build-*.log
+          if-no-files-found: ignore
