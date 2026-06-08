@@ -38,3 +38,4 @@
 - Consolidated bundled runtime diagnostics self-test verification in the build-product verifier.
 - Shell-escaped generated stale diagnostics fixture output in build-product verifier tests.
 - Matched expected virtual camera device evidence against exact normalized camera names.
+- Matched system-extension registration evidence against the exact extension identifier field.

@@ -133,6 +133,8 @@ require_output "$registration_output" "Registration active fixture present: yes"
 require_output "$registration_output" "Registration active fixture activated enabled: yes"
 require_output "$registration_output" "Registration reversed fixture activated enabled: yes"
 require_output "$registration_output" "Registration waiting fixture activated enabled: no"
+require_output "$registration_output" "Registration longer identifier fixture present: no"
+require_output "$registration_output" "Registration longer identifier fixture activated enabled: no"
 require_output "$registration_output" "Registration missing fixture present: no"
 require_output "$registration_output" "Registration empty fixture present: unknown"
 

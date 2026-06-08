@@ -127,6 +127,8 @@ passing_outputs = {
         "Registration active fixture present: yes",
         "Registration active fixture activated enabled: yes",
         "Registration waiting fixture activated enabled: no",
+        "Registration longer identifier fixture present: no",
+        "Registration longer identifier fixture activated enabled: no",
         "Registration empty fixture present: unknown",
     ],
     "activation-evidence": [
@@ -175,6 +177,8 @@ stale_outputs = {
         "Registration active fixture present: no",
         "Registration active fixture activated enabled: no",
         "Registration waiting fixture activated enabled: yes",
+        "Registration longer identifier fixture present: yes",
+        "Registration longer identifier fixture activated enabled: yes",
         "Registration empty fixture present: yes",
     ],
     "activation-evidence": [

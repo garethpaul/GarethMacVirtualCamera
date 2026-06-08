@@ -431,7 +431,15 @@ extension_registration_entries() {
   local registration_output="$1"
   local extension_identifier="$2"
 
-  printf '%s\n' "$registration_output" | /usr/bin/grep -F "$extension_identifier" || true
+  printf '%s\n' "$registration_output" | /usr/bin/awk -v extension_identifier="$extension_identifier" '
+    {
+      for (field_index = 1; field_index <= NF; field_index += 1) {
+        if ($field_index == extension_identifier) {
+          print
+          next
+        }
+      }
+    }'
 }
 
 extension_registration_present_value() {
@@ -945,17 +953,21 @@ run_registration_self_test() {
   local active_output
   local reversed_output
   local waiting_output
+  local longer_identifier_output
   local missing_output
 
   active_output=$'2 extension(s)\n--- com.apple.system_extension.cmio\n* * ABCDE12345 com.garethpaul.GarethVideoCam.Extension (1.18/7) Gareth Video Cam Extension [activated enabled]\n'
   reversed_output=$'1 extension(s)\n--- com.apple.system_extension.cmio\n* * ABCDE12345 com.garethpaul.GarethVideoCam.Extension (1.18/7) Gareth Video Cam Extension [enabled activated]\n'
   waiting_output=$'1 extension(s)\n--- com.apple.system_extension.cmio\n* * ABCDE12345 com.garethpaul.GarethVideoCam.Extension (1.18/7) Gareth Video Cam Extension [activated waiting for user]\n'
+  longer_identifier_output=$'1 extension(s)\n--- com.apple.system_extension.cmio\n* * ABCDE12345 com.garethpaul.GarethVideoCam.Extension.Helper (1.18/7) Gareth Video Cam Extension Helper [activated enabled]\n'
   missing_output=$'0 extension(s)\n'
 
   printf 'Registration active fixture present: %s\n' "$(extension_registration_present_value "$active_output" "$EXTENSION_ID")"
   printf 'Registration active fixture activated enabled: %s\n' "$(extension_registration_activated_enabled_value "$active_output" "$EXTENSION_ID")"
   printf 'Registration reversed fixture activated enabled: %s\n' "$(extension_registration_activated_enabled_value "$reversed_output" "$EXTENSION_ID")"
   printf 'Registration waiting fixture activated enabled: %s\n' "$(extension_registration_activated_enabled_value "$waiting_output" "$EXTENSION_ID")"
+  printf 'Registration longer identifier fixture present: %s\n' "$(extension_registration_present_value "$longer_identifier_output" "$EXTENSION_ID")"
+  printf 'Registration longer identifier fixture activated enabled: %s\n' "$(extension_registration_activated_enabled_value "$longer_identifier_output" "$EXTENSION_ID")"
   printf 'Registration missing fixture present: %s\n' "$(extension_registration_present_value "$missing_output" "$EXTENSION_ID")"
   printf 'Registration empty fixture present: %s\n' "$(extension_registration_present_value "" "$EXTENSION_ID")"
 }
