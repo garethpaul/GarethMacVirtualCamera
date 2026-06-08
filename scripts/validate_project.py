@@ -276,6 +276,9 @@ def main():
     project_text = (ROOT / "GarethVideoCam.xcodeproj/project.pbxproj").read_text()
     app_entry_source = (ROOT / "GarethVideoCam/GarethVideoCam.swift").read_text()
     host_source = (ROOT / "GarethVideoCam/ContentView.swift").read_text()
+    details_actions_source = ""
+    if "private struct DetailsActions" in host_source and "private struct ActivityPanel" in host_source:
+        details_actions_source = host_source.split("private struct DetailsActions", 1)[1].split("private struct ActivityPanel", 1)[0]
     extension_source = (ROOT / "Extension/ExtensionProvider.swift").read_text()
     extension_main_source = (ROOT / "Extension/main.swift").read_text()
     readme_text = (ROOT / "README.md").read_text()
@@ -735,6 +738,9 @@ def main():
             failures)
     require("private struct DetailsActions" in host_source and "ViewThatFits(in: .horizontal)" in host_source,
             "host app should keep details actions responsive at narrower window widths",
+            failures)
+    require("Button(action: manager.copyRuntimeEvidenceExpectedDiagnostics)" in details_actions_source and "Copy Expected Lines" in details_actions_source and "Copy the expected signed-host diagnostics lines." in details_actions_source,
+            "host details actions should expose the expected runtime evidence copy action",
             failures)
     require("private static let titleColumnWidth: CGFloat = 220" in host_source and ".frame(width: Self.titleColumnWidth" in host_source and "private var titleLabel" in host_source and "private var valueText" in host_source,
             "host app should keep diagnostic detail rows responsive with a stable readable title column",

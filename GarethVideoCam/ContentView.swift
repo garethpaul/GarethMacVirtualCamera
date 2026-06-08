@@ -3204,6 +3204,12 @@ private struct DetailsActions: View {
         .buttonStyle(.bordered)
         .help("Copy the runtime diagnostics command.")
 
+        Button(action: manager.copyRuntimeEvidenceExpectedDiagnostics) {
+            Label("Copy Expected Lines", systemImage: "checkmark.seal")
+        }
+        .buttonStyle(.bordered)
+        .help("Copy the expected signed-host diagnostics lines.")
+
         Button(action: manager.revealApplicationInFinder) {
             Label("Reveal App", systemImage: "folder")
         }
