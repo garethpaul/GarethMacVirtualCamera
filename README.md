@@ -50,7 +50,7 @@ Signed runtime activation checklist:
 2. Run the shared Xcode scheme so it replaces `/Applications/GarethVideoCam.app`, then open the app from that path.
 3. Confirm the in-app readiness summary has no blocked checks, then choose Install.
 4. Approve the pending camera extension in System Settings if macOS requests approval.
-5. Run `./scripts/collect_runtime_diagnostics.sh /Applications/GarethVideoCam.app 1h`.
+5. Use the Runtime Evidence section's Copy Command action, then run the copied command on the signed macOS host.
 6. Confirm the diagnostics report `Runtime readiness result: ready`, `Runtime activation evidence result: active`, `Extension registration entry present: yes`, `Extension registration activated enabled: yes`, `Bundled video metadata ready: yes`, `Application group match ready: yes`, and `Expected virtual camera device present: yes`.
 
 After approval, camera pickers should list `Gareth Video Cam`.

@@ -1279,7 +1279,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         2. Run the shared Xcode scheme so it replaces /Applications/GarethVideoCam.app, then open the app from that path.
         3. Confirm the in-app readiness summary has no blocked checks, then choose Install.
         4. Approve the pending camera extension in System Settings if macOS requests approval.
-        5. Run ./scripts/collect_runtime_diagnostics.sh /Applications/GarethVideoCam.app 1h.
+        5. Run the Diagnostics Command below on the signed macOS host.
         6. Confirm the diagnostics report the expected activation evidence.
 
         Expected Diagnostics:
@@ -2619,6 +2619,8 @@ private struct RuntimeEvidencePanel: View {
                 Text("Runtime Evidence")
                     .font(.title3.weight(.semibold))
 
+                DetailRow(title: "Current Readiness", value: manager.requestReadinessStatus)
+                DetailRow(title: "Next Action", value: manager.requestReadinessNextAction)
                 DetailRow(title: "Diagnostics Command", value: manager.runtimeDiagnosticsCommand, monospaced: true)
 
                 VStack(spacing: 0) {
