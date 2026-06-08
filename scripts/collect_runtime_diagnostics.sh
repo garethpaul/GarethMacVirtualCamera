@@ -357,6 +357,9 @@ else
   printf 'systemextensionsctl is not available on this host.\n'
 fi
 
+section "Camera Devices"
+run_if_available system_profiler SPCameraDataType
+
 section "Recent Gareth Video Cam Logs"
 if command -v log >/dev/null 2>&1; then
   /usr/bin/log show --last "$LOG_WINDOW" --style compact --predicate "subsystem == '${LOG_SUBSYSTEM}'" 2>/dev/null || true
