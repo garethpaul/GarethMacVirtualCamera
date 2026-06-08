@@ -350,7 +350,7 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
             advanceLoopTiming(by: assetDuration)
             installAssetReaderState(try makeAssetReader(asset: asset, videoTrack: videoTrack))
         } catch {
-            logger.error("Unable to loop the bundled video")
+            logger.error("Unable to loop the bundled video: \(error.localizedDescription, privacy: .public)")
             stopStreamingSession()
         }
     }

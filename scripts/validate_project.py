@@ -166,6 +166,9 @@ def main():
     require("advanceLoopTiming(by: assetDuration)" in extension_source and "private func advanceLoopTiming(by duration: CMTime)" in extension_source,
             "extension should advance timestamps explicitly at bundled-video loop boundaries",
             failures)
+    require("Unable to loop the bundled video: \\(error.localizedDescription" in extension_source,
+            "extension should log loop restart failures with actionable error details",
+            failures)
     require("kCVPixelBufferWidthKey" in extension_source and "kCVPixelBufferHeightKey" in extension_source and "kCVPixelBufferIOSurfacePropertiesKey" in extension_source,
             "extension asset reader should produce pixel buffers matching the advertised stream dimensions",
             failures)
