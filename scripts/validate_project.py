@@ -158,6 +158,9 @@ def main():
     require("Runtime Activation" in readme_text and "valid Apple Developer signing identity" in readme_text,
             "README should document signed runtime activation requirements",
             failures)
+    require("System Settings shortcut" in readme_text and "diagnostics snapshot" in readme_text,
+            "README should document the in-app approval and diagnostics actions",
+            failures)
     require("ACTIONABLE_PATTERN" in build_log_scanner_source and "appintentsmetadataprocessor" in build_log_scanner_source,
             "build-log scanner should fail on warnings while ignoring Xcode AppIntents metadata noise",
             failures)
