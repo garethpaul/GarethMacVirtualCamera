@@ -41,3 +41,4 @@
 - Matched system-extension registration evidence against the exact extension identifier field.
 - Matched system-extension registration status evidence against exact activated/enabled tokens.
 - Refreshed prerelease Apple toolchain watch items with current beta names and build numbers.
+- Expanded copied signed-host runtime evidence expectations to cover all critical readiness gates.
