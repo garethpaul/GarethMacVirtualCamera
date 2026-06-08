@@ -710,8 +710,8 @@ def main():
     require("private struct DetailsActions" in host_source and "ViewThatFits(in: .horizontal)" in host_source,
             "host app should keep details actions responsive at narrower window widths",
             failures)
-    require("private var titleLabel" in host_source and "private var valueText" in host_source,
-            "host app should keep diagnostic detail rows responsive at narrower window widths",
+    require("private static let titleColumnWidth: CGFloat = 220" in host_source and ".frame(width: Self.titleColumnWidth" in host_source and "private var titleLabel" in host_source and "private var valueText" in host_source,
+            "host app should keep diagnostic detail rows responsive with a stable readable title column",
             failures)
     require("private var activityTitle" in host_source and "private var activityTimestamp" in host_source,
             "host app should keep activity rows responsive at narrower window widths",

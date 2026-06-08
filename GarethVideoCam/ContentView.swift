@@ -3291,6 +3291,8 @@ private struct ActivityRow: View {
 }
 
 private struct DetailRow: View {
+    private static let titleColumnWidth: CGFloat = 220
+
     var title: String
     var value: String
     var monospaced = false
@@ -3299,7 +3301,7 @@ private struct DetailRow: View {
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 titleLabel
-                    .frame(width: 160, alignment: .leading)
+                    .frame(width: Self.titleColumnWidth, alignment: .leading)
                 valueText
             }
 
@@ -3314,6 +3316,7 @@ private struct DetailRow: View {
     private var titleLabel: some View {
         Text(title)
             .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     @ViewBuilder
