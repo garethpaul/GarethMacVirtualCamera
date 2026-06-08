@@ -196,6 +196,35 @@ done
 
 PRODUCTS_PATH="$GOOD_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" >/dev/null
 
+MISSING_APP_PRODUCTS="$TMP_DIR/missing-app/Products"
+mkdir -p "$MISSING_APP_PRODUCTS/Debug"
+
+if PRODUCTS_PATH="$MISSING_APP_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/missing-app.out" 2>"$TMP_DIR/missing-app.err"; then
+  printf 'Expected verifier to reject a missing app product.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug app product" "$TMP_DIR/missing-app.err"; then
+  printf 'Verifier failure did not explain the missing app product.\n' >&2
+  cat "$TMP_DIR/missing-app.err" >&2
+  exit 1
+fi
+
+MISSING_EMBEDDED_EXTENSION_PRODUCTS="$TMP_DIR/missing-embedded-extension/Products"
+write_product_fixture "$MISSING_EMBEDDED_EXTENSION_PRODUCTS" Debug
+rm -rf "$MISSING_EMBEDDED_EXTENSION_PRODUCTS/Debug/GarethVideoCam.app/Contents/Library/SystemExtensions/$EXTENSION_NAME"
+
+if PRODUCTS_PATH="$MISSING_EMBEDDED_EXTENSION_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/missing-embedded-extension.out" 2>"$TMP_DIR/missing-embedded-extension.err"; then
+  printf 'Expected verifier to reject a missing embedded system extension.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug embedded system extension" "$TMP_DIR/missing-embedded-extension.err"; then
+  printf 'Verifier failure did not explain the missing embedded system extension.\n' >&2
+  cat "$TMP_DIR/missing-embedded-extension.err" >&2
+  exit 1
+fi
+
 BAD_PRODUCTS="$TMP_DIR/bad/Products"
 write_product_fixture "$BAD_PRODUCTS" Debug "com.example.WrongExtension"
 
