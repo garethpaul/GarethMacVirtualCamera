@@ -33,19 +33,39 @@ private let logger = Logger(subsystem: "com.garethpaul.GarethVideoCam",
 
 private enum CameraExtensionError: LocalizedError {
     case missingBundledVideo
-    case failedToStartAssetReader
+    case missingVideoTrack
+    case invalidVideoDuration
+    case unableToAddTrackOutput
+    case assetReaderFailedToStart(String)
     case unexpectedDeviceSource
 
     var errorDescription: String? {
         switch self {
         case .missingBundledVideo:
             return "The bundled loop video was not found."
-        case .failedToStartAssetReader:
-            return "The bundled loop video could not be read."
+        case .missingVideoTrack:
+            return "The bundled loop video does not contain a video track."
+        case .invalidVideoDuration:
+            return "The bundled loop video does not report a valid duration."
+        case .unableToAddTrackOutput:
+            return "The bundled loop video could not be connected to an asset reader output."
+        case .assetReaderFailedToStart(let detail):
+            return "The asset reader failed to start: \(detail)"
         case .unexpectedDeviceSource:
             return "The stream is attached to an unexpected device source."
         }
     }
+}
+
+private struct LoadedVideoAsset {
+    let asset: AVAsset
+    let videoTrack: AVAssetTrack
+    let duration: CMTime
+}
+
+private struct AssetReaderState {
+    let assetReader: AVAssetReader
+    let trackOutput: AVAssetReaderTrackOutput
 }
 
 // MARK: - ExtensionDeviceSource
@@ -129,15 +149,12 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource {
 
             resetTiming()
             self.videoURL = videoURL
-
-            guard setupAssetReader(with: videoURL) else {
-                self.videoURL = nil
-                throw CameraExtensionError.failedToStartAssetReader
-            }
-
             _streamingCounter = 1
-            startTimer()
-            logger.info("Started stream with bundled video: \(videoURL.lastPathComponent, privacy: .public)")
+            isPreparingStream = true
+            streamPreparationTask?.cancel()
+            streamPreparationTask = Task { [weak self] in
+                await self?.prepareAndStartStreaming(with: videoURL)
+            }
         }
     }
 
@@ -161,8 +178,12 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource {
 
     private var assetReader: AVAssetReader?
     private var asset: AVAsset?
+    private var assetDuration: CMTime?
+    private var videoTrack: AVAssetTrack?
     private var trackOutput: AVAssetReaderTrackOutput?
     private var videoURL: URL?
+    private var isPreparingStream = false
+    private var streamPreparationTask: Task<Void, Never>?
 
     private var _timer: DispatchSourceTimer?
     private let _timerQueue = DispatchQueue(label: "com.garethpaul.GarethVideoCam.stream")
@@ -170,16 +191,71 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource {
     private var lastPresentationTime: CMTime?
     private var timestampOffset: CMTime = .zero
 
-    private func setupAssetReader(with videoURL: URL) -> Bool {
-        let nextAsset = AVAsset(url: videoURL)
-
+    private func prepareAndStartStreaming(with videoURL: URL) async {
         do {
-            let nextAssetReader = try AVAssetReader(asset: nextAsset)
+            let loadedAsset = try await loadVideoAsset(from: videoURL)
+            if Task.isCancelled { return }
 
-            guard let videoTrack = nextAsset.tracks(withMediaType: .video).first else {
-                logger.error("Bundled video does not contain a video track")
-                return false
+            let readerState = try makeAssetReader(asset: loadedAsset.asset,
+                                                  videoTrack: loadedAsset.videoTrack)
+            if Task.isCancelled { return }
+
+            _timerQueue.async { [weak self] in
+                guard let self else { return }
+
+                self.streamPreparationTask = nil
+                self.isPreparingStream = false
+
+                guard self._streamingCounter > 0, self.videoURL == videoURL else {
+                    return
+                }
+
+                self.asset = loadedAsset.asset
+                self.assetDuration = loadedAsset.duration
+                self.videoTrack = loadedAsset.videoTrack
+                self.installAssetReaderState(readerState)
+                self.startTimer()
+                logger.info("Started stream with bundled video: \(videoURL.lastPathComponent, privacy: .public)")
             }
+        } catch {
+            _timerQueue.async { [weak self] in
+                guard let self else { return }
+
+                self.streamPreparationTask = nil
+                self.isPreparingStream = false
+                logger.error("Failed to prepare bundled video: \(error.localizedDescription, privacy: .public)")
+                self.stopStreamingSession()
+            }
+        }
+    }
+
+    private func loadVideoAsset(from videoURL: URL) async throws -> LoadedVideoAsset {
+        let asset = AVURLAsset(url: videoURL,
+                               options: [AVURLAssetPreferPreciseDurationAndTimingKey: true])
+
+        async let loadedTracks = asset.loadTracks(withMediaType: .video)
+        async let loadedDuration = asset.load(.duration)
+
+        let (tracks, duration) = try await (loadedTracks, loadedDuration)
+
+        guard let videoTrack = tracks.first else {
+            throw CameraExtensionError.missingVideoTrack
+        }
+
+        guard duration.flags.contains(.valid),
+              !duration.flags.contains(.indefinite),
+              CMTimeCompare(duration, .zero) > 0 else {
+            throw CameraExtensionError.invalidVideoDuration
+        }
+
+        return LoadedVideoAsset(asset: asset,
+                                videoTrack: videoTrack,
+                                duration: duration)
+    }
+
+    private func makeAssetReader(asset: AVAsset, videoTrack: AVAssetTrack) throws -> AssetReaderState {
+        do {
+            let nextAssetReader = try AVAssetReader(asset: asset)
 
             let outputSettings: [String: Any] = [
                 kCVPixelBufferPixelFormatTypeKey as String: Int(CameraExtensionConfiguration.pixelFormat)
@@ -190,25 +266,26 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource {
             nextTrackOutput.alwaysCopiesSampleData = false
 
             guard nextAssetReader.canAdd(nextTrackOutput) else {
-                logger.error("Asset reader cannot add the configured track output")
-                return false
+                throw CameraExtensionError.unableToAddTrackOutput
             }
 
             nextAssetReader.add(nextTrackOutput)
 
             guard nextAssetReader.startReading() else {
-                logger.error("Asset reader failed to start: \(nextAssetReader.error?.localizedDescription ?? "unknown error", privacy: .public)")
-                return false
+                throw CameraExtensionError.assetReaderFailedToStart(nextAssetReader.error?.localizedDescription ?? "unknown error")
             }
 
-            asset = nextAsset
-            assetReader = nextAssetReader
-            trackOutput = nextTrackOutput
-            return true
+            return AssetReaderState(assetReader: nextAssetReader,
+                                    trackOutput: nextTrackOutput)
         } catch {
             logger.error("Failed to initialize asset reader: \(error.localizedDescription, privacy: .public)")
-            return false
+            throw error
         }
+    }
+
+    private func installAssetReaderState(_ readerState: AssetReaderState) {
+        assetReader = readerState.assetReader
+        trackOutput = readerState.trackOutput
     }
 
     private func startTimer() {
@@ -234,15 +311,22 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource {
             return
         }
 
-        guard let videoURL = videoURL, setupAssetReader(with: videoURL) else {
-            logger.error("Unable to loop the bundled video")
+        guard let asset, let videoTrack else {
+            logger.error("Unable to loop the bundled video because no loaded asset is available")
             stopStreamingSession()
             return
+        }
+
+        do {
+            installAssetReaderState(try makeAssetReader(asset: asset, videoTrack: videoTrack))
+        } catch {
+            logger.error("Unable to loop the bundled video")
+            stopStreamingSession()
         }
     }
 
     private func processSampleBuffer(_ sampleBuffer: CMSampleBuffer) {
-        guard let assetDuration = asset?.duration else {
+        guard let assetDuration else {
             logger.error("No asset duration is available for stream timing")
             return
         }
@@ -329,6 +413,10 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource {
     }
 
     private func stopStreamingSession() {
+        streamPreparationTask?.cancel()
+        streamPreparationTask = nil
+        isPreparingStream = false
+
         _timer?.setEventHandler {}
         _timer?.cancel()
         _timer = nil
@@ -336,6 +424,8 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource {
         assetReader?.cancelReading()
         assetReader = nil
         asset = nil
+        assetDuration = nil
+        videoTrack = nil
         trackOutput = nil
         videoURL = nil
         _streamingCounter = 0

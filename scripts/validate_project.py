@@ -60,6 +60,7 @@ def main():
             failures)
 
     project_text = (ROOT / "GarethVideoCam.xcodeproj/project.pbxproj").read_text()
+    extension_source = (ROOT / "Extension/ExtensionProvider.swift").read_text()
     require(f"PRODUCT_BUNDLE_IDENTIFIER = {APP_BUNDLE_ID};" in project_text,
             "project is missing the host app bundle identifier",
             failures)
@@ -82,6 +83,9 @@ def main():
             failures)
     require(len(build_versions) == 1,
             "app and extension build versions should stay aligned",
+            failures)
+    require("tracks(withMediaType:" not in extension_source and "AVAsset(url:" not in extension_source,
+            "extension should use modern asynchronous AVAsset loading APIs",
             failures)
 
     scheme_path = ROOT / "GarethVideoCam.xcodeproj/xcshareddata/xcschemes/GarethVideoCam.xcscheme"
