@@ -186,6 +186,9 @@ def main():
     require("appCodeSigningStatus" in host_source and "extensionCodeSigningStatus" in host_source and "Extension Signing Required" in host_source and "The embedded system extension code signature is valid." in host_source,
             "host app should validate both the container app and embedded system-extension signatures before submitting requests",
             failures)
+    require("SecCodeCopySigningInformation" in host_source and "kSecCodeInfoTeamIdentifier" in host_source and "signingTeamReadinessDetail" in host_source and "Team Identifier Required" in host_source,
+            "host app should verify matching app and embedded system-extension signing team identifiers before submitting requests",
+            failures)
     require("case needsSigning" in host_source and "requestReadinessMessage" in host_source and "App Signature" in host_source and "Extension Signature" in host_source,
             "host app should surface signing readiness in state, controls, and details",
             failures)

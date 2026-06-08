@@ -198,7 +198,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     enum CodeSigningStatus: Equatable {
-        case valid(String)
+        case valid(String, String?)
         case invalid(String)
 
         var title: String {
@@ -212,7 +212,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         var detail: String {
             switch self {
-            case .valid(let detail):
+            case .valid(let detail, _):
                 return detail
             case .invalid(let detail):
                 return detail
@@ -225,6 +225,15 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
                 return true
             case .invalid:
                 return false
+            }
+        }
+
+        var teamIdentifier: String? {
+            switch self {
+            case .valid(_, let teamIdentifier):
+                return teamIdentifier
+            case .invalid:
+                return nil
             }
         }
     }
@@ -333,7 +342,10 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     var canSubmitSystemExtensionRequests: Bool {
-        return isRunningFromApplications && appCodeSigningStatus.isValid && extensionCodeSigningStatus.isValid
+        return isRunningFromApplications
+            && appCodeSigningStatus.isValid
+            && extensionCodeSigningStatus.isValid
+            && signingTeamReadinessDetail == nil
     }
 
     var isRunningFromApplications: Bool {
@@ -353,7 +365,19 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             return "System extension requests require a valid system extension signature."
         }
 
+        if signingTeamReadinessDetail != nil {
+            return "System extension requests require matching app and extension team identifiers."
+        }
+
         return nil
+    }
+
+    var appTeamIdentifier: String {
+        return appCodeSigningStatus.teamIdentifier ?? "Unknown"
+    }
+
+    var extensionTeamIdentifier: String {
+        return extensionCodeSigningStatus.teamIdentifier ?? "Unknown"
     }
 
     var diagnosticSummary: String {
@@ -381,8 +405,10 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         App Path: \(applicationBundlePath)
         App Code Signing: \(appCodeSigningStatus.title)
         App Code Signing Detail: \(appCodeSigningStatus.detail)
+        App Team ID: \(appTeamIdentifier)
         Extension Code Signing: \(extensionCodeSigningStatus.title)
         Extension Code Signing Detail: \(extensionCodeSigningStatus.detail)
+        Extension Team ID: \(extensionTeamIdentifier)
         \(extensionDescription)
 
         Recent Activity:
@@ -557,6 +583,14 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             return nil
         }
 
+        if let signingTeamReadinessDetail {
+            state = .needsSigning
+            appendActivity(level: .warning,
+                           title: "Team Identifier Required",
+                           detail: signingTeamReadinessDetail)
+            return nil
+        }
+
         return extensionInfo
     }
 
@@ -565,11 +599,31 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             return .needsApplicationLocation
         }
 
-        if !appCodeSigningStatus.isValid || !extensionCodeSigningStatus.isValid {
+        if !appCodeSigningStatus.isValid || !extensionCodeSigningStatus.isValid || signingTeamReadinessDetail != nil {
             return .needsSigning
         }
 
         return .ready
+    }
+
+    private var signingTeamReadinessDetail: String? {
+        guard appCodeSigningStatus.isValid, extensionCodeSigningStatus.isValid else {
+            return nil
+        }
+
+        guard let appTeamIdentifier = appCodeSigningStatus.teamIdentifier else {
+            return "The app signature does not expose a team identifier."
+        }
+
+        guard let extensionTeamIdentifier = extensionCodeSigningStatus.teamIdentifier else {
+            return "The embedded system extension signature does not expose a team identifier."
+        }
+
+        guard appTeamIdentifier == extensionTeamIdentifier else {
+            return "The app team identifier \(appTeamIdentifier) does not match the embedded system extension team identifier \(extensionTeamIdentifier)."
+        }
+
+        return nil
     }
 
     private static func evaluateCodeSigningStatus(for bundleURL: URL, validDetail: String) -> CodeSigningStatus {
@@ -584,12 +638,28 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             return .invalid(errorMessage(for: checkStatus))
         }
 
-        return .valid(validDetail)
+        return .valid(validDetail, teamIdentifier(for: staticCode))
     }
 
     private static func errorMessage(for status: OSStatus) -> String {
         let fallback = "Code-signing check failed with OSStatus \(status)."
         return SecCopyErrorMessageString(status, nil) as String? ?? fallback
+    }
+
+    private static func teamIdentifier(for staticCode: SecStaticCode) -> String? {
+        var signingInformation: CFDictionary?
+        let infoStatus = SecCodeCopySigningInformation(staticCode,
+                                                       SecCSFlags(rawValue: kSecCSSigningInformation),
+                                                       &signingInformation)
+        guard infoStatus == errSecSuccess,
+              let signingInformation,
+              let signingDictionary = signingInformation as? [String: Any],
+              let teamIdentifier = signingDictionary[kSecCodeInfoTeamIdentifier as String] as? String,
+              !teamIdentifier.isEmpty else {
+            return nil
+        }
+
+        return teamIdentifier
     }
 
     private func handleFailure(_ error: Error) {
@@ -856,10 +926,12 @@ private struct DetailsPanel: View {
                 if !manager.appCodeSigningStatus.isValid {
                     DetailRow(title: "App Signature Detail", value: manager.appCodeSigningStatus.detail)
                 }
+                DetailRow(title: "App Team ID", value: manager.appTeamIdentifier)
                 DetailRow(title: "Extension Signature", value: manager.extensionCodeSigningStatus.title)
                 if !manager.extensionCodeSigningStatus.isValid {
                     DetailRow(title: "Extension Signature Detail", value: manager.extensionCodeSigningStatus.detail)
                 }
+                DetailRow(title: "Extension Team ID", value: manager.extensionTeamIdentifier)
                 DetailRow(title: "Application Path", value: manager.applicationBundlePath, monospaced: true)
 
                 if let bundlePath = manager.extensionInfo?.bundlePath {
