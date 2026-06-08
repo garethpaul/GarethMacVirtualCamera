@@ -175,6 +175,7 @@ verify_app_diagnostics_resources() {
   local application_identity_self_test_output
   local video_metadata_self_test_output
   local application_group_self_test_output
+  local mach_service_self_test_output
   local parser_self_test_output
 
   if [ ! -f "$script_path" ]; then
@@ -274,6 +275,20 @@ verify_app_diagnostics_resources() {
     || ! printf '%s\n' "$application_group_self_test_output" | /usr/bin/grep -F "Application group list format fixture: ABCDE12345.com.garethpaul.GarethVideoCam, ZYXWV98765.com.garethpaul.GarethVideoCam" >/dev/null; then
     printf 'Unexpected %s app bundled runtime diagnostics application-group self-test output.\n' "$configuration" >&2
     printf '%s\n' "$application_group_self_test_output" >&2
+    exit 1
+  fi
+
+  if ! mach_service_self_test_output="$(GARETH_DIAGNOSTICS_SELF_TEST=mach-service /bin/bash "$script_path" "$app_path" 1m 2>&1)"; then
+    printf 'Failed %s app bundled runtime diagnostics mach-service self-test.\n' "$configuration" >&2
+    printf '%s\n' "$mach_service_self_test_output" >&2
+    exit 1
+  fi
+
+  if ! printf '%s\n' "$mach_service_self_test_output" | /usr/bin/grep -F "Mach service direct fixture ready: yes" >/dev/null \
+    || ! printf '%s\n' "$mach_service_self_test_output" | /usr/bin/grep -F "Mach service dotted-prefix fixture ready: no" >/dev/null \
+    || ! printf '%s\n' "$mach_service_self_test_output" | /usr/bin/grep -F "Mach service unresolved fixture resolved: no" >/dev/null; then
+    printf 'Unexpected %s app bundled runtime diagnostics mach-service self-test output.\n' "$configuration" >&2
+    printf '%s\n' "$mach_service_self_test_output" >&2
     exit 1
   fi
 

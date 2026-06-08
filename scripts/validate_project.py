@@ -863,6 +863,9 @@ def main():
     require("GARETH_DIAGNOSTICS_SELF_TEST=application-group" in verify_build_products_source and "Application group shared fixture ready: yes" in verify_build_products_source and "Application group dotted-prefix fixture ready: no" in verify_build_products_source and "Application group list format fixture: ABCDE12345.com.garethpaul.GarethVideoCam, ZYXWV98765.com.garethpaul.GarethVideoCam" in verify_build_products_source,
             "build-product verifier should run the bundled runtime diagnostics application-group self-test",
             failures)
+    require("GARETH_DIAGNOSTICS_SELF_TEST=mach-service" in verify_build_products_source and "Mach service direct fixture ready: yes" in verify_build_products_source and "Mach service dotted-prefix fixture ready: no" in verify_build_products_source and "Mach service unresolved fixture resolved: no" in verify_build_products_source,
+            "build-product verifier should run the bundled runtime diagnostics mach-service self-test",
+            failures)
     require("APP_CAMERA_USAGE_DESCRIPTION" in verify_build_products_source and "APP_SYSTEM_EXTENSION_USAGE_DESCRIPTION" in verify_build_products_source and "EXTENSION_CAMERA_USAGE_DESCRIPTION" in verify_build_products_source and "EXTENSION_SYSTEM_EXTENSION_USAGE_DESCRIPTION" in verify_build_products_source and "verify_info_plist_value \"$configuration\" \"app\" \"$app_path\" \"NSCameraUsageDescription\"" in verify_build_products_source and "verify_info_plist_value \"$configuration\" \"extension\" \"$extension_path\" \"NSCameraUsageDescription\"" in verify_build_products_source,
             "build-product verifier should require exact product-specific app and extension privacy usage strings",
             failures)
@@ -883,6 +886,9 @@ def main():
             failures)
     require("write_stale_application_group_diagnostics_fixture" in verify_build_products_test_source and "stale-application-group-diagnostics" in verify_build_products_test_source and "Unexpected Debug app bundled runtime diagnostics application-group self-test output" in verify_build_products_test_source,
             "build-product verifier tests should reject stale bundled runtime diagnostics application-group self-test output",
+            failures)
+    require("write_stale_mach_service_diagnostics_fixture" in verify_build_products_test_source and "stale-mach-service-diagnostics" in verify_build_products_test_source and "Unexpected Debug app bundled runtime diagnostics mach-service self-test output" in verify_build_products_test_source,
+            "build-product verifier tests should reject stale bundled runtime diagnostics mach-service self-test output",
             failures)
     require(verify_build_products_test_path.stat().st_mode & 0o111,
             "build-product verifier test script should be executable",

@@ -29,3 +29,4 @@
 - Covered missing app and extension display names in build-product verifier fixtures.
 - Verified bundled runtime diagnostics video-metadata self-tests inside built app products.
 - Verified bundled runtime diagnostics application-group self-tests inside built app products.
+- Verified bundled runtime diagnostics Mach service self-tests inside built app products.
