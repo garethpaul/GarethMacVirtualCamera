@@ -213,6 +213,9 @@ def main():
     require("diagnosticSummary" in host_source and "NSPasteboard.general" in host_source and "Copy Diagnostics" in host_source,
             "host app should expose copyable diagnostics for activation troubleshooting",
             failures)
+    require("applicationVersion" in host_source and "App Version" in host_source and "CFBundleShortVersionString" in host_source,
+            "host app should show and copy app version diagnostics",
+            failures)
     require("func copyDiagnostics() {\n        refreshExtensionInfo()" in host_source,
             "host app should refresh readiness before copying diagnostics",
             failures)

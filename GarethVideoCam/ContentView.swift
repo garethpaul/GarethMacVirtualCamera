@@ -316,6 +316,22 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         return Bundle.main.bundleURL.path
     }
 
+    var applicationVersion: String {
+        let shortVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+        let buildVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
+
+        switch (shortVersion, buildVersion) {
+        case let (shortVersion?, buildVersion?):
+            return "\(shortVersion) (\(buildVersion))"
+        case let (shortVersion?, nil):
+            return shortVersion
+        case let (nil, buildVersion?):
+            return buildVersion
+        case (nil, nil):
+            return "Unknown"
+        }
+    }
+
     var canSubmitSystemExtensionRequests: Bool {
         return isRunningFromApplications && appCodeSigningStatus.isValid && extensionCodeSigningStatus.isValid
     }
@@ -360,6 +376,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         return """
         Gareth Video Cam Diagnostics
         State: \(state.title)
+        App Version: \(applicationVersion)
         App Location: \(applicationLocationStatus)
         App Path: \(applicationBundlePath)
         App Code Signing: \(appCodeSigningStatus.title)
@@ -832,6 +849,7 @@ private struct DetailsPanel: View {
                 Text("Build")
                     .font(.title3.weight(.semibold))
 
+                DetailRow(title: "App Version", value: manager.applicationVersion)
                 DetailRow(title: "Extension Version", value: manager.extensionInfo?.version ?? "Unknown")
                 DetailRow(title: "Application Location", value: manager.applicationLocationStatus)
                 DetailRow(title: "App Signature", value: manager.appCodeSigningStatus.title)
