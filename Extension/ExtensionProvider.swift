@@ -117,7 +117,7 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
         let videoStreamFormat = CMIOExtensionStreamFormat(formatDescription: videoDescription,
                                                           maxFrameDuration: CameraExtensionConfiguration.frameDuration,
                                                           minFrameDuration: CameraExtensionConfiguration.frameDuration,
-                                                          validFrameDurations: nil)
+                                                          validFrameDurations: [CameraExtensionConfiguration.frameDuration])
 
         _streamSource = ExtensionStreamSource(localizedName: CameraExtensionConfiguration.localizedStreamName,
                                               streamID: CameraExtensionConfiguration.streamID,

@@ -342,6 +342,9 @@ def main():
     require("invalidFrameDuration" in extension_source and "throw CameraExtensionError.invalidFrameDuration" in extension_source and "streamProperties.frameDuration" in extension_source,
             "extension stream should reject unsupported frame-duration requests",
             failures)
+    require("validFrameDurations: [CameraExtensionConfiguration.frameDuration]" in extension_source,
+            "extension stream should advertise the fixed frame duration it enforces",
+            failures)
     require("case needsApplicationLocation" in host_source and "case needsBundleIdentifier" in host_source and "canSubmitSystemExtensionRequests" in host_source,
             "host app should model the /Applications and host bundle identifier requirements before submitting system-extension requests",
             failures)
