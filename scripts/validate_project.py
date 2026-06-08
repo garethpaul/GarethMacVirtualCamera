@@ -243,7 +243,7 @@ def main():
     require("System Settings shortcut" in readme_text and "diagnostics snapshot" in readme_text and "bundled system extension signature is invalid" in readme_text,
             "README should document the in-app approval and diagnostics actions",
             failures)
-    require("collect_runtime_diagnostics.sh" in readme_text and "Gatekeeper assessment" in readme_text and "signed entitlements" in readme_text and "systemextensionsctl" in readme_text and "unified-log window" in readme_text and "system-extension/CMIO log context" in readme_text,
+    require("collect_runtime_diagnostics.sh" in readme_text and "bundle versions" in readme_text and "Gatekeeper assessment" in readme_text and "signed entitlements" in readme_text and "systemextensionsctl" in readme_text and "unified-log window" in readme_text and "system-extension/CMIO log context" in readme_text,
             "README should document collecting runtime diagnostics on macOS",
             failures)
     require("ACTIONABLE_PATTERN" in build_log_scanner_source and "IGNORED_LINE_TOKEN_GROUPS" in build_log_scanner_source and "all(token.lower() in normalized_line" in build_log_scanner_source,
@@ -252,8 +252,8 @@ def main():
     require("test_ignores_appintents_metadata_notice" in build_log_scanner_test_source and "test_fails_on_actionable_warning" in build_log_scanner_test_source and "test_fails_on_other_appintents_warning" in build_log_scanner_test_source,
             "build-log scanner should have regression coverage for ignored and actionable warnings",
             failures)
-    require("codesign -d --entitlements :-" in runtime_diagnostics_source and "spctl --assess" in runtime_diagnostics_source and "systemextensionsctl list" in runtime_diagnostics_source and "LOG_WINDOW" in runtime_diagnostics_source and "systemextensionsd" in runtime_diagnostics_source and "com.apple.CoreMediaIO" in runtime_diagnostics_source,
-            "runtime diagnostics script should collect entitlements, Gatekeeper assessment, system-extension registration, configurable log windows, and recent app/system-extension logs",
+    require("codesign -d --entitlements :-" in runtime_diagnostics_source and "spctl --assess" in runtime_diagnostics_source and "systemextensionsctl list" in runtime_diagnostics_source and "CFBundleShortVersionString" in runtime_diagnostics_source and "CFBundleVersion" in runtime_diagnostics_source and "LOG_WINDOW" in runtime_diagnostics_source and "systemextensionsd" in runtime_diagnostics_source and "com.apple.CoreMediaIO" in runtime_diagnostics_source,
+            "runtime diagnostics script should collect entitlements, Gatekeeper assessment, bundle versions, system-extension registration, configurable log windows, and recent app/system-extension logs",
             failures)
 
     scheme_path = ROOT / "GarethVideoCam.xcodeproj/xcshareddata/xcschemes/GarethVideoCam.xcscheme"

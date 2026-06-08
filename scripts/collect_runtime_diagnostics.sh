@@ -22,6 +22,15 @@ run_if_available() {
   fi
 }
 
+print_bundle_metadata() {
+  local bundle_path="$1"
+  local info_plist="${bundle_path}/Contents/Info"
+
+  /usr/bin/defaults read "$info_plist" CFBundleIdentifier 2>/dev/null || true
+  /usr/bin/defaults read "$info_plist" CFBundleShortVersionString 2>/dev/null || true
+  /usr/bin/defaults read "$info_plist" CFBundleVersion 2>/dev/null || true
+}
+
 section "Host"
 printf 'Log window: %s\n' "$LOG_WINDOW"
 run_if_available sw_vers
@@ -35,6 +44,7 @@ if [ -d "$APP_PATH" ]; then
   /usr/bin/codesign -dv "$APP_PATH" 2>&1 || true
   /usr/bin/codesign -d --entitlements :- "$APP_PATH" 2>&1 || true
   run_if_available spctl --assess --type execute --verbose=4 "$APP_PATH"
+  print_bundle_metadata "$APP_PATH"
 else
   printf 'App bundle is not installed at the requested path.\n'
 fi
@@ -46,7 +56,7 @@ if [ -d "$EXTENSION_PATH" ]; then
   /usr/bin/codesign -dv "$EXTENSION_PATH" 2>&1 || true
   /usr/bin/codesign -d --entitlements :- "$EXTENSION_PATH" 2>&1 || true
   run_if_available spctl --assess --type execute --verbose=4 "$EXTENSION_PATH"
-  /usr/bin/defaults read "${EXTENSION_PATH}/Contents/Info" CFBundleIdentifier 2>/dev/null || true
+  print_bundle_metadata "$EXTENSION_PATH"
 else
   printf 'Expected embedded system extension was not found.\n'
 fi

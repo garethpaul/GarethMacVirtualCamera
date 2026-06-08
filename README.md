@@ -60,4 +60,4 @@ To collect runtime evidence from a signed macOS host:
 
 Pass a second argument to change the unified-log window, for example `1h`.
 
-The diagnostics script reports host tool versions, app and extension code-signing status, Gatekeeper assessment, signed entitlements, embedded system-extension metadata, `systemextensionsctl` registration, recent `com.garethpaul.GarethVideoCam` unified logs, and recent system-extension/CMIO log context.
+The diagnostics script reports host tool versions, app and extension bundle versions, code-signing status, Gatekeeper assessment, signed entitlements, embedded system-extension metadata, `systemextensionsctl` registration, recent `com.garethpaul.GarethVideoCam` unified logs, and recent system-extension/CMIO log context.
