@@ -504,7 +504,7 @@ final class ExtensionStreamSource: NSObject, CMIOExtensionStreamSource {
         let streamProperties = CMIOExtensionStreamProperties(dictionary: [:])
 
         if properties.contains(.streamActiveFormatIndex) {
-            streamProperties.activeFormatIndex = 0
+            streamProperties.activeFormatIndex = activeFormatIndex
         }
 
         if properties.contains(.streamFrameDuration) {

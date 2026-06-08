@@ -177,6 +177,9 @@ def main():
     require("invalidActiveFormatIndex" in extension_source and "throw CameraExtensionError.invalidActiveFormatIndex" in extension_source,
             "extension stream should reject unsupported active format indices",
             failures)
+    require("streamProperties.activeFormatIndex = activeFormatIndex" in extension_source,
+            "extension stream should report the stored active format index",
+            failures)
     require("invalidFrameDuration" in extension_source and "throw CameraExtensionError.invalidFrameDuration" in extension_source and "streamProperties.frameDuration" in extension_source,
             "extension stream should reject unsupported frame-duration requests",
             failures)
