@@ -163,6 +163,7 @@ verify_app_diagnostics_resources() {
   local resource_self_test_output
   local executable_self_test_output
   local team_identifier_self_test_output
+  local application_identity_self_test_output
   local parser_self_test_output
 
   if [ ! -f "$script_path" ]; then
@@ -221,6 +222,19 @@ verify_app_diagnostics_resources() {
     || ! printf '%s\n' "$team_identifier_self_test_output" | /usr/bin/grep -F "Team ID mismatch fixture: no" >/dev/null; then
     printf 'Unexpected %s app bundled runtime diagnostics Team ID self-test output.\n' "$configuration" >&2
     printf '%s\n' "$team_identifier_self_test_output" >&2
+    exit 1
+  fi
+
+  if ! application_identity_self_test_output="$(GARETH_DIAGNOSTICS_SELF_TEST=application-identity /bin/bash "$script_path" "$app_path" 1m 2>&1)"; then
+    printf 'Failed %s app bundled runtime diagnostics application-identity self-test.\n' "$configuration" >&2
+    printf '%s\n' "$application_identity_self_test_output" >&2
+    exit 1
+  fi
+
+  if ! printf '%s\n' "$application_identity_self_test_output" | /usr/bin/grep -F "App path match fixture: yes" >/dev/null \
+    || ! printf '%s\n' "$application_identity_self_test_output" | /usr/bin/grep -F "Bundle identifier missing fixture: no" >/dev/null; then
+    printf 'Unexpected %s app bundled runtime diagnostics application-identity self-test output.\n' "$configuration" >&2
+    printf '%s\n' "$application_identity_self_test_output" >&2
     exit 1
   fi
 

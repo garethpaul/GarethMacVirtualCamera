@@ -797,6 +797,9 @@ def main():
     require("GARETH_DIAGNOSTICS_SELF_TEST=team-id" in verify_build_products_source and "Team ID match fixture: yes" in verify_build_products_source and "Team ID mismatch fixture: no" in verify_build_products_source,
             "build-product verifier should run the bundled runtime diagnostics Team ID self-test",
             failures)
+    require("GARETH_DIAGNOSTICS_SELF_TEST=application-identity" in verify_build_products_source and "App path match fixture: yes" in verify_build_products_source and "Bundle identifier missing fixture: no" in verify_build_products_source,
+            "build-product verifier should run the bundled runtime diagnostics application-identity self-test",
+            failures)
     require(verify_build_products_path.stat().st_mode & 0o111,
             "build-product verifier script should be executable",
             failures)
