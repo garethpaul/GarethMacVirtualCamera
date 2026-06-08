@@ -8,6 +8,10 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 APP_ID="com.garethpaul.GarethVideoCam"
 EXTENSION_ID="com.garethpaul.GarethVideoCam.Extension"
 EXTENSION_NAME="com.garethpaul.GarethVideoCam.Extension.systemextension"
+APP_CAMERA_USAGE_DESCRIPTION="Gareth Video Cam publishes a virtual camera stream."
+APP_SYSTEM_EXTENSION_USAGE_DESCRIPTION="Gareth Video Cam installs a camera extension that makes the bundled video available as a virtual camera."
+EXTENSION_CAMERA_USAGE_DESCRIPTION="Gareth Video Cam publishes the bundled video as a virtual camera stream."
+EXTENSION_SYSTEM_EXTENSION_USAGE_DESCRIPTION="$APP_SYSTEM_EXTENSION_USAGE_DESCRIPTION"
 
 write_info_plist() {
   local bundle_path="$1"
@@ -180,6 +184,10 @@ write_product_fixture() {
   write_info_plist "$extension_path" "$extension_identifier" "$EXTENSION_ID" "$extension_mach_service_name" "$extension_short_version" "$extension_build_version"
   set_info_plist_key "$app_path" "CFBundleDisplayName" "Gareth Video Cam"
   set_info_plist_key "$extension_path" "CFBundleDisplayName" "Gareth Video Cam Extension"
+  set_info_plist_key "$app_path" "NSCameraUsageDescription" "$APP_CAMERA_USAGE_DESCRIPTION"
+  set_info_plist_key "$app_path" "NSSystemExtensionUsageDescription" "$APP_SYSTEM_EXTENSION_USAGE_DESCRIPTION"
+  set_info_plist_key "$extension_path" "NSCameraUsageDescription" "$EXTENSION_CAMERA_USAGE_DESCRIPTION"
+  set_info_plist_key "$extension_path" "NSSystemExtensionUsageDescription" "$EXTENSION_SYSTEM_EXTENSION_USAGE_DESCRIPTION"
   write_executable_fixture "$app_path" "GarethVideoCam"
   write_executable_fixture "$extension_path" "$EXTENSION_ID"
   mkdir -p "$app_resources_path"
@@ -386,6 +394,21 @@ fi
 if ! grep -q "Unexpected Debug app CFBundleDisplayName" "$TMP_DIR/wrong-display.err"; then
   printf 'Verifier failure did not explain the wrong app display name.\n' >&2
   cat "$TMP_DIR/wrong-display.err" >&2
+  exit 1
+fi
+
+WRONG_EXTENSION_USAGE_PRODUCTS="$TMP_DIR/wrong-extension-usage/Products"
+write_product_fixture "$WRONG_EXTENSION_USAGE_PRODUCTS" Debug
+set_info_plist_key "$WRONG_EXTENSION_USAGE_PRODUCTS/Debug/GarethVideoCam.app/Contents/Library/SystemExtensions/$EXTENSION_NAME" "NSCameraUsageDescription" "Camera usage fixture"
+
+if PRODUCTS_PATH="$WRONG_EXTENSION_USAGE_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/wrong-extension-usage.out" 2>"$TMP_DIR/wrong-extension-usage.err"; then
+  printf 'Expected verifier to reject a wrong extension camera usage description.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Unexpected Debug extension NSCameraUsageDescription" "$TMP_DIR/wrong-extension-usage.err"; then
+  printf 'Verifier failure did not explain the wrong extension camera usage description.\n' >&2
+  cat "$TMP_DIR/wrong-extension-usage.err" >&2
   exit 1
 fi
 

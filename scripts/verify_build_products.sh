@@ -10,6 +10,10 @@ APP_ID="${APP_ID:-com.garethpaul.GarethVideoCam}"
 EXTENSION_ID="${EXTENSION_ID:-com.garethpaul.GarethVideoCam.Extension}"
 APP_DISPLAY_NAME="${APP_DISPLAY_NAME:-Gareth Video Cam}"
 EXTENSION_DISPLAY_NAME="${EXTENSION_DISPLAY_NAME:-Gareth Video Cam Extension}"
+APP_CAMERA_USAGE_DESCRIPTION="${APP_CAMERA_USAGE_DESCRIPTION:-Gareth Video Cam publishes a virtual camera stream.}"
+APP_SYSTEM_EXTENSION_USAGE_DESCRIPTION="${APP_SYSTEM_EXTENSION_USAGE_DESCRIPTION:-Gareth Video Cam installs a camera extension that makes the bundled video available as a virtual camera.}"
+EXTENSION_CAMERA_USAGE_DESCRIPTION="${EXTENSION_CAMERA_USAGE_DESCRIPTION:-Gareth Video Cam publishes the bundled video as a virtual camera stream.}"
+EXTENSION_SYSTEM_EXTENSION_USAGE_DESCRIPTION="${EXTENSION_SYSTEM_EXTENSION_USAGE_DESCRIPTION:-Gareth Video Cam installs a camera extension that makes the bundled video available as a virtual camera.}"
 EXPECTED_VIDEO_WIDTH="${EXPECTED_VIDEO_WIDTH:-1280}"
 EXPECTED_VIDEO_HEIGHT="${EXPECTED_VIDEO_HEIGHT:-720}"
 EXPECTED_VIDEO_FRAME_RATE="${EXPECTED_VIDEO_FRAME_RATE:-24}"
@@ -149,8 +153,13 @@ verify_info_plist_value() {
   local actual_value
 
   actual_value="$(read_info_plist_string "$bundle_path" "$key")"
+  if [ -z "$actual_value" ]; then
+    printf 'Missing %s %s %s.\n' "$configuration" "$bundle_label" "$key" >&2
+    exit 1
+  fi
+
   if [ "$actual_value" != "$expected_value" ]; then
-    printf 'Unexpected %s %s %s: %s\n' "$configuration" "$bundle_label" "$key" "${actual_value:-unknown}" >&2
+    printf 'Unexpected %s %s %s: %s\n' "$configuration" "$bundle_label" "$key" "$actual_value" >&2
     exit 1
   fi
 }
@@ -370,8 +379,8 @@ for configuration in "${configurations[@]}"; do
 
   verify_bundle_executable "$configuration" "app" "$app_path"
   verify_info_plist_value "$configuration" "app" "$app_path" "CFBundleDisplayName" "$APP_DISPLAY_NAME"
-  verify_info_plist_string "$configuration" "app" "$app_path" "NSCameraUsageDescription"
-  verify_info_plist_string "$configuration" "app" "$app_path" "NSSystemExtensionUsageDescription"
+  verify_info_plist_value "$configuration" "app" "$app_path" "NSCameraUsageDescription" "$APP_CAMERA_USAGE_DESCRIPTION"
+  verify_info_plist_value "$configuration" "app" "$app_path" "NSSystemExtensionUsageDescription" "$APP_SYSTEM_EXTENSION_USAGE_DESCRIPTION"
   verify_app_diagnostics_resources "$configuration" "$app_path"
 
   if [ ! -d "$extension_path" ]; then
@@ -388,8 +397,8 @@ for configuration in "${configurations[@]}"; do
   verify_aligned_bundle_versions "$configuration" "$app_path" "$extension_path"
   verify_bundle_executable "$configuration" "extension" "$extension_path"
   verify_info_plist_value "$configuration" "extension" "$extension_path" "CFBundleDisplayName" "$EXTENSION_DISPLAY_NAME"
-  verify_info_plist_string "$configuration" "extension" "$extension_path" "NSCameraUsageDescription"
-  verify_info_plist_string "$configuration" "extension" "$extension_path" "NSSystemExtensionUsageDescription"
+  verify_info_plist_value "$configuration" "extension" "$extension_path" "NSCameraUsageDescription" "$EXTENSION_CAMERA_USAGE_DESCRIPTION"
+  verify_info_plist_value "$configuration" "extension" "$extension_path" "NSSystemExtensionUsageDescription" "$EXTENSION_SYSTEM_EXTENSION_USAGE_DESCRIPTION"
   verify_extension_cmio_metadata "$configuration" "$extension_path"
 
   if [ ! -s "$video_path" ]; then
