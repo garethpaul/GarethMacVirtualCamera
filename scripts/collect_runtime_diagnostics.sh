@@ -112,6 +112,28 @@ print_yes_no_unknown() {
   printf '%s: %s\n' "$label" "$value"
 }
 
+print_quarantine_status() {
+  local label="$1"
+  local bundle_path="$2"
+  local quarantine_value
+
+  if [ ! -e "$bundle_path" ]; then
+    printf '%s quarantine attribute: unknown; path is missing.\n' "$label"
+    return
+  fi
+
+  if [ ! -x /usr/bin/xattr ]; then
+    printf '%s quarantine attribute: unknown; xattr is not available on this host.\n' "$label"
+    return
+  fi
+
+  if quarantine_value="$(/usr/bin/xattr -p com.apple.quarantine "$bundle_path" 2>/dev/null)"; then
+    printf '%s quarantine attribute: present (%s)\n' "$label" "$quarantine_value"
+  else
+    printf '%s quarantine attribute: absent\n' "$label"
+  fi
+}
+
 section "Host"
 printf 'Log window: %s\n' "$LOG_WINDOW"
 run_if_available sw_vers
@@ -147,6 +169,10 @@ if [ "$APP_PATH" = "$EXPECTED_APP_PATH" ]; then
 else
   printf 'App path matches expected app path: no\n'
 fi
+
+section "Quarantine Check"
+print_quarantine_status "App" "$APP_PATH"
+print_quarantine_status "Extension" "$EXTENSION_PATH"
 
 section "Embedded System Extension"
 printf 'Extension path: %s\n' "$EXTENSION_PATH"
