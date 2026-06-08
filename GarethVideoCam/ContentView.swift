@@ -608,18 +608,18 @@ extension SystemExtensionRequestManager: OSSystemExtensionRequestDelegate {
         let requestKind = pendingRequestKind ?? .activation
         pendingRequestKind = nil
 
-        switch result.rawValue {
-        case 0:
+        switch result {
+        case .completed:
             state = requestKind.completedState
             appendActivity(level: .success,
                            title: requestKind.completedTitle,
                            detail: requestKind.completedDetail)
-        case 1:
+        case .willCompleteAfterReboot:
             state = .requiresRestart
             appendActivity(level: .warning,
                            title: "Restart Required",
                            detail: requestKind.restartDetail)
-        default:
+        @unknown default:
             state = .ready
             appendActivity(level: .info,
                            title: "Request Completed",
