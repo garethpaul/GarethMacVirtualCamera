@@ -429,8 +429,8 @@ def main():
     require("func copyDiagnostics() {\n        refreshExtensionInfo()" in host_source,
             "host app should refresh readiness before copying diagnostics",
             failures)
-    require("Button(action: manager.refreshExtensionInfo)" in host_source and "Refresh Status" in host_source,
-            "host app should let users refresh extension and signing readiness in-place",
+    require("refreshStatus()" in host_source and "Status Refreshed" in host_source and "Button(action: manager.refreshStatus)" in host_source and "Refresh Status" in host_source,
+            "host app should let users refresh extension and signing readiness in-place with activity feedback",
             failures)
     require("case .idle, .ready, .needsApplicationLocation, .needsBundleIdentifier, .needsSigning, .deactivated, .failed:" in host_source,
             "host app should let a successful refresh recover from stale readiness failures",

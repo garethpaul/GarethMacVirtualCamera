@@ -667,7 +667,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         OSSystemExtensionManager.shared.submitRequest(deactivationRequest)
     }
 
-    func refreshExtensionInfo() {
+    @discardableResult
+    func refreshExtensionInfo() -> Bool {
         appCodeSigningStatus = Self.evaluateCodeSigningStatus(for: Bundle.main.bundleURL,
                                                               validDetail: "The app bundle code signature is valid.")
 
@@ -683,11 +684,22 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             default:
                 break
             }
+            return true
         } catch {
             extensionInfo = nil
             extensionCodeSigningStatus = .invalid("System extension code-signing status could not be checked: \(error.localizedDescription)")
             handleReadinessFailure(error)
+            return false
         }
+    }
+
+    func refreshStatus() {
+        guard refreshExtensionInfo() else { return }
+
+        let detail = requestReadinessDetail ?? "System extension requests can be submitted."
+        appendActivity(level: canSubmitSystemExtensionRequests ? .success : .warning,
+                       title: "Status Refreshed",
+                       detail: detail)
     }
 
     func copyDiagnostics() {
@@ -1453,7 +1465,7 @@ private struct DetailsActions: View {
 
     @ViewBuilder
     private var actionButtons: some View {
-        Button(action: manager.refreshExtensionInfo) {
+        Button(action: manager.refreshStatus) {
             Label("Refresh Status", systemImage: "arrow.clockwise")
         }
         .buttonStyle(.bordered)
