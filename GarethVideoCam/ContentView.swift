@@ -614,7 +614,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         let bundleVersionStatus: ReadinessCheck.Status
         let bundleVersionDetail: String
-        if let extensionInfo {
+        if extensionInfo != nil {
             if let bundleVersionReadinessDetail {
                 bundleVersionStatus = .blocked
                 bundleVersionDetail = bundleVersionReadinessDetail
