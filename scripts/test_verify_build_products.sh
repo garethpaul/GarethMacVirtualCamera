@@ -457,6 +457,36 @@ if ! grep -q "Missing Debug extension NSSystemExtensionUsageDescription" "$TMP_D
   exit 1
 fi
 
+MISSING_APP_CAMERA_USAGE_PRODUCTS="$TMP_DIR/missing-app-camera-usage/Products"
+write_product_fixture "$MISSING_APP_CAMERA_USAGE_PRODUCTS" Debug
+remove_info_plist_key "$MISSING_APP_CAMERA_USAGE_PRODUCTS/Debug/GarethVideoCam.app" "NSCameraUsageDescription"
+
+if PRODUCTS_PATH="$MISSING_APP_CAMERA_USAGE_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/missing-app-camera-usage.out" 2>"$TMP_DIR/missing-app-camera-usage.err"; then
+  printf 'Expected verifier to reject a missing app camera usage description.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug app NSCameraUsageDescription" "$TMP_DIR/missing-app-camera-usage.err"; then
+  printf 'Verifier failure did not explain the missing app camera usage description.\n' >&2
+  cat "$TMP_DIR/missing-app-camera-usage.err" >&2
+  exit 1
+fi
+
+MISSING_EXTENSION_CAMERA_USAGE_PRODUCTS="$TMP_DIR/missing-extension-camera-usage/Products"
+write_product_fixture "$MISSING_EXTENSION_CAMERA_USAGE_PRODUCTS" Debug
+remove_info_plist_key "$MISSING_EXTENSION_CAMERA_USAGE_PRODUCTS/Debug/GarethVideoCam.app/Contents/Library/SystemExtensions/$EXTENSION_NAME" "NSCameraUsageDescription"
+
+if PRODUCTS_PATH="$MISSING_EXTENSION_CAMERA_USAGE_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/missing-extension-camera-usage.out" 2>"$TMP_DIR/missing-extension-camera-usage.err"; then
+  printf 'Expected verifier to reject a missing extension camera usage description.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug extension NSCameraUsageDescription" "$TMP_DIR/missing-extension-camera-usage.err"; then
+  printf 'Verifier failure did not explain the missing extension camera usage description.\n' >&2
+  cat "$TMP_DIR/missing-extension-camera-usage.err" >&2
+  exit 1
+fi
+
 WRONG_APP_SYSTEM_EXTENSION_USAGE_PRODUCTS="$TMP_DIR/wrong-app-system-extension-usage/Products"
 write_product_fixture "$WRONG_APP_SYSTEM_EXTENSION_USAGE_PRODUCTS" Debug
 set_info_plist_key "$WRONG_APP_SYSTEM_EXTENSION_USAGE_PRODUCTS/Debug/GarethVideoCam.app" "NSSystemExtensionUsageDescription" "System extension usage fixture"
