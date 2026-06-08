@@ -1,57 +1,56 @@
 # Security Policy
 
-## Supported Scope
+## Supported Versions
 
-The supported security scope for Gareth Mac Virtual Camera is the current default branch, `main`. Older commits, tags, branches, forks, demos, and generated artifacts are not actively supported unless the repository explicitly marks them as maintained.
+The supported security scope for `GarethMacVirtualCamera` is the current default branch, `main`. Older commits, tags, branches, forks, demos, and generated artifacts are not actively supported unless the repository explicitly marks them as maintained.
 
-Gareth Mac Virtual Camera is a macOS SwiftUI host app with an embedded CoreMediaIO system extension. The extension publishes the bundled `Extension/video.mp4` as a virtual camera named `Gareth Video Cam`.
+Project summary: VirtualCamera for Mac that Plays MP4 in Loop
 
-## Reporting A Vulnerability
+## Reporting a Vulnerability
 
-Report suspected vulnerabilities through GitHub private vulnerability reporting or a draft GitHub Security Advisory for `garethpaul/GarethMacVirtualCamera` when that option is available. If private reporting is unavailable, contact the repository owner through GitHub and avoid posting exploit details publicly until the issue can be assessed.
+Please report suspected vulnerabilities through GitHub's private vulnerability reporting or by opening a draft GitHub Security Advisory for `garethpaul/GarethMacVirtualCamera` when that option is available. If GitHub does not show a private reporting option for this repository, contact the repository owner through GitHub and avoid posting exploit details publicly until the issue can be assessed.
 
 Do not open a public issue that includes exploit code, secrets, personal data, or detailed reproduction steps for an unpatched vulnerability.
 
+## What to Include
+
 Helpful reports include:
 
-- the affected file, entitlement, bundle identifier, script, workflow, or runtime path
-- the macOS version, Xcode version, branch, and commit SHA used
-- a concise impact statement explaining what an attacker or untrusted local process could do
-- reproduction steps using test data, local apps, and devices you control
-- relevant logs, diagnostics, screenshots, or proof-of-concept snippets without private data
+- the affected file, endpoint, permission, dependency, or workflow
+- a concise impact statement explaining what an attacker could do
+- reproduction steps using test data and accounts you control
+- the branch, commit SHA, platform version, device, runtime, or dependency versions used
+- logs, screenshots, or proof-of-concept snippets that demonstrate impact without exposing private data
 
-## Security Posture
+## Project Security Posture
 
-Virtual camera extensions operate on a privacy-sensitive media surface. Changes should preserve explicit user approval, valid signing, expected bundle identifiers, expected app-group entitlements, and the System Extension entitlement model.
+- This repository appears to be an Apple platform application or Swift sample. The active security scope is the code and documentation on the default branch.
+- Review found authentication, token, or session-related code paths; changes in those areas should receive security-focused review before merge.
+- Review found network clients, sockets, web APIs, or service endpoints; changes in those areas should receive security-focused review before merge.
+- Review found mobile permission or privacy-sensitive data handling; changes in those areas should receive security-focused review before merge.
+- Review found file, document, data, or media parsing flows; changes in those areas should receive security-focused review before merge.
+- Review found shell execution, subprocess, or dynamic evaluation surfaces; changes in those areas should receive security-focused review before merge.
+- Review found database, model, query, or persistence-related code; changes in those areas should receive security-focused review before merge.
+- No primary dependency manifest was detected in the repository root. If dependencies are added later, include a manifest and prefer reproducible installation instructions.
 
-Security-sensitive surfaces include:
+## Mobile Privacy Notes
 
-- system-extension activation, deactivation, approval, and registration handling
-- host and extension code signing, Team ID matching, and entitlement validation
-- shared app-group configuration between the host app and embedded extension
-- bundled-video parsing, metadata validation, and pixel-buffer stream-format checks
-- runtime diagnostics that collect signing, entitlement, process, camera inventory, and unified-log evidence
-- shell scripts and CI workflows that build, verify, or scan project artifacts
+If this project requests device permissions such as location, camera, microphone, contacts, Bluetooth, health data, or local storage access, reports should describe the permission involved and whether sensitive data can be accessed, persisted, or transmitted unexpectedly. Please avoid testing against real third-party user data or accounts you do not control.
 
-Do not add hidden camera capture, external streaming, upload behavior, entitlement shortcuts, or activation paths that bypass macOS signing and user approval.
+## Dependency and Supply Chain Security
+
+Dependency updates should come from trusted package managers and should keep lockfiles in sync when lockfiles exist. Do not commit credentials, private keys, tokens, generated secrets, or machine-local configuration. If a vulnerability depends on a compromised package, typosquatting risk, insecure transitive dependency, or unsafe build step, include the package name, affected version, and the path through which it is used.
 
 ## Safe Research Guidelines
 
 Good-faith research is welcome when it stays within these boundaries:
 
-- use only devices, data, and infrastructure that you own or have explicit permission to test
+- use only accounts, devices, data, and infrastructure that you own or have explicit permission to test
 - avoid destructive actions, persistence, spam, phishing, social engineering, or denial-of-service testing
 - minimize access to personal data and stop testing immediately if private data is exposed
-- do not exfiltrate secrets or third-party data
-- report the minimum evidence needed to verify impact
+- do not exfiltrate secrets or third-party data; report the minimum evidence needed to verify impact
 - keep vulnerability details confidential until the maintainer has assessed the report
-
-## Dependency And Supply Chain Security
-
-This repository does not use a root package dependency manifest. If dependencies are added later, use trusted package managers, keep lockfiles in sync when lockfiles exist, and avoid committing credentials, private keys, tokens, generated secrets, or machine-local configuration.
-
-Build and validation changes should keep `./scripts/check_project.sh`, `.github/workflows/macos-build.yml`, `./scripts/build_unsigned.sh`, `./scripts/verify_build_products.sh`, and `./scripts/scan_build_log.py` aligned so local and CI evidence stay comparable.
 
 ## Maintainer Response
 
-The maintainer will review complete reports as availability allows, prioritize issues by exploitability and impact, and coordinate a fix or mitigation when the affected code is still maintained. For sample, archived, or educational repository states, remediation may be documentation, validation, dependency updates, or clearly marking unsupported code rather than a production-style release.
+The maintainer will review complete reports as availability allows, prioritize issues by exploitability and impact, and coordinate a fix or mitigation when the affected code is still maintained. For sample, archived, or educational repositories, the likely remediation may be documentation, dependency updates, or clearly marking unsupported code rather than a production-style patch release.
