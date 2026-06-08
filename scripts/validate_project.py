@@ -770,7 +770,7 @@ def main():
     require("CI-equivalent unsigned compile" in readme_text and "./scripts/build_unsigned.sh" in readme_text and "./scripts/scan_build_log.py build-Debug.log build-Release.log" in readme_text and ".build/Xcode" in readme_text and "BUILD_OUTPUT_PATH" in readme_text,
             "README should document the CI-equivalent unsigned Debug and Release target builds with log scanning",
             failures)
-    require("verifies the built app products contain the embedded system extension, aligned bundle versions, declared executables, display metadata, product-specific privacy usage strings, bundled runtime diagnostics self-tests, resolved CoreMediaIO extension metadata, and bundled-video metadata" in readme_text,
+    require("runs `make check`, performs unsigned Debug and Release target builds" in readme_text and "verifies the built app products contain the embedded system extension, aligned bundle versions, declared executables, display metadata, product-specific privacy usage strings, bundled runtime diagnostics self-tests, resolved CoreMediaIO extension metadata, and bundled-video metadata" in readme_text,
             "README should document CI build-product verification",
             failures)
     require("parseable dimensions, frame rate, and positive video duration" in readme_text,
@@ -935,20 +935,8 @@ def main():
         require("Xcode_26.5" in workflow_text,
                 "macOS build workflow should explicitly select Xcode 26.5",
                 failures)
-        require("./scripts/test_scan_build_log.py" in workflow_text,
-                "macOS build workflow should test the build-log scanner",
-                failures)
-        require("./scripts/test_verify_build_products.sh" in workflow_text and "Test build product verifier" in workflow_text,
-                "macOS build workflow should test the build-product verifier",
-                failures)
-        require("./scripts/test_collect_runtime_diagnostics.sh" in workflow_text and "Test runtime diagnostics" in workflow_text,
-                "macOS build workflow should test runtime diagnostics helpers",
-                failures)
-        require("bash -n ./scripts/collect_runtime_diagnostics.sh" in workflow_text and "bash -n ./scripts/build_unsigned.sh" in workflow_text and "bash -n ./scripts/verify_build_products.sh" in workflow_text and "bash -n ./scripts/check_project.sh" in workflow_text and "bash -n ./scripts/test_collect_runtime_diagnostics.sh" in workflow_text and "bash -n ./scripts/test_verify_build_products.sh" in workflow_text,
-                "macOS build workflow should syntax-check the runtime diagnostics, unsigned build, and build-product verifier scripts",
-                failures)
-        require("git diff-tree --check --root --no-commit-id -r HEAD" in workflow_text,
-                "macOS build workflow should check committed whitespace",
+        require("Run local validation baseline" in workflow_text and "make check" in workflow_text,
+                "macOS build workflow should run the conventional make check validation baseline",
                 failures)
         require("./scripts/build_unsigned.sh" in workflow_text,
                 "macOS build workflow should perform the shared unsigned xcodebuild script",
