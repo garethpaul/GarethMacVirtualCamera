@@ -62,6 +62,7 @@ def main():
     project_text = (ROOT / "GarethVideoCam.xcodeproj/project.pbxproj").read_text()
     host_source = (ROOT / "GarethVideoCam/ContentView.swift").read_text()
     extension_source = (ROOT / "Extension/ExtensionProvider.swift").read_text()
+    extension_main_source = (ROOT / "Extension/main.swift").read_text()
     require(f"PRODUCT_BUNDLE_IDENTIFIER = {APP_BUNDLE_ID};" in project_text,
             "project is missing the host app bundle identifier",
             failures)
@@ -93,6 +94,12 @@ def main():
             failures)
     require("isPreparingStream" not in extension_source,
             "extension should not keep unused stream preparation state",
+            failures)
+    require("fatalError(" not in extension_source and "fatalError(" not in extension_main_source,
+            "extension startup should log initialization failures instead of crashing with fatalError",
+            failures)
+    require("Failed to start camera extension service" in extension_main_source and "exit(EXIT_FAILURE)" in extension_main_source,
+            "extension entry point should log startup failures before exiting",
             failures)
     require("case needsApplicationLocation" in host_source and "canSubmitSystemExtensionRequests" in host_source,
             "host app should model the /Applications requirement before submitting system-extension requests",

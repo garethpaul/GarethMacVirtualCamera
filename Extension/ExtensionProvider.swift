@@ -38,6 +38,9 @@ private enum CameraExtensionError: LocalizedError {
     case unableToAddTrackOutput
     case assetReaderFailedToStart(String)
     case unexpectedDeviceSource
+    case failedToCreateVideoFormatDescription(OSStatus)
+    case failedToAddStream(String)
+    case failedToAddDevice(String)
 
     var errorDescription: String? {
         switch self {
@@ -53,6 +56,12 @@ private enum CameraExtensionError: LocalizedError {
             return "The asset reader failed to start: \(detail)"
         case .unexpectedDeviceSource:
             return "The stream is attached to an unexpected device source."
+        case .failedToCreateVideoFormatDescription(let status):
+            return "Failed to create the video format description: \(status)"
+        case .failedToAddStream(let detail):
+            return "Failed to add the camera stream: \(detail)"
+        case .failedToAddDevice(let detail):
+            return "Failed to add the camera device: \(detail)"
         }
     }
 }
@@ -73,7 +82,7 @@ private struct AssetReaderState: @unchecked Sendable {
 final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @unchecked Sendable {
     // MARK: Lifecycle
 
-    init(localizedName: String) {
+    init(localizedName: String) throws {
         super.init()
 
         device = CMIOExtensionDevice(localizedName: localizedName,
@@ -89,7 +98,7 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
                                                                      formatDescriptionOut: &_videoDescription)
 
         guard formatDescriptionStatus == noErr, let videoDescription = _videoDescription else {
-            fatalError("Failed to create the video format description: \(formatDescriptionStatus)")
+            throw CameraExtensionError.failedToCreateVideoFormatDescription(formatDescriptionStatus)
         }
 
         let videoStreamFormat = CMIOExtensionStreamFormat(formatDescription: videoDescription,
@@ -102,11 +111,7 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
                                               streamFormat: videoStreamFormat,
                                               device: device)
 
-        do {
-            try device.addStream(_streamSource.stream)
-        } catch {
-            fatalError("Failed to add stream: \(error.localizedDescription)")
-        }
+        try addStream()
     }
 
     // MARK: Internal
@@ -192,6 +197,14 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
 
     private var lastPresentationTime: CMTime?
     private var timestampOffset: CMTime = .zero
+
+    private func addStream() throws {
+        do {
+            try device.addStream(_streamSource.stream)
+        } catch {
+            throw CameraExtensionError.failedToAddStream(error.localizedDescription)
+        }
+    }
 
     private func prepareAndStartStreaming(with videoURL: URL, generation: UInt64) async {
         do {
@@ -532,16 +545,16 @@ final class ExtensionStreamSource: NSObject, CMIOExtensionStreamSource {
 final class ExtensionProviderSource: NSObject, CMIOExtensionProviderSource {
     // MARK: Lifecycle
 
-    init(clientQueue: DispatchQueue?) {
+    init(clientQueue: DispatchQueue?) throws {
         super.init()
 
         provider = CMIOExtensionProvider(source: self, clientQueue: clientQueue)
-        deviceSource = ExtensionDeviceSource(localizedName: CameraExtensionConfiguration.localizedDeviceName)
+        deviceSource = try ExtensionDeviceSource(localizedName: CameraExtensionConfiguration.localizedDeviceName)
 
         do {
             try provider.addDevice(deviceSource.device)
         } catch {
-            fatalError("Failed to add device: \(error.localizedDescription)")
+            throw CameraExtensionError.failedToAddDevice(error.localizedDescription)
         }
     }
 
