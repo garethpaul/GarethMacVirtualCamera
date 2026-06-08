@@ -375,6 +375,9 @@ def main():
     require("struct ReadinessCheck" in host_source and "readinessChecks" in host_source and "ReadinessPanel(manager: manager)" in host_source and "ReadinessRow" in host_source and "Team ID Match" in host_source and "Readiness Checks:" in host_source,
             "host app should show and copy a compact readiness checklist for activation gates",
             failures)
+    require("let checks = manager.readinessChecks" in host_source and "ForEach(Array(checks.enumerated()), id: \\.element.id)" in host_source,
+            "host readiness panel should render a stable checklist snapshot",
+            failures)
     require("applicationIdentifierReadinessDetail" in host_source and "applicationBundleIdentifierStatus" in host_source and "App Bundle ID Check" in host_source and "App Identifier Required" in host_source,
             "host app should block requests when the host bundle identifier does not match the expected identifier",
             failures)

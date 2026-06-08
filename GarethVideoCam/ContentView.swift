@@ -1331,17 +1331,19 @@ private struct ReadinessPanel: View {
     @ObservedObject var manager: SystemExtensionRequestManager
 
     var body: some View {
+        let checks = manager.readinessChecks
+
         SectionSurface {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Readiness")
                     .font(.title3.weight(.semibold))
 
                 VStack(spacing: 0) {
-                    ForEach(manager.readinessChecks) { check in
+                    ForEach(Array(checks.enumerated()), id: \.element.id) { index, check in
                         ReadinessRow(check: check)
                             .padding(.vertical, 10)
 
-                        if check.id != manager.readinessChecks.last?.id {
+                        if index < checks.count - 1 {
                             Divider()
                         }
                     }
