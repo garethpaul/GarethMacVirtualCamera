@@ -581,6 +581,9 @@ def main():
     require("let checks = manager.readinessChecks" in host_source and "ForEach(Array(checks.enumerated()), id: \\.element.id)" in host_source,
             "host readiness panel should render a stable checklist snapshot",
             failures)
+    require("private var readinessTitle" in host_source and "private var readinessDetail" in host_source and "private var readinessStatus" in host_source and "Text(check.status.title)" in host_source and ".fixedSize(horizontal: true, vertical: false)" in host_source,
+            "host readiness checklist rows should keep titles, details, and status labels responsive and readable",
+            failures)
     require("applicationIdentifierReadinessDetail" in host_source and "applicationBundleIdentifierStatus" in host_source and "App Bundle ID Check" in host_source and "App Identifier Required" in host_source,
             "host app should block requests when the host bundle identifier does not match the expected identifier",
             failures)

@@ -3031,11 +3031,7 @@ private struct ReadinessRow: View {
                     }
                 }
 
-                Text(check.detail)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .textSelection(.enabled)
+                readinessDetail
             }
         }
     }
@@ -3044,6 +3040,17 @@ private struct ReadinessRow: View {
     private var readinessTitle: some View {
         Text(check.title)
             .font(.callout.weight(.semibold))
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    @ViewBuilder
+    private var readinessDetail: some View {
+        Text(check.detail)
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .textSelection(.enabled)
     }
 
     @ViewBuilder
@@ -3051,6 +3058,8 @@ private struct ReadinessRow: View {
         Text(check.status.title)
             .font(.caption.weight(.semibold))
             .foregroundStyle(check.status.color)
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
     }
 }
 
