@@ -532,6 +532,36 @@ if ! grep -q "Unexpected Debug app NSCameraUsageDescription" "$TMP_DIR/wrong-app
   exit 1
 fi
 
+MISSING_APP_DISPLAY_PRODUCTS="$TMP_DIR/missing-app-display/Products"
+write_product_fixture "$MISSING_APP_DISPLAY_PRODUCTS" Debug
+remove_info_plist_key "$MISSING_APP_DISPLAY_PRODUCTS/Debug/GarethVideoCam.app" "CFBundleDisplayName"
+
+if PRODUCTS_PATH="$MISSING_APP_DISPLAY_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/missing-app-display.out" 2>"$TMP_DIR/missing-app-display.err"; then
+  printf 'Expected verifier to reject a missing app display name.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug app CFBundleDisplayName" "$TMP_DIR/missing-app-display.err"; then
+  printf 'Verifier failure did not explain the missing app display name.\n' >&2
+  cat "$TMP_DIR/missing-app-display.err" >&2
+  exit 1
+fi
+
+MISSING_EXTENSION_DISPLAY_PRODUCTS="$TMP_DIR/missing-extension-display/Products"
+write_product_fixture "$MISSING_EXTENSION_DISPLAY_PRODUCTS" Debug
+remove_info_plist_key "$MISSING_EXTENSION_DISPLAY_PRODUCTS/Debug/GarethVideoCam.app/Contents/Library/SystemExtensions/$EXTENSION_NAME" "CFBundleDisplayName"
+
+if PRODUCTS_PATH="$MISSING_EXTENSION_DISPLAY_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/missing-extension-display.out" 2>"$TMP_DIR/missing-extension-display.err"; then
+  printf 'Expected verifier to reject a missing extension display name.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug extension CFBundleDisplayName" "$TMP_DIR/missing-extension-display.err"; then
+  printf 'Verifier failure did not explain the missing extension display name.\n' >&2
+  cat "$TMP_DIR/missing-extension-display.err" >&2
+  exit 1
+fi
+
 WRONG_DISPLAY_PRODUCTS="$TMP_DIR/wrong-display/Products"
 write_product_fixture "$WRONG_DISPLAY_PRODUCTS" Debug
 set_info_plist_key "$WRONG_DISPLAY_PRODUCTS/Debug/GarethVideoCam.app" "CFBundleDisplayName" "GarethVideoCam"

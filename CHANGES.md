@@ -26,3 +26,4 @@
 - Covered unsigned build script default Debug and Release configuration behavior.
 - Documented the stable Apple toolchain target separately from current prerelease watch items.
 - Made runtime video metadata parsing tolerant of quoted and whitespace-padded values.
+- Covered missing app and extension display names in build-product verifier fixtures.
