@@ -71,6 +71,24 @@ read_bundle_identifier() {
   read_info_plist_value "$bundle_path" CFBundleIdentifier
 }
 
+bundle_versions_match_readiness_value() {
+  local app_short_version="$1"
+  local app_build_version="$2"
+  local extension_short_version="$3"
+  local extension_build_version="$4"
+
+  if [ -n "$app_short_version" ] \
+    && [ -n "$app_build_version" ] \
+    && [ -n "$extension_short_version" ] \
+    && [ -n "$extension_build_version" ] \
+    && [ "$app_short_version" = "$extension_short_version" ] \
+    && [ "$app_build_version" = "$extension_build_version" ]; then
+    printf 'yes\n'
+  else
+    printf 'no\n'
+  fi
+}
+
 read_extension_mach_service_name() {
   local info_plist="$EXTENSION_INFO_PLIST"
   local value=""
@@ -235,6 +253,13 @@ run_readiness_rollup_ready_self_test() {
   print_readiness_rollup
 }
 
+run_bundle_version_match_self_test() {
+  printf 'Bundle version match fixture: %s\n' "$(bundle_versions_match_readiness_value "1.0" "100" "1.0" "100")"
+  printf 'Bundle version short mismatch fixture: %s\n' "$(bundle_versions_match_readiness_value "1.0" "100" "2.0" "100")"
+  printf 'Bundle version build mismatch fixture: %s\n' "$(bundle_versions_match_readiness_value "1.0" "100" "1.0" "101")"
+  printf 'Bundle version missing fixture: %s\n' "$(bundle_versions_match_readiness_value "1.0" "" "1.0" "100")"
+}
+
 case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
   readiness-rollup|readiness-rollup-blocked)
     run_readiness_rollup_blocked_self_test
@@ -246,6 +271,10 @@ case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
     ;;
   readiness-rollup-ready)
     run_readiness_rollup_ready_self_test
+    exit 0
+    ;;
+  bundle-version-match)
+    run_bundle_version_match_self_test
     exit 0
     ;;
 esac
@@ -436,6 +465,33 @@ else
   printf 'Extension bundle identifier check requires the embedded system extension bundle.\n'
 fi
 
+section "Bundle Version Match"
+if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
+  app_short_version="$(read_info_plist_value "$APP_PATH" CFBundleShortVersionString)"
+  app_build_version="$(read_info_plist_value "$APP_PATH" CFBundleVersion)"
+  extension_short_version="$(read_info_plist_value "$EXTENSION_PATH" CFBundleShortVersionString)"
+  extension_build_version="$(read_info_plist_value "$EXTENSION_PATH" CFBundleVersion)"
+
+  printf 'App bundle short version: %s\n' "${app_short_version:-unknown}"
+  printf 'App bundle build version: %s\n' "${app_build_version:-unknown}"
+  printf 'Extension bundle short version: %s\n' "${extension_short_version:-unknown}"
+  printf 'Extension bundle build version: %s\n' "${extension_build_version:-unknown}"
+
+  if [ -n "$app_short_version" ] && [ -n "$extension_short_version" ] && [ "$app_short_version" = "$extension_short_version" ]; then
+    printf 'Bundle short versions match: yes\n'
+  else
+    printf 'Bundle short versions match: no\n'
+  fi
+
+  if [ -n "$app_build_version" ] && [ -n "$extension_build_version" ] && [ "$app_build_version" = "$extension_build_version" ]; then
+    printf 'Bundle build versions match: yes\n'
+  else
+    printf 'Bundle build versions match: no\n'
+  fi
+else
+  printf 'Bundle version comparison requires both the app and embedded system extension bundles.\n'
+fi
+
 section "Signing Team Match"
 if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
   app_team_identifier=""
@@ -574,6 +630,16 @@ else
   print_readiness_check "Extension host-only entitlement absent" "unknown"
   print_readiness_check "Extension executable ready" "unknown"
   print_readiness_check "Extension CMIO Mach service ready" "unknown"
+fi
+
+if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
+  app_short_version="$(read_info_plist_value "$APP_PATH" CFBundleShortVersionString)"
+  app_build_version="$(read_info_plist_value "$APP_PATH" CFBundleVersion)"
+  extension_short_version="$(read_info_plist_value "$EXTENSION_PATH" CFBundleShortVersionString)"
+  extension_build_version="$(read_info_plist_value "$EXTENSION_PATH" CFBundleVersion)"
+  print_readiness_check "Bundle versions match ready" "$(bundle_versions_match_readiness_value "$app_short_version" "$app_build_version" "$extension_short_version" "$extension_build_version")"
+else
+  print_readiness_check "Bundle versions match ready" "unknown"
 fi
 
 if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
