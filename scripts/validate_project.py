@@ -488,6 +488,9 @@ def main():
     require("didCompleteInitialAppearance" in host_source and "guard didCompleteInitialAppearance else" in host_source,
             "host app should avoid duplicating the manager startup refresh on first view appearance",
             failures)
+    require("@Environment(\\.scenePhase)" in host_source and ".onChange(of: scenePhase)" in host_source and "newScenePhase == .active" in host_source,
+            "host app should refresh readiness when it becomes active after external approval changes",
+            failures)
     require("case .idle, .ready, .needsApplicationLocation, .needsBundleIdentifier, .needsSigning, .deactivated, .failed:" in host_source,
             "host app should let a successful refresh recover from stale readiness failures",
             failures)
@@ -533,7 +536,7 @@ def main():
     require("Runtime Activation" in readme_text and "valid Apple Developer signing identity" in readme_text,
             "README should document signed runtime activation requirements",
             failures)
-    require("shows and copies a readiness checklist" in readme_text and "primary System Settings approval shortcut" in readme_text and "reveal the app and embedded extension in Finder" in readme_text and "diagnostics snapshot" in readme_text and "generation timestamp" in readme_text and "bundle identifiers" in readme_text and "host app bundle identifier does not match the expected identifier" in readme_text and "missing the System Extension entitlement" in readme_text and "embedded `video.mp4` resource is missing or empty" in readme_text and "bundled system extension signature is invalid" in readme_text and "Team IDs" in readme_text and "pending request direction" in readme_text and "last recorded failure" in readme_text,
+    require("refreshes readiness when the app becomes active" in readme_text and "shows and copies a readiness checklist" in readme_text and "primary System Settings approval shortcut" in readme_text and "reveal the app and embedded extension in Finder" in readme_text and "diagnostics snapshot" in readme_text and "generation timestamp" in readme_text and "bundle identifiers" in readme_text and "host app bundle identifier does not match the expected identifier" in readme_text and "missing the System Extension entitlement" in readme_text and "embedded `video.mp4` resource is missing or empty" in readme_text and "bundled system extension signature is invalid" in readme_text and "Team IDs" in readme_text and "pending request direction" in readme_text and "last recorded failure" in readme_text,
             "README should document the in-app approval and diagnostics actions",
             failures)
     require("collect_runtime_diagnostics.sh" in readme_text and "bundle versions" in readme_text and "bundled-video byte size, checksum, metadata" in readme_text and "expected application-location and bundle identifier checks" in readme_text and "matching Team IDs" in readme_text and "Gatekeeper assessment" in readme_text and "signed entitlements" in readme_text and "explicit host System Extension entitlement checks" in readme_text and "runtime-readiness summary" in readme_text and "systemextensionsctl" in readme_text and "camera device inventory" in readme_text and "running app/extension processes" in readme_text and "unified-log window" in readme_text and "system-extension/CMIO log context" in readme_text,

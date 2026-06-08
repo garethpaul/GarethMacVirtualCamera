@@ -9,6 +9,7 @@ import SwiftUI
 import SystemExtensions
 
 struct ContentView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @ObservedObject var systemExtensionRequestManager: SystemExtensionRequestManager
     @State private var selectedSection: DashboardSection? = .overview
     @State private var didCompleteInitialAppearance = false
@@ -28,6 +29,11 @@ struct ContentView: View {
                 didCompleteInitialAppearance = true
                 return
             }
+
+            systemExtensionRequestManager.refreshExtensionInfo()
+        }
+        .onChange(of: scenePhase) { _, newScenePhase in
+            guard newScenePhase == .active, didCompleteInitialAppearance else { return }
 
             systemExtensionRequestManager.refreshExtensionInfo()
         }
