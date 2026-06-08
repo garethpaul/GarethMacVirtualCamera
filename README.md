@@ -58,4 +58,6 @@ To collect runtime evidence from a signed macOS host:
 ./scripts/collect_runtime_diagnostics.sh /Applications/GarethVideoCam.app
 ```
 
-The diagnostics script reports host tool versions, app and extension code-signing status, Gatekeeper assessment, signed entitlements, embedded system-extension metadata, `systemextensionsctl` registration, and recent `com.garethpaul.GarethVideoCam` unified logs.
+Pass a second argument to change the unified-log window, for example `1h`.
+
+The diagnostics script reports host tool versions, app and extension code-signing status, Gatekeeper assessment, signed entitlements, embedded system-extension metadata, `systemextensionsctl` registration, recent `com.garethpaul.GarethVideoCam` unified logs, and recent system-extension/CMIO log context.

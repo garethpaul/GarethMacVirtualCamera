@@ -2,6 +2,7 @@
 set -euo pipefail
 
 APP_PATH="${1:-/Applications/GarethVideoCam.app}"
+LOG_WINDOW="${2:-30m}"
 EXTENSION_ID="com.garethpaul.GarethVideoCam.Extension"
 EXTENSION_PATH="${APP_PATH}/Contents/Library/SystemExtensions/${EXTENSION_ID}.systemextension"
 LOG_SUBSYSTEM="com.garethpaul.GarethVideoCam"
@@ -22,6 +23,7 @@ run_if_available() {
 }
 
 section "Host"
+printf 'Log window: %s\n' "$LOG_WINDOW"
 run_if_available sw_vers
 run_if_available uname -a
 run_if_available xcodebuild -version
@@ -58,7 +60,14 @@ fi
 
 section "Recent Gareth Video Cam Logs"
 if command -v log >/dev/null 2>&1; then
-  /usr/bin/log show --last 30m --style compact --predicate "subsystem == '${LOG_SUBSYSTEM}'" 2>/dev/null || true
+  /usr/bin/log show --last "$LOG_WINDOW" --style compact --predicate "subsystem == '${LOG_SUBSYSTEM}'" 2>/dev/null || true
+else
+  printf 'log is not available on this host.\n'
+fi
+
+section "Recent System Extension and Camera Logs"
+if command -v log >/dev/null 2>&1; then
+  /usr/bin/log show --last "$LOG_WINDOW" --style compact --predicate "process == 'systemextensionsd' OR subsystem == 'com.apple.systemextension' OR subsystem == 'com.apple.systemextensions' OR subsystem == 'com.apple.CoreMediaIO' OR eventMessage CONTAINS[c] '${EXTENSION_ID}'" 2>/dev/null || true
 else
   printf 'log is not available on this host.\n'
 fi
