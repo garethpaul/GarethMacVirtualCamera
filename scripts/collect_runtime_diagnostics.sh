@@ -3,6 +3,7 @@ set -euo pipefail
 
 APP_PATH="${1:-/Applications/GarethVideoCam.app}"
 LOG_WINDOW="${2:-30m}"
+APP_ID="com.garethpaul.GarethVideoCam"
 EXTENSION_ID="com.garethpaul.GarethVideoCam.Extension"
 EXTENSION_PATH="${APP_PATH}/Contents/Library/SystemExtensions/${EXTENSION_ID}.systemextension"
 LOG_SUBSYSTEM="com.garethpaul.GarethVideoCam"
@@ -24,18 +25,23 @@ run_if_available() {
 
 print_bundle_metadata() {
   local bundle_path="$1"
-  local info_plist="${bundle_path}/Contents/Info"
   local bundle_identifier
   local short_version
   local build_version
 
-  bundle_identifier="$(/usr/bin/defaults read "$info_plist" CFBundleIdentifier 2>/dev/null || true)"
-  short_version="$(/usr/bin/defaults read "$info_plist" CFBundleShortVersionString 2>/dev/null || true)"
-  build_version="$(/usr/bin/defaults read "$info_plist" CFBundleVersion 2>/dev/null || true)"
+  bundle_identifier="$(read_bundle_identifier "$bundle_path")"
+  short_version="$(/usr/bin/defaults read "${bundle_path}/Contents/Info" CFBundleShortVersionString 2>/dev/null || true)"
+  build_version="$(/usr/bin/defaults read "${bundle_path}/Contents/Info" CFBundleVersion 2>/dev/null || true)"
 
   printf 'Bundle identifier: %s\n' "${bundle_identifier:-unknown}"
   printf 'Bundle short version: %s\n' "${short_version:-unknown}"
   printf 'Bundle build version: %s\n' "${build_version:-unknown}"
+}
+
+read_bundle_identifier() {
+  local bundle_path="$1"
+
+  /usr/bin/defaults read "${bundle_path}/Contents/Info" CFBundleIdentifier 2>/dev/null || true
 }
 
 read_team_identifier() {
@@ -84,6 +90,35 @@ if [ -d "$EXTENSION_PATH" ]; then
   print_bundle_metadata "$EXTENSION_PATH"
 else
   printf 'Expected embedded system extension was not found.\n'
+fi
+
+section "Bundle Identifier Check"
+if [ -d "$APP_PATH" ]; then
+  app_bundle_identifier="$(read_bundle_identifier "$APP_PATH")"
+  printf 'Expected app bundle identifier: %s\n' "$APP_ID"
+  printf 'Actual app bundle identifier: %s\n' "${app_bundle_identifier:-unknown}"
+
+  if [ "$app_bundle_identifier" = "$APP_ID" ]; then
+    printf 'App bundle identifier matches: yes\n'
+  else
+    printf 'App bundle identifier matches: no\n'
+  fi
+else
+  printf 'App bundle identifier check requires the app bundle.\n'
+fi
+
+if [ -d "$EXTENSION_PATH" ]; then
+  extension_bundle_identifier="$(read_bundle_identifier "$EXTENSION_PATH")"
+  printf 'Expected extension bundle identifier: %s\n' "$EXTENSION_ID"
+  printf 'Actual extension bundle identifier: %s\n' "${extension_bundle_identifier:-unknown}"
+
+  if [ "$extension_bundle_identifier" = "$EXTENSION_ID" ]; then
+    printf 'Extension bundle identifier matches: yes\n'
+  else
+    printf 'Extension bundle identifier matches: no\n'
+  fi
+else
+  printf 'Extension bundle identifier check requires the embedded system extension bundle.\n'
 fi
 
 section "Signing Team Match"
