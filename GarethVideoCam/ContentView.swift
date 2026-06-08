@@ -372,6 +372,30 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         return nil
     }
 
+    var requestReadinessStatus: String {
+        return canSubmitSystemExtensionRequests ? "Ready" : "Blocked"
+    }
+
+    var requestReadinessDetail: String? {
+        if !isRunningFromApplications {
+            return "The app must run from /Applications/GarethVideoCam.app before macOS will accept system extension requests."
+        }
+
+        if !appCodeSigningStatus.isValid {
+            return appCodeSigningStatus.detail
+        }
+
+        if !extensionCodeSigningStatus.isValid {
+            return extensionCodeSigningStatus.detail
+        }
+
+        if let signingTeamReadinessDetail {
+            return signingTeamReadinessDetail
+        }
+
+        return nil
+    }
+
     var appTeamIdentifier: String {
         return appCodeSigningStatus.teamIdentifier ?? "Unknown"
     }
@@ -403,6 +427,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         App Version: \(applicationVersion)
         App Location: \(applicationLocationStatus)
         App Path: \(applicationBundlePath)
+        Request Readiness: \(requestReadinessStatus)
+        Request Readiness Detail: \(requestReadinessDetail ?? "System extension requests can be submitted.")
         App Code Signing: \(appCodeSigningStatus.title)
         App Code Signing Detail: \(appCodeSigningStatus.detail)
         App Team ID: \(appTeamIdentifier)
@@ -957,6 +983,10 @@ private struct DetailsPanel: View {
                 DetailRow(title: "App Version", value: manager.applicationVersion)
                 DetailRow(title: "Extension Version", value: manager.extensionInfo?.version ?? "Unknown")
                 DetailRow(title: "Application Location", value: manager.applicationLocationStatus)
+                DetailRow(title: "Request Readiness", value: manager.requestReadinessStatus)
+                if let requestReadinessDetail = manager.requestReadinessDetail {
+                    DetailRow(title: "Readiness Detail", value: requestReadinessDetail)
+                }
                 DetailRow(title: "App Signature", value: manager.appCodeSigningStatus.title)
                 if !manager.appCodeSigningStatus.isValid {
                     DetailRow(title: "App Signature Detail", value: manager.appCodeSigningStatus.detail)
