@@ -92,6 +92,19 @@ def main():
             "shared scheme no longer copies the app into /Applications for system-extension testing",
             failures)
 
+    workflow_path = ROOT / ".github/workflows/macos-build.yml"
+    require(workflow_path.exists(),
+            "macOS build workflow is missing",
+            failures)
+    if workflow_path.exists():
+        workflow_text = workflow_path.read_text()
+        require("runs-on: macos-26" in workflow_text,
+                "macOS build workflow should run on the macOS 26 runner",
+                failures)
+        require("xcodebuild" in workflow_text and "CODE_SIGNING_ALLOWED=NO" in workflow_text,
+                "macOS build workflow should perform an unsigned xcodebuild",
+                failures)
+
     if failures:
         for failure in failures:
             print(f"FAIL: {failure}", file=sys.stderr)

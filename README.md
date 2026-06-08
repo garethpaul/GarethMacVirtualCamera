@@ -30,4 +30,6 @@ On macOS with Xcode installed, also run:
 xcodebuild -project GarethVideoCam.xcodeproj -scheme GarethVideoCam -configuration Debug build
 ```
 
+Pushes and pull requests to `main` also run `.github/workflows/macos-build.yml` on GitHub's `macos-26` runner. That workflow validates metadata and performs an unsigned Debug build so CI can catch Apple SDK compile regressions without requiring a signing certificate.
+
 After approving the camera extension in System Settings, it should appear in camera pickers as `Gareth Video Cam`.
