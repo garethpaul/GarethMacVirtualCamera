@@ -450,8 +450,11 @@ def main():
     require("activateFileViewerSelecting" in host_source and "Reveal App" in host_source,
             "host app should let users reveal the running app bundle in Finder",
             failures)
-    require("revealBundledExtensionInFinder" in host_source and "Reveal Extension" in host_source and "Extension Revealed" in host_source,
-            "host app should let users reveal the embedded system extension bundle in Finder",
+    require("revealBundledExtensionInFinder" in host_source and "canRevealBundledExtension" in host_source and "Reveal Extension" in host_source and "Extension Revealed" in host_source and ".disabled(!manager.canRevealBundledExtension)" in host_source,
+            "host app should let users reveal the embedded system extension bundle in Finder only when it is loaded",
+            failures)
+    require("Submit a macOS system extension activation request." in host_source and "Refresh app, extension, signing, and readiness status." in host_source and "Copy the current readiness and diagnostics snapshot." in host_source,
+            "host app action buttons should expose concise hover help",
             failures)
     require("openSystemSettings" in host_source and "System Settings" in host_source and "/System/Applications/System Settings.app" in host_source,
             "host app should provide a System Settings shortcut for extension approval",

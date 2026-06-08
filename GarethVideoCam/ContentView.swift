@@ -578,6 +578,10 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         return ByteCountFormatter.string(fromByteCount: videoByteCount, countStyle: .file)
     }
 
+    var canRevealBundledExtension: Bool {
+        return extensionInfo != nil
+    }
+
     var diagnosticSummary: String {
         let extensionDescription: String
         if let extensionInfo {
@@ -1297,6 +1301,7 @@ private struct ActionPanel: View {
         }
         .buttonStyle(.borderedProminent)
         .disabled(manager.isBusy || !manager.canSubmitSystemExtensionRequests)
+        .help("Submit a macOS system extension activation request.")
     }
 
     @ViewBuilder
@@ -1306,6 +1311,7 @@ private struct ActionPanel: View {
         }
         .buttonStyle(.bordered)
         .disabled(manager.isBusy || !manager.canSubmitSystemExtensionRequests)
+        .help("Submit a macOS system extension deactivation request.")
     }
 }
 
@@ -1451,26 +1457,32 @@ private struct DetailsActions: View {
             Label("Refresh Status", systemImage: "arrow.clockwise")
         }
         .buttonStyle(.bordered)
+        .help("Refresh app, extension, signing, and readiness status.")
 
         Button(action: manager.openSystemSettings) {
             Label("System Settings", systemImage: "gearshape")
         }
         .buttonStyle(.bordered)
+        .help("Open System Settings for extension approval.")
 
         Button(action: manager.copyDiagnostics) {
             Label("Copy Diagnostics", systemImage: "doc.on.doc")
         }
         .buttonStyle(.bordered)
+        .help("Copy the current readiness and diagnostics snapshot.")
 
         Button(action: manager.revealApplicationInFinder) {
             Label("Reveal App", systemImage: "folder")
         }
         .buttonStyle(.bordered)
+        .help("Reveal the running app bundle in Finder.")
 
         Button(action: manager.revealBundledExtensionInFinder) {
             Label("Reveal Extension", systemImage: "folder")
         }
         .buttonStyle(.bordered)
+        .disabled(!manager.canRevealBundledExtension)
+        .help("Reveal the embedded system extension bundle in Finder.")
     }
 }
 
