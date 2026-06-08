@@ -33,14 +33,14 @@ def main():
 
     actionable_lines = []
     with build_log_path.open("r", encoding="utf-8", errors="replace") as build_log:
-        for line in build_log:
+        for line_number, line in enumerate(build_log, start=1):
             if ACTIONABLE_PATTERN.search(line) and not is_ignored(line):
-                actionable_lines.append(line.rstrip())
+                actionable_lines.append((line_number, line.rstrip()))
 
     if actionable_lines:
         print("Actionable build warnings/errors found:")
-        for line in actionable_lines:
-            print(line)
+        for line_number, line in actionable_lines:
+            print(f"{build_log_path}:{line_number}: {line}")
         return 1
 
     print("No actionable build warnings/errors found.")
