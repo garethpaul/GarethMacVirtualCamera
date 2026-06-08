@@ -8,6 +8,7 @@ EXTENSION_ID="com.garethpaul.GarethVideoCam.Extension"
 EXTENSION_PATH="${APP_PATH}/Contents/Library/SystemExtensions/${EXTENSION_ID}.systemextension"
 VIDEO_PATH="${EXTENSION_PATH}/Contents/Resources/video.mp4"
 LOG_SUBSYSTEM="com.garethpaul.GarethVideoCam"
+HOST_SYSTEM_EXTENSION_ENTITLEMENT="com.apple.developer.system-extension.install"
 
 section() {
   printf '\n== %s ==\n' "$1"
@@ -61,6 +62,25 @@ read_team_identifier() {
       printf '%s\n' "$team_identifier"
       ;;
   esac
+}
+
+has_boolean_entitlement() {
+  local bundle_path="$1"
+  local entitlement="$2"
+  local entitlements_file
+  local entitlement_value
+
+  entitlements_file="$(/usr/bin/mktemp -t gareth-entitlements.XXXXXX)" || return 1
+
+  if ! /usr/bin/codesign -d --entitlements :- "$bundle_path" >"$entitlements_file" 2>/dev/null; then
+    /bin/rm -f "$entitlements_file"
+    return 1
+  fi
+
+  entitlement_value="$(/usr/libexec/PlistBuddy -c "Print :${entitlement}" "$entitlements_file" 2>/dev/null || true)"
+  /bin/rm -f "$entitlements_file"
+
+  [ "$entitlement_value" = "true" ]
 }
 
 file_byte_count() {
@@ -195,6 +215,28 @@ if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
   fi
 else
   printf 'Signing team comparison requires both the app and embedded system extension bundles.\n'
+fi
+
+section "Entitlement Check"
+printf 'Expected app System Extension entitlement: %s\n' "$HOST_SYSTEM_EXTENSION_ENTITLEMENT"
+if [ -d "$APP_PATH" ]; then
+  if has_boolean_entitlement "$APP_PATH" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT"; then
+    printf 'App System Extension entitlement present: yes\n'
+  else
+    printf 'App System Extension entitlement present: no\n'
+  fi
+else
+  printf 'App System Extension entitlement present: unknown; app bundle is missing.\n'
+fi
+
+if [ -d "$EXTENSION_PATH" ]; then
+  if has_boolean_entitlement "$EXTENSION_PATH" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT"; then
+    printf 'Extension carries host-only System Extension entitlement: yes\n'
+  else
+    printf 'Extension carries host-only System Extension entitlement: no\n'
+  fi
+else
+  printf 'Extension carries host-only System Extension entitlement: unknown; embedded extension is missing.\n'
 fi
 
 section "System Extension Registration"
