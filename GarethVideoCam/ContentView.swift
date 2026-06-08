@@ -4,6 +4,7 @@
 
 import Foundation
 import AppKit
+import Darwin
 import Security
 import SwiftUI
 import SystemExtensions
@@ -74,6 +75,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     private let expectedExtensionBundleIdentifier = "com.garethpaul.GarethVideoCam.Extension"
     private let expectedApplicationBundlePath = "/Applications/GarethVideoCam.app"
     private let requiredSystemExtensionInstallEntitlement = "com.apple.developer.system-extension.install"
+    private static let quarantineAttributeName = "com.apple.quarantine"
 
     enum InstallState: Equatable {
         case idle
@@ -317,6 +319,34 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
     }
 
+    enum QuarantineStatus: Equatable {
+        case present(String)
+        case absent
+        case unknown(String)
+
+        var title: String {
+            switch self {
+            case .present:
+                return "Present"
+            case .absent:
+                return "Absent"
+            case .unknown:
+                return "Unknown"
+            }
+        }
+
+        var detail: String {
+            switch self {
+            case .present(let value):
+                return "\(SystemExtensionRequestManager.quarantineAttributeName)=\(value)"
+            case .absent:
+                return "No quarantine extended attribute was found."
+            case .unknown(let detail):
+                return detail
+            }
+        }
+    }
+
     private enum RequestKind {
         case activation
         case deactivation
@@ -381,6 +411,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     @Published var activity: [ActivityItem] = []
     @Published var appCodeSigningStatus: CodeSigningStatus = .invalid("App code-signing status has not been checked yet.")
     @Published var extensionCodeSigningStatus: CodeSigningStatus = .invalid("System extension code-signing status has not been checked yet.")
+    @Published var appQuarantineStatus: QuarantineStatus = .unknown("App quarantine status has not been checked yet.")
+    @Published var extensionQuarantineStatus: QuarantineStatus = .unknown("System extension quarantine status has not been checked yet.")
     @Published var lastFailureDetail: String?
 
     private var pendingRequestKind: RequestKind?
@@ -707,6 +739,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         Expected App Path: \(expectedApplicationPath)
         App Location: \(applicationLocationStatus)
         App Path: \(applicationBundlePath)
+        App Quarantine: \(appQuarantineStatus.title)
+        App Quarantine Detail: \(appQuarantineStatus.detail)
         Request Readiness: \(requestReadinessStatus)
         Request Readiness Detail: \(requestReadinessDetail ?? "System extension requests can be submitted.")
         Pending Request: \(pendingRequestStatus)
@@ -721,6 +755,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         App Team ID: \(appTeamIdentifier)
         Extension Code Signing: \(extensionCodeSigningStatus.title)
         Extension Code Signing Detail: \(extensionCodeSigningStatus.detail)
+        Extension Quarantine: \(extensionQuarantineStatus.title)
+        Extension Quarantine Detail: \(extensionQuarantineStatus.detail)
         Extension Team ID: \(extensionTeamIdentifier)
         \(extensionDescription)
 
@@ -763,6 +799,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
     @discardableResult
     func refreshExtensionInfo() -> Bool {
+        appQuarantineStatus = Self.quarantineStatus(for: Bundle.main.bundleURL)
         appCodeSigningStatus = Self.evaluateCodeSigningStatus(for: Bundle.main.bundleURL,
                                                               validDetail: "The app bundle code signature is valid.")
 
@@ -771,6 +808,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             extensionInfo = loadedExtensionInfo
             extensionCodeSigningStatus = Self.evaluateCodeSigningStatus(for: URL(fileURLWithPath: loadedExtensionInfo.bundlePath),
                                                                         validDetail: "The embedded system extension code signature is valid.")
+            extensionQuarantineStatus = Self.quarantineStatus(for: URL(fileURLWithPath: loadedExtensionInfo.bundlePath))
 
             switch state {
             case .idle, .ready, .needsApplicationLocation, .needsBundleIdentifier, .needsSigning, .deactivated, .failed:
@@ -782,6 +820,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         } catch {
             extensionInfo = nil
             extensionCodeSigningStatus = .invalid("System extension code-signing status could not be checked: \(error.localizedDescription)")
+            extensionQuarantineStatus = .unknown("System extension quarantine status could not be checked: \(error.localizedDescription)")
             handleReadinessFailure(error)
             return false
         }
@@ -932,6 +971,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     private func prepareForSystemExtensionRequest() -> ExtensionInfo? {
+        appQuarantineStatus = Self.quarantineStatus(for: Bundle.main.bundleURL)
         appCodeSigningStatus = Self.evaluateCodeSigningStatus(for: Bundle.main.bundleURL,
                                                               validDetail: "The app bundle code signature is valid.")
 
@@ -970,9 +1010,11 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             self.extensionInfo = extensionInfo
             extensionCodeSigningStatus = Self.evaluateCodeSigningStatus(for: URL(fileURLWithPath: extensionInfo.bundlePath),
                                                                         validDetail: "The embedded system extension code signature is valid.")
+            extensionQuarantineStatus = Self.quarantineStatus(for: URL(fileURLWithPath: extensionInfo.bundlePath))
         } catch {
             self.extensionInfo = nil
             extensionCodeSigningStatus = .invalid("System extension code-signing status could not be checked: \(error.localizedDescription)")
+            extensionQuarantineStatus = .unknown("System extension quarantine status could not be checked: \(error.localizedDescription)")
             handleReadinessFailure(error)
             return nil
         }
@@ -1147,6 +1189,67 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
             return nil
         })
+    }
+
+    private static func quarantineStatus(for url: URL) -> QuarantineStatus {
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            return .unknown("Path is missing: \(url.path)")
+        }
+
+        return url.withUnsafeFileSystemRepresentation { fileSystemPath in
+            guard let fileSystemPath else {
+                return .unknown("Path cannot be represented in the file system: \(url.path)")
+            }
+
+            return quarantineAttributeName.withCString { attributeName in
+                let size = getxattr(fileSystemPath, attributeName, nil, 0, 0, 0)
+                if size < 0 {
+                    let errorNumber = errno
+                    if errorNumber == ENOATTR {
+                        return .absent
+                    }
+
+                    return .unknown("getxattr failed with errno \(errorNumber).")
+                }
+
+                guard size > 0 else {
+                    return .present("empty")
+                }
+
+                let dataSize = Int(size)
+                var data = Data(count: dataSize)
+                let readSize = data.withUnsafeMutableBytes { buffer -> ssize_t in
+                    guard let baseAddress = buffer.baseAddress else {
+                        return 0
+                    }
+
+                    return getxattr(fileSystemPath, attributeName, baseAddress, dataSize, 0, 0)
+                }
+
+                if readSize < 0 {
+                    return .unknown("getxattr failed with errno \(errno).")
+                }
+
+                let readableSize = Int(readSize)
+                if readableSize < dataSize {
+                    data = data.subdata(in: 0..<readableSize)
+                }
+
+                return .present(printableQuarantineValue(from: data))
+            }
+        }
+    }
+
+    private static func printableQuarantineValue(from data: Data) -> String {
+        if let value = String(data: data, encoding: .utf8) {
+            let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmedValue.isEmpty {
+                return trimmedValue
+            }
+        }
+
+        let hexValue = data.map { String(format: "%02x", Int($0)) }.joined()
+        return hexValue.isEmpty ? "empty" : "0x\(hexValue)"
     }
 
     private static func isBundledVideoFailureDetail(_ detail: String) -> Bool {
@@ -1575,6 +1678,8 @@ private struct DetailsPanel: View {
                 DetailRow(title: "Extension Version", value: manager.extensionInfo?.version ?? "Unknown")
                 DetailRow(title: "Application Location", value: manager.applicationLocationStatus)
                 DetailRow(title: "Expected App Path", value: manager.expectedApplicationPath, monospaced: true)
+                DetailRow(title: "App Quarantine", value: manager.appQuarantineStatus.title)
+                DetailRow(title: "App Quarantine Detail", value: manager.appQuarantineStatus.detail, monospaced: true)
                 DetailRow(title: "Request Readiness", value: manager.requestReadinessStatus)
                 DetailRow(title: "Pending Request", value: manager.pendingRequestStatus)
                 if let stateGuidanceDetail = manager.stateGuidanceDetail {
@@ -1596,6 +1701,8 @@ private struct DetailsPanel: View {
                 if !manager.extensionCodeSigningStatus.isValid {
                     DetailRow(title: "Extension Signature Detail", value: manager.extensionCodeSigningStatus.detail)
                 }
+                DetailRow(title: "Extension Quarantine", value: manager.extensionQuarantineStatus.title)
+                DetailRow(title: "Extension Quarantine Detail", value: manager.extensionQuarantineStatus.detail, monospaced: true)
                 DetailRow(title: "Extension Team ID", value: manager.extensionTeamIdentifier)
                 DetailRow(title: "Bundled Video", value: manager.bundledVideoReadinessStatus)
                 DetailRow(title: "Application Path", value: manager.applicationBundlePath, monospaced: true)
