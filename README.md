@@ -24,6 +24,8 @@ This workspace does not require Xcode for metadata checks:
 ./scripts/validate_project.py
 ```
 
+The validator also checks the bundled `Extension/video.mp4` for parseable dimensions, frame rate, and positive video duration so resource regressions fail before runtime activation.
+
 For a CI-equivalent unsigned compile on macOS with Xcode installed:
 
 ```sh

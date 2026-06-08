@@ -38,7 +38,7 @@ def png_dimensions(path):
 
 def mp4_video_metadata(path):
     data = path.read_bytes()
-    video_metadata = {"dimensions": None, "frame_rate": None}
+    video_metadata = {"dimensions": None, "frame_rate": None, "duration_seconds": None}
 
     def iter_atoms(start, end):
         offset = start
@@ -134,13 +134,14 @@ def mp4_video_metadata(path):
 
                 handler = None
                 timescale = None
+                media_duration = None
                 sample_durations = []
 
                 for media_atom_type, atom_start, atom_end in iter_atoms(media_start, media_end):
                     if media_atom_type == "mdhd":
                         mdhd = parse_mdhd(atom_start, atom_end)
                         if mdhd is not None:
-                            timescale, _ = mdhd
+                            timescale, media_duration = mdhd
                     elif media_atom_type == "hdlr":
                         handler = parse_hdlr(atom_start, atom_end)
                     elif media_atom_type == "minf":
@@ -152,6 +153,9 @@ def mp4_video_metadata(path):
                                         video_dimensions = parse_stsd_dimensions(stbl_start, stbl_end)
                                         if video_dimensions is not None:
                                             video_metadata["dimensions"] = video_dimensions
+
+                if handler == "vide" and timescale and media_duration is not None:
+                    video_metadata["duration_seconds"] = media_duration / timescale
 
                 if handler == "vide" and timescale and len(sample_durations) == 1:
                     _, sample_delta = sample_durations[0]
@@ -215,11 +219,15 @@ def main():
     video_metadata = mp4_video_metadata(video_path) if video_path.exists() else {}
     video_dimensions = video_metadata.get("dimensions")
     video_frame_rate = video_metadata.get("frame_rate")
+    video_duration_seconds = video_metadata.get("duration_seconds")
     require(video_dimensions is not None,
             "Extension/video.mp4 should expose parseable video dimensions",
             failures)
     require(video_frame_rate is not None,
             "Extension/video.mp4 should expose a constant parseable video frame rate",
+            failures)
+    require(video_duration_seconds is not None and video_duration_seconds > 0,
+            "Extension/video.mp4 should expose a positive video duration",
             failures)
     require(not (ROOT / "GarethVideoCam/video.mp4").exists(),
             "duplicate host-app video.mp4 should not be checked in",
@@ -518,6 +526,9 @@ def main():
             failures)
     require("CI-equivalent unsigned compile" in readme_text and "-target GarethVideoCam" in readme_text and "for configuration in Debug Release" in readme_text and "build-${configuration}.log" in readme_text and "./scripts/scan_build_log.py \"build-${configuration}.log\"" in readme_text,
             "README should document the CI-equivalent unsigned Debug and Release target builds with log scanning",
+            failures)
+    require("parseable dimensions, frame rate, and positive video duration" in readme_text,
+            "README should document bundled-video metadata validation",
             failures)
     require("Runtime Activation" in readme_text and "valid Apple Developer signing identity" in readme_text,
             "README should document signed runtime activation requirements",
