@@ -41,6 +41,7 @@ private enum CameraExtensionError: LocalizedError {
     case failedToCreateVideoFormatDescription(OSStatus)
     case failedToAddStream(String)
     case failedToAddDevice(String)
+    case invalidActiveFormatIndex(Int)
 
     var errorDescription: String? {
         switch self {
@@ -62,6 +63,8 @@ private enum CameraExtensionError: LocalizedError {
             return "Failed to add the camera stream: \(detail)"
         case .failedToAddDevice(let detail):
             return "Failed to add the camera device: \(detail)"
+        case .invalidActiveFormatIndex(let activeFormatIndex):
+            return "The requested active stream format index is invalid: \(activeFormatIndex)"
         }
     }
 }
@@ -482,13 +485,7 @@ final class ExtensionStreamSource: NSObject, CMIOExtensionStreamSource {
         return [_streamFormat]
     }
 
-    var activeFormatIndex: Int = 0 {
-        didSet {
-            if activeFormatIndex != 0 {
-                logger.error("Invalid active format index: \(self.activeFormatIndex, privacy: .public)")
-            }
-        }
-    }
+    var activeFormatIndex: Int = 0
 
     var availableProperties: Set<CMIOExtensionProperty> {
         return [.streamActiveFormatIndex, .streamFrameDuration]
@@ -510,6 +507,11 @@ final class ExtensionStreamSource: NSObject, CMIOExtensionStreamSource {
 
     func setStreamProperties(_ streamProperties: CMIOExtensionStreamProperties) throws {
         if let activeFormatIndex = streamProperties.activeFormatIndex {
+            guard activeFormatIndex == 0 else {
+                logger.error("Invalid active format index: \(activeFormatIndex, privacy: .public)")
+                throw CameraExtensionError.invalidActiveFormatIndex(activeFormatIndex)
+            }
+
             self.activeFormatIndex = activeFormatIndex
         }
     }
