@@ -611,7 +611,7 @@ def main():
             "build-product verifier script should be executable",
             failures)
     require("write_product_fixture" in verify_build_products_test_source and "com.example.WrongExtension" in verify_build_products_test_source and "Unexpected Debug extension bundle identifier" in verify_build_products_test_source and "Missing or empty Debug bundled video resource" in verify_build_products_test_source and "Build-product verifier tests passed." in verify_build_products_test_source,
-            "build-product verifier should have fixture coverage for passing products and bundle identifier failures",
+            "build-product verifier should have fixture coverage for passing products, bundle identifier failures, and missing bundled video",
             failures)
     require(verify_build_products_test_path.stat().st_mode & 0o111,
             "build-product verifier test script should be executable",
