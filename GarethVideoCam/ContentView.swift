@@ -154,6 +154,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         var identifier: String
         var version: String
         var bundlePath: String
+        var videoPath: String
+        var videoByteCount: Int64
     }
 
     struct ActivityItem: Identifiable, Equatable {
@@ -404,6 +406,14 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         return extensionCodeSigningStatus.teamIdentifier ?? "Unknown"
     }
 
+    var bundledVideoSize: String {
+        guard let videoByteCount = extensionInfo?.videoByteCount else {
+            return "Unknown"
+        }
+
+        return ByteCountFormatter.string(fromByteCount: videoByteCount, countStyle: .file)
+    }
+
     var diagnosticSummary: String {
         let extensionDescription: String
         if let extensionInfo {
@@ -411,6 +421,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             Extension ID: \(extensionInfo.identifier)
             Extension Version: \(extensionInfo.version)
             Extension Path: \(extensionInfo.bundlePath)
+            Bundled Video Path: \(extensionInfo.videoPath)
+            Bundled Video Size: \(bundledVideoSize)
             """
         } else {
             extensionDescription = "Extension: No bundled extension loaded"
@@ -571,14 +583,46 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             let version = extensionBundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
                 ?? extensionBundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String
                 ?? "Unknown"
+            let videoURL = extensionURL
+                .appendingPathComponent("Contents")
+                .appendingPathComponent("Resources")
+                .appendingPathComponent("video.mp4")
+            let videoByteCount = try Self.bundledVideoByteCount(at: videoURL)
 
             return ExtensionInfo(identifier: identifier,
                                  version: version,
-                                 bundlePath: extensionURL.path)
+                                 bundlePath: extensionURL.path,
+                                 videoPath: videoURL.path,
+                                 videoByteCount: videoByteCount)
         }
 
         throw ExtensionRequestError.unexpectedBundleIdentifier(expected: expectedExtensionBundleIdentifier,
                                                               actual: unexpectedIdentifiers.joined(separator: ", "))
+    }
+
+    private static func bundledVideoByteCount(at videoURL: URL) throws -> Int64 {
+        var isDirectory = ObjCBool(false)
+        guard FileManager.default.fileExists(atPath: videoURL.path, isDirectory: &isDirectory),
+              !isDirectory.boolValue else {
+            throw ExtensionRequestError.missingBundledVideoResource(videoURL.path)
+        }
+
+        let attributes: [FileAttributeKey: Any]
+        do {
+            attributes = try FileManager.default.attributesOfItem(atPath: videoURL.path)
+        } catch {
+            throw ExtensionRequestError.missingBundledVideoResource(videoURL.path)
+        }
+
+        guard let byteCount = attributes[.size] as? NSNumber else {
+            throw ExtensionRequestError.missingBundledVideoResource(videoURL.path)
+        }
+
+        guard byteCount.int64Value > 0 else {
+            throw ExtensionRequestError.emptyBundledVideoResource(videoURL.path)
+        }
+
+        return byteCount.int64Value
     }
 
     private func prepareForSystemExtensionRequest() -> ExtensionInfo? {
@@ -804,6 +848,8 @@ enum ExtensionRequestError: LocalizedError {
     case missingBundledExtension
     case unreadableExtensionBundle(String)
     case missingBundleIdentifier(String)
+    case missingBundledVideoResource(String)
+    case emptyBundledVideoResource(String)
     case unexpectedBundleIdentifier(expected: String, actual: String)
 
     var errorDescription: String? {
@@ -816,6 +862,10 @@ enum ExtensionRequestError: LocalizedError {
             return "The bundled extension at \(path) could not be opened."
         case .missingBundleIdentifier(let path):
             return "The bundled extension at \(path) does not declare a bundle identifier."
+        case .missingBundledVideoResource(let path):
+            return "The bundled extension does not include the required video resource at \(path)."
+        case .emptyBundledVideoResource(let path):
+            return "The bundled extension video resource at \(path) is empty."
         case .unexpectedBundleIdentifier(let expected, let actual):
             return "Expected bundled extension \(expected), but found \(actual)."
         }
@@ -1014,6 +1064,10 @@ private struct DetailsPanel: View {
 
                 if let bundlePath = manager.extensionInfo?.bundlePath {
                     DetailRow(title: "Bundle Path", value: bundlePath, monospaced: true)
+                }
+                if let videoPath = manager.extensionInfo?.videoPath {
+                    DetailRow(title: "Video Path", value: videoPath, monospaced: true)
+                    DetailRow(title: "Video Size", value: manager.bundledVideoSize)
                 }
 
                 DetailsActions(manager: manager)

@@ -372,6 +372,15 @@ def main():
     require(f'expectedExtensionBundleIdentifier = "{EXTENSION_BUNDLE_ID}"' in host_source and "unexpectedBundleIdentifier" in host_source,
             "host app should verify the bundled system extension identifier before submitting requests",
             failures)
+    require("videoPath" in host_source and "videoByteCount" in host_source and "Contents" in host_source and "Resources" in host_source and "video.mp4" in host_source and "fileExists(atPath: videoURL.path, isDirectory:" in host_source,
+            "host app should capture bundled-video resource metadata from the embedded extension",
+            failures)
+    require("missingBundledVideoResource" in host_source and "emptyBundledVideoResource" in host_source and "bundledVideoByteCount" in host_source,
+            "host app should fail readiness when the embedded extension video resource is missing or empty",
+            failures)
+    require("Bundled Video Path" in host_source and "Bundled Video Size" in host_source and "Video Path" in host_source and "Video Size" in host_source,
+            "host app should show and copy bundled-video diagnostics",
+            failures)
     require("nsError.domain" in host_source and "unknown code \\(errorCode)" in host_source,
             "host app should preserve system-extension failure domain and code diagnostics",
             failures)
