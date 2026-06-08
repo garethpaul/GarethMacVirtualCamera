@@ -384,15 +384,16 @@ extension SystemExtensionRequestManager: OSSystemExtensionRequestDelegate {
     }
 
     public func request(_ request: OSSystemExtensionRequest, didFailWithError error: Error) {
-        let errorCode = (error as NSError).code
-        var errorString: String
+        let nsError = error as NSError
+        let errorCode = nsError.code
+        let errorString: String
         switch errorCode {
         case 1:
             errorString = "unknown error"
         case 2:
             errorString = "missing entitlement"
         case 3:
-            errorString = "Container App for Extension has to be in /Applications to install Extension."
+            errorString = "container app is outside /Applications"
         case 4:
             errorString = "extension not found"
         case 5:
@@ -414,10 +415,12 @@ extension SystemExtensionRequestManager: OSSystemExtensionRequestDelegate {
         case 13:
             errorString = "authorization required"
         default:
-            errorString = "unknown code"
+            errorString = "unknown code \(errorCode)"
         }
         state = .failed(errorString)
-        appendActivity(level: .error, title: "Request Failed", detail: errorString)
+        appendActivity(level: .error,
+                       title: "Request Failed",
+                       detail: "\(errorString) (\(nsError.domain) \(errorCode)): \(nsError.localizedDescription)")
     }
 }
 
