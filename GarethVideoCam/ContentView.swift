@@ -72,6 +72,7 @@ private enum DashboardSection: String, CaseIterable, Hashable {
 class SystemExtensionRequestManager: NSObject, ObservableObject {
     private let expectedApplicationBundleIdentifier = "com.garethpaul.GarethVideoCam"
     private let expectedExtensionBundleIdentifier = "com.garethpaul.GarethVideoCam.Extension"
+    private let expectedApplicationBundlePath = "/Applications/GarethVideoCam.app"
     private let requiredSystemExtensionInstallEntitlement = "com.apple.developer.system-extension.install"
 
     enum InstallState: Equatable {
@@ -406,7 +407,11 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     var applicationLocationStatus: String {
-        return isRunningFromApplications ? "In Applications" : "Outside Applications"
+        if isRunningFromExpectedApplicationPath {
+            return "Expected Path"
+        }
+
+        return isRunningFromApplications ? "Unexpected Applications Path" : "Outside Applications"
     }
 
     var applicationBundlePath: String {
@@ -450,12 +455,16 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         return expectedExtensionBundleIdentifier
     }
 
+    var expectedApplicationPath: String {
+        return expectedApplicationBundlePath
+    }
+
     var applicationBundleIdentifierStatus: String {
         return applicationIdentifierReadinessDetail == nil ? "Matches" : "Mismatch"
     }
 
     var canSubmitSystemExtensionRequests: Bool {
-        return isRunningFromApplications
+        return applicationLocationReadinessDetail == nil
             && applicationIdentifierReadinessDetail == nil
             && appCodeSigningStatus.isValid
             && appEntitlementReadinessDetail == nil
@@ -469,9 +478,13 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         return applicationBundlePath.hasPrefix("/Applications/")
     }
 
+    var isRunningFromExpectedApplicationPath: Bool {
+        return applicationBundlePath == expectedApplicationBundlePath
+    }
+
     var requestReadinessMessage: String? {
-        if !isRunningFromApplications {
-            return "System extension requests require /Applications."
+        if applicationLocationReadinessDetail != nil {
+            return "System extension requests require /Applications/GarethVideoCam.app."
         }
 
         if applicationIdentifierReadinessDetail != nil {
@@ -561,8 +574,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         return [
             ReadinessCheck(id: "location",
                            title: "Application Location",
-                           detail: isRunningFromApplications ? applicationBundlePath : "Run the app from /Applications/GarethVideoCam.app.",
-                           status: isRunningFromApplications ? .passing : .blocked),
+                           detail: applicationLocationReadinessDetail ?? applicationBundlePath,
+                           status: applicationLocationReadinessDetail == nil ? .passing : .blocked),
             ReadinessCheck(id: "bundle-id",
                            title: "Host Bundle ID",
                            detail: applicationIdentifierReadinessDetail ?? applicationBundleIdentifier,
@@ -591,8 +604,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     var requestReadinessDetail: String? {
-        if !isRunningFromApplications {
-            return "The app must run from /Applications/GarethVideoCam.app before macOS will accept system extension requests."
+        if let applicationLocationReadinessDetail {
+            return applicationLocationReadinessDetail
         }
 
         if let applicationIdentifierReadinessDetail {
@@ -691,6 +704,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         Actual App ID: \(applicationBundleIdentifier)
         App Bundle ID Check: \(applicationBundleIdentifierStatus)
         Expected Extension ID: \(expectedExtensionIdentifier)
+        Expected App Path: \(expectedApplicationPath)
         App Location: \(applicationLocationStatus)
         App Path: \(applicationBundlePath)
         Request Readiness: \(requestReadinessStatus)
@@ -921,10 +935,10 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         appCodeSigningStatus = Self.evaluateCodeSigningStatus(for: Bundle.main.bundleURL,
                                                               validDetail: "The app bundle code signature is valid.")
 
-        guard isRunningFromApplications else {
+        if let applicationLocationReadinessDetail {
             recordReadinessBlock(state: .needsApplicationLocation,
                                  title: "Move Required",
-                                 detail: "Current path is \(applicationBundlePath).")
+                                 detail: applicationLocationReadinessDetail)
             return nil
         }
 
@@ -981,7 +995,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     private var readinessState: InstallState {
-        if !isRunningFromApplications {
+        if applicationLocationReadinessDetail != nil {
             return .needsApplicationLocation
         }
 
@@ -998,6 +1012,18 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
 
         return .ready
+    }
+
+    private var applicationLocationReadinessDetail: String? {
+        guard !isRunningFromExpectedApplicationPath else {
+            return nil
+        }
+
+        if isRunningFromApplications {
+            return "The app is in /Applications but must run from \(expectedApplicationBundlePath); current path is \(applicationBundlePath)."
+        }
+
+        return "The app must run from \(expectedApplicationBundlePath); current path is \(applicationBundlePath)."
     }
 
     private var applicationIdentifierReadinessDetail: String? {
@@ -1541,6 +1567,7 @@ private struct DetailsPanel: View {
                 DetailRow(title: "Expected Extension ID", value: manager.expectedExtensionIdentifier)
                 DetailRow(title: "Extension Version", value: manager.extensionInfo?.version ?? "Unknown")
                 DetailRow(title: "Application Location", value: manager.applicationLocationStatus)
+                DetailRow(title: "Expected App Path", value: manager.expectedApplicationPath, monospaced: true)
                 DetailRow(title: "Request Readiness", value: manager.requestReadinessStatus)
                 DetailRow(title: "Pending Request", value: manager.pendingRequestStatus)
                 if let stateGuidanceDetail = manager.stateGuidanceDetail {

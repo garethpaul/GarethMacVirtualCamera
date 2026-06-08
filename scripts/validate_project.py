@@ -377,6 +377,9 @@ def main():
     require("case needsApplicationLocation" in host_source and "case needsBundleIdentifier" in host_source and "canSubmitSystemExtensionRequests" in host_source,
             "host app should model the /Applications and host bundle identifier requirements before submitting system-extension requests",
             failures)
+    require('expectedApplicationBundlePath = "/Applications/GarethVideoCam.app"' in host_source and "applicationLocationReadinessDetail" in host_source and "isRunningFromExpectedApplicationPath" in host_source and "Expected App Path" in host_source,
+            "host app should require and display the exact expected /Applications app path",
+            failures)
     require("import Security" in host_source and "CodeSigningStatus" in host_source and "SecStaticCodeCheckValidityWithErrors" in host_source,
             "host app should check code-signing validity before submitting system-extension requests",
             failures)
@@ -476,8 +479,8 @@ def main():
     require("System Extension Entitlement" in host_source and "App System Extension Entitlement:" in host_source,
             "host app should show and copy app System Extension entitlement diagnostics",
             failures)
-    require("expectedApplicationBundleIdentifier" in host_source and "applicationBundleIdentifier" in host_source and "Expected App ID" in host_source and "Actual App ID" in host_source and "App Bundle ID Check" in host_source and "Expected Extension ID" in host_source,
-            "host app should show and copy expected and actual bundle identifier diagnostics",
+    require("expectedApplicationBundleIdentifier" in host_source and "applicationBundleIdentifier" in host_source and "Expected App ID" in host_source and "Actual App ID" in host_source and "App Bundle ID Check" in host_source and "Expected Extension ID" in host_source and "Expected App Path:" in host_source,
+            "host app should show and copy expected and actual bundle identifier and app path diagnostics",
             failures)
     require("func copyDiagnostics() {\n        refreshExtensionInfo()" in host_source,
             "host app should refresh readiness before copying diagnostics",
@@ -536,7 +539,7 @@ def main():
     require("Runtime Activation" in readme_text and "valid Apple Developer signing identity" in readme_text,
             "README should document signed runtime activation requirements",
             failures)
-    require("refreshes readiness when the app becomes active" in readme_text and "shows and copies a readiness checklist" in readme_text and "primary System Settings approval shortcut" in readme_text and "reveal the app and embedded extension in Finder" in readme_text and "diagnostics snapshot" in readme_text and "generation timestamp" in readme_text and "bundle identifiers" in readme_text and "host app bundle identifier does not match the expected identifier" in readme_text and "missing the System Extension entitlement" in readme_text and "embedded `video.mp4` resource is missing or empty" in readme_text and "bundled system extension signature is invalid" in readme_text and "Team IDs" in readme_text and "pending request direction" in readme_text and "last recorded failure" in readme_text,
+    require("not running from `/Applications/GarethVideoCam.app`" in readme_text and "refreshes readiness when the app becomes active" in readme_text and "shows and copies a readiness checklist" in readme_text and "primary System Settings approval shortcut" in readme_text and "reveal the app and embedded extension in Finder" in readme_text and "diagnostics snapshot" in readme_text and "generation timestamp" in readme_text and "bundle identifiers" in readme_text and "expected and current app paths" in readme_text and "host app bundle identifier does not match the expected identifier" in readme_text and "missing the System Extension entitlement" in readme_text and "embedded `video.mp4` resource is missing or empty" in readme_text and "bundled system extension signature is invalid" in readme_text and "Team IDs" in readme_text and "pending request direction" in readme_text and "last recorded failure" in readme_text,
             "README should document the in-app approval and diagnostics actions",
             failures)
     require("collect_runtime_diagnostics.sh" in readme_text and "bundle versions" in readme_text and "bundled-video byte size, checksum, metadata" in readme_text and "expected application-location and bundle identifier checks" in readme_text and "matching Team IDs" in readme_text and "Gatekeeper assessment" in readme_text and "signed entitlements" in readme_text and "explicit host System Extension entitlement checks" in readme_text and "runtime-readiness summary" in readme_text and "systemextensionsctl" in readme_text and "camera device inventory" in readme_text and "running app/extension processes" in readme_text and "unified-log window" in readme_text and "system-extension/CMIO log context" in readme_text,
