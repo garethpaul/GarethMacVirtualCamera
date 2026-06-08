@@ -58,6 +58,7 @@ private enum DashboardSection: String, CaseIterable, Hashable {
 }
 
 class SystemExtensionRequestManager: NSObject, ObservableObject {
+    private let expectedApplicationBundleIdentifier = "com.garethpaul.GarethVideoCam"
     private let expectedExtensionBundleIdentifier = "com.garethpaul.GarethVideoCam.Extension"
 
     enum InstallState: Equatable {
@@ -344,6 +345,18 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
     }
 
+    var applicationBundleIdentifier: String {
+        return Bundle.main.bundleIdentifier ?? "Unknown"
+    }
+
+    var expectedApplicationIdentifier: String {
+        return expectedApplicationBundleIdentifier
+    }
+
+    var expectedExtensionIdentifier: String {
+        return expectedExtensionBundleIdentifier
+    }
+
     var canSubmitSystemExtensionRequests: Bool {
         return isRunningFromApplications
             && appCodeSigningStatus.isValid
@@ -445,6 +458,9 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         Generated At: \(diagnosticGeneratedAt)
         State: \(state.title)
         App Version: \(applicationVersion)
+        Expected App ID: \(expectedApplicationIdentifier)
+        Actual App ID: \(applicationBundleIdentifier)
+        Expected Extension ID: \(expectedExtensionIdentifier)
         App Location: \(applicationLocationStatus)
         App Path: \(applicationBundlePath)
         Request Readiness: \(requestReadinessStatus)
@@ -1077,6 +1093,9 @@ private struct DetailsPanel: View {
                     .font(.title3.weight(.semibold))
 
                 DetailRow(title: "App Version", value: manager.applicationVersion)
+                DetailRow(title: "App Bundle ID", value: manager.applicationBundleIdentifier)
+                DetailRow(title: "Expected App ID", value: manager.expectedApplicationIdentifier)
+                DetailRow(title: "Expected Extension ID", value: manager.expectedExtensionIdentifier)
                 DetailRow(title: "Extension Version", value: manager.extensionInfo?.version ?? "Unknown")
                 DetailRow(title: "Application Location", value: manager.applicationLocationStatus)
                 DetailRow(title: "Request Readiness", value: manager.requestReadinessStatus)
