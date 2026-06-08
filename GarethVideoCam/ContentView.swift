@@ -1333,6 +1333,10 @@ private struct ActionPanel: View {
                         .font(.callout)
                         .foregroundStyle(.orange)
                 }
+
+                if manager.state == .needsApproval {
+                    approvalButton
+                }
             }
         }
     }
@@ -1384,6 +1388,15 @@ private struct ActionPanel: View {
         .buttonStyle(.bordered)
         .disabled(manager.isBusy || !manager.canSubmitSystemExtensionRequests)
         .help("Submit a macOS system extension deactivation request.")
+    }
+
+    @ViewBuilder
+    private var approvalButton: some View {
+        Button(action: manager.openSystemSettings) {
+            Label("Open System Settings", systemImage: "gearshape")
+        }
+        .buttonStyle(.borderedProminent)
+        .help("Open System Settings to approve the pending camera extension request.")
     }
 }
 
