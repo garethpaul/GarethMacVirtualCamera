@@ -5,7 +5,11 @@
 	<key>CMIOExtension</key>
 	<dict>
 		<key>CMIOExtensionMachServiceName</key>
-		<string>$(TeamIdentifierPrefix)com.garethpaul.GarethVideoCam</string>
+		<string>$(TeamIdentifierPrefix)$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Gareth Video Cam publishes a virtual camera stream.</string>
+	<key>NSSystemExtensionUsageDescription</key>
+	<string>Gareth Video Cam installs a camera extension that makes the bundled video available as a virtual camera.</string>
 </dict>
 </plist>

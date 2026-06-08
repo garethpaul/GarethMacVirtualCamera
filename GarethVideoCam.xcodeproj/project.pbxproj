@@ -13,7 +13,7 @@
 		8C3B7E5828A3E43300E7BAFB /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8C3B7E5728A3E43300E7BAFB /* Preview Assets.xcassets */; };
 		8C3B7E6628A3E48200E7BAFB /* ExtensionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B7E6528A3E48200E7BAFB /* ExtensionProvider.swift */; };
 		8C3B7E6828A3E48200E7BAFB /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B7E6728A3E48200E7BAFB /* main.swift */; };
-		8C3B7E6D28A3E48200E7BAFB /* com.gareth.GarethVideoCam.Extension.systemextension in Embed System Extensions */ = {isa = PBXBuildFile; fileRef = 8C3B7E6328A3E48200E7BAFB /* com.gareth.GarethVideoCam.Extension.systemextension */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		8C3B7E6D28A3E48200E7BAFB /* com.garethpaul.GarethVideoCam.Extension.systemextension in Embed System Extensions */ = {isa = PBXBuildFile; fileRef = 8C3B7E6328A3E48200E7BAFB /* com.garethpaul.GarethVideoCam.Extension.systemextension */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		C3B7BE802B88518900C8EDB0 /* video.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = C3B7BE7F2B88518900C8EDB0 /* video.mp4 */; };
 /* End PBXBuildFile section */
 
@@ -34,7 +34,7 @@
 			dstPath = "$(SYSTEM_EXTENSIONS_FOLDER_PATH)";
 			dstSubfolderSpec = 16;
 			files = (
-				8C3B7E6D28A3E48200E7BAFB /* com.gareth.GarethVideoCam.Extension.systemextension in Embed System Extensions */,
+				8C3B7E6D28A3E48200E7BAFB /* com.garethpaul.GarethVideoCam.Extension.systemextension in Embed System Extensions */,
 			);
 			name = "Embed System Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -48,7 +48,7 @@
 		8C3B7E5428A3E43300E7BAFB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8C3B7E5728A3E43300E7BAFB /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		8C3B7E5928A3E43300E7BAFB /* Entitlements.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Entitlements.entitlements; sourceTree = "<group>"; };
-		8C3B7E6328A3E48200E7BAFB /* com.gareth.GarethVideoCam.Extension.systemextension */ = {isa = PBXFileReference; explicitFileType = "wrapper.system-extension"; includeInIndex = 0; path = com.gareth.GarethVideoCam.Extension.systemextension; sourceTree = BUILT_PRODUCTS_DIR; };
+		8C3B7E6328A3E48200E7BAFB /* com.garethpaul.GarethVideoCam.Extension.systemextension */ = {isa = PBXFileReference; explicitFileType = "wrapper.system-extension"; includeInIndex = 0; path = com.garethpaul.GarethVideoCam.Extension.systemextension; sourceTree = BUILT_PRODUCTS_DIR; };
 		8C3B7E6528A3E48200E7BAFB /* ExtensionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionProvider.swift; sourceTree = "<group>"; };
 		8C3B7E6728A3E48200E7BAFB /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		8C3B7E6928A3E48200E7BAFB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -87,7 +87,7 @@
 			isa = PBXGroup;
 			children = (
 				8C3B7E4D28A3E43200E7BAFB /* GarethVideoCam.app */,
-				8C3B7E6328A3E48200E7BAFB /* com.gareth.GarethVideoCam.Extension.systemextension */,
+				8C3B7E6328A3E48200E7BAFB /* com.garethpaul.GarethVideoCam.Extension.systemextension */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -160,7 +160,7 @@
 			);
 			name = Extension;
 			productName = Extension;
-			productReference = 8C3B7E6328A3E48200E7BAFB /* com.gareth.GarethVideoCam.Extension.systemextension */;
+			productReference = 8C3B7E6328A3E48200E7BAFB /* com.garethpaul.GarethVideoCam.Extension.systemextension */;
 			productType = "com.apple.product-type.system-extension";
 		};
 /* End PBXNativeTarget section */
@@ -170,8 +170,8 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1400;
-				LastUpgradeCheck = 1500;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					8C3B7E4C28A3E43200E7BAFB = {
 						CreatedOnToolsVersion = 14.0;
@@ -378,22 +378,23 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"GarethVideoCam/Preview Content\"";
 				DEVELOPMENT_TEAM = 53AF9EMAN4;
-				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Camera Extension";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSSystemExtensionUsageDescription = "Gareth Video Cam installs a camera extension that makes the bundled video available as a virtual camera.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.12;
+				MARKETING_VERSION = 1.14;
 				PRODUCT_BUNDLE_IDENTIFIER = com.garethpaul.GarethVideoCam;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -413,22 +414,23 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"GarethVideoCam/Preview Content\"";
 				DEVELOPMENT_TEAM = 53AF9EMAN4;
-				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Camera Extension";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSSystemExtensionUsageDescription = "Gareth Video Cam installs a camera extension that makes the bundled video available as a virtual camera.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.12;
+				MARKETING_VERSION = 1.14;
 				PRODUCT_BUNDLE_IDENTIFIER = com.garethpaul.GarethVideoCam;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -444,7 +446,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 53AF9EMAN4;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -460,9 +462,9 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.13;
-				PRODUCT_BUNDLE_IDENTIFIER = com.gareth.GarethVideoCam.Extension;
-				PRODUCT_NAME = com.gareth.GarethVideoCam.Extension;
+				MARKETING_VERSION = 1.14;
+				PRODUCT_BUNDLE_IDENTIFIER = com.garethpaul.GarethVideoCam.Extension;
+				PRODUCT_NAME = com.garethpaul.GarethVideoCam.Extension;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -477,7 +479,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 53AF9EMAN4;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -493,9 +495,9 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.13;
-				PRODUCT_BUNDLE_IDENTIFIER = com.gareth.GarethVideoCam.Extension;
-				PRODUCT_NAME = com.gareth.GarethVideoCam.Extension;
+				MARKETING_VERSION = 1.14;
+				PRODUCT_BUNDLE_IDENTIFIER = com.garethpaul.GarethVideoCam.Extension;
+				PRODUCT_NAME = com.garethpaul.GarethVideoCam.Extension;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;

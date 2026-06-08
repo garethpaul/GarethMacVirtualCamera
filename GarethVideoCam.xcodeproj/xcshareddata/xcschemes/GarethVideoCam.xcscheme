@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1500"
+   LastUpgradeVersion = "2600"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -10,7 +10,7 @@
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
                title = "Run Script"
-               scriptText = "# Type a script or drag a script file from your workspace to insert its path.&#10;ditto &quot;${CODESIGNING_FOLDER_PATH}&quot; &quot;/Applications/${FULL_PRODUCT_NAME}&quot;&#10;">
+               scriptText = "set -eu&#10;install_path=&quot;/Applications/${FULL_PRODUCT_NAME}&quot;&#10;/usr/bin/ditto &quot;${CODESIGNING_FOLDER_PATH}&quot; &quot;${install_path}&quot;&#10;">
                <EnvironmentBuildable>
                   <BuildableReference
                      BuildableIdentifier = "primary"
@@ -63,7 +63,7 @@
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
                title = "Run Script"
-               scriptText = "# Type a script or drag a script file from your workspace to insert its path.&#10;ditto &quot;${CODESIGNING_FOLDER_PATH}&quot; &quot;/Applications/${FULL_PRODUCT_NAME}&quot;&#10;">
+               scriptText = "set -eu&#10;install_path=&quot;/Applications/${FULL_PRODUCT_NAME}&quot;&#10;/usr/bin/ditto &quot;${CODESIGNING_FOLDER_PATH}&quot; &quot;${install_path}&quot;&#10;">
             </ActionContent>
          </ExecutionAction>
       </PostActions>
