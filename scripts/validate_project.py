@@ -228,6 +228,9 @@ def main():
     require("diagnosticSummary" in host_source and "NSPasteboard.general" in host_source and "Copy Diagnostics" in host_source,
             "host app should expose copyable diagnostics for activation troubleshooting",
             failures)
+    require("didCopyDiagnostics" in host_source and "Diagnostics Copy Failed" in host_source,
+            "host app should report clipboard failures when copying diagnostics",
+            failures)
     require("applicationVersion" in host_source and "App Version" in host_source and "CFBundleShortVersionString" in host_source,
             "host app should show and copy app version diagnostics",
             failures)
@@ -251,6 +254,9 @@ def main():
             failures)
     require("openSystemSettings" in host_source and "System Settings" in host_source and "/System/Applications/System Settings.app" in host_source,
             "host app should provide a System Settings shortcut for extension approval",
+            failures)
+    require("didOpenSettings" in host_source and "System Settings Unavailable" in host_source,
+            "host app should report System Settings launch failures",
             failures)
     require("CI-equivalent unsigned compile" in readme_text and "-target GarethVideoCam" in readme_text,
             "README should document the CI-equivalent unsigned target build",

@@ -500,11 +500,17 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        pasteboard.setString(diagnosticSummary, forType: .string)
+        let didCopyDiagnostics = pasteboard.setString(diagnosticSummary, forType: .string)
 
-        appendActivity(level: .success,
-                       title: "Diagnostics Copied",
-                       detail: "Copied current app and extension status to the clipboard.")
+        if didCopyDiagnostics {
+            appendActivity(level: .success,
+                           title: "Diagnostics Copied",
+                           detail: "Copied current app and extension status to the clipboard.")
+        } else {
+            appendActivity(level: .error,
+                           title: "Diagnostics Copy Failed",
+                           detail: "macOS did not accept the diagnostics text on the clipboard.")
+        }
     }
 
     func revealApplicationInFinder() {
@@ -516,10 +522,17 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
     func openSystemSettings() {
         let settingsURL = URL(fileURLWithPath: "/System/Applications/System Settings.app")
-        _ = NSWorkspace.shared.open(settingsURL)
-        appendActivity(level: .info,
-                       title: "System Settings Opened",
-                       detail: "Approve the camera extension if macOS is waiting for user approval.")
+        let didOpenSettings = NSWorkspace.shared.open(settingsURL)
+
+        if didOpenSettings {
+            appendActivity(level: .info,
+                           title: "System Settings Opened",
+                           detail: "Approve the camera extension if macOS is waiting for user approval.")
+        } else {
+            appendActivity(level: .error,
+                           title: "System Settings Unavailable",
+                           detail: "macOS did not open System Settings from \(settingsURL.path).")
+        }
     }
 
     private func loadBundledExtensionInfo() throws -> ExtensionInfo {
