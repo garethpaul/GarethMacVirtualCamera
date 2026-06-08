@@ -31,6 +31,7 @@ printf 'App path: %s\n' "$APP_PATH"
 if [ -d "$APP_PATH" ]; then
   /usr/bin/codesign --verify --deep --strict --verbose=2 "$APP_PATH" 2>&1 || true
   /usr/bin/codesign -dv "$APP_PATH" 2>&1 || true
+  /usr/bin/codesign -d --entitlements :- "$APP_PATH" 2>&1 || true
 else
   printf 'App bundle is not installed at the requested path.\n'
 fi
@@ -40,6 +41,7 @@ printf 'Extension path: %s\n' "$EXTENSION_PATH"
 if [ -d "$EXTENSION_PATH" ]; then
   /usr/bin/codesign --verify --strict --verbose=2 "$EXTENSION_PATH" 2>&1 || true
   /usr/bin/codesign -dv "$EXTENSION_PATH" 2>&1 || true
+  /usr/bin/codesign -d --entitlements :- "$EXTENSION_PATH" 2>&1 || true
   /usr/bin/defaults read "${EXTENSION_PATH}/Contents/Info" CFBundleIdentifier 2>/dev/null || true
 else
   printf 'Expected embedded system extension was not found.\n'

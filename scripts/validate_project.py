@@ -210,7 +210,7 @@ def main():
     require("System Settings shortcut" in readme_text and "diagnostics snapshot" in readme_text,
             "README should document the in-app approval and diagnostics actions",
             failures)
-    require("collect_runtime_diagnostics.sh" in readme_text and "systemextensionsctl" in readme_text,
+    require("collect_runtime_diagnostics.sh" in readme_text and "signed entitlements" in readme_text and "systemextensionsctl" in readme_text,
             "README should document collecting runtime diagnostics on macOS",
             failures)
     require("ACTIONABLE_PATTERN" in build_log_scanner_source and "appintentsmetadataprocessor" in build_log_scanner_source,
@@ -219,8 +219,8 @@ def main():
     require("test_ignores_appintents_metadata_notice" in build_log_scanner_test_source and "test_fails_on_actionable_warning" in build_log_scanner_test_source,
             "build-log scanner should have regression coverage for ignored and actionable warnings",
             failures)
-    require("systemextensionsctl list" in runtime_diagnostics_source and "log show --last 30m" in runtime_diagnostics_source,
-            "runtime diagnostics script should collect system-extension registration and recent app logs",
+    require("codesign -d --entitlements :-" in runtime_diagnostics_source and "systemextensionsctl list" in runtime_diagnostics_source and "log show --last 30m" in runtime_diagnostics_source,
+            "runtime diagnostics script should collect entitlements, system-extension registration, and recent app logs",
             failures)
 
     scheme_path = ROOT / "GarethVideoCam.xcodeproj/xcshareddata/xcschemes/GarethVideoCam.xcscheme"
