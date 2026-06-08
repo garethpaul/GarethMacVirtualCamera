@@ -8,7 +8,7 @@ struct GarethVideoCamApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView(systemExtensionRequestManager: systemExtensionRequestManager)
-                .frame(minWidth: 860, minHeight: 640)
+                .frame(minWidth: 720, minHeight: 560)
         }
         .windowResizability(.contentMinSize)
     }

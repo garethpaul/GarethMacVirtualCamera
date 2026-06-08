@@ -114,6 +114,7 @@ def main():
             failures)
 
     project_text = (ROOT / "GarethVideoCam.xcodeproj/project.pbxproj").read_text()
+    app_entry_source = (ROOT / "GarethVideoCam/GarethVideoCam.swift").read_text()
     host_source = (ROOT / "GarethVideoCam/ContentView.swift").read_text()
     extension_source = (ROOT / "Extension/ExtensionProvider.swift").read_text()
     extension_main_source = (ROOT / "Extension/main.swift").read_text()
@@ -248,6 +249,9 @@ def main():
             failures)
     require("private var titleLabel" in host_source and "private var valueText" in host_source,
             "host app should keep diagnostic detail rows responsive at narrower window widths",
+            failures)
+    require(".frame(minWidth: 720, minHeight: 560)" in app_entry_source and ".windowResizability(.contentMinSize)" in app_entry_source,
+            "host app should allow a compact but bounded resizable window",
             failures)
     require("activateFileViewerSelecting" in host_source and "Reveal App" in host_source,
             "host app should let users reveal the running app bundle in Finder",
