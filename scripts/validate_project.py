@@ -713,8 +713,8 @@ def main():
     require("private static let titleColumnWidth: CGFloat = 220" in host_source and ".frame(width: Self.titleColumnWidth" in host_source and "private var titleLabel" in host_source and "private var valueText" in host_source,
             "host app should keep diagnostic detail rows responsive with a stable readable title column",
             failures)
-    require("private var activityTitle" in host_source and "private var activityTimestamp" in host_source,
-            "host app should keep activity rows responsive at narrower window widths",
+    require("private var activityTitle" in host_source and "private var activityDetail" in host_source and "private var activityTimestamp" in host_source and ".fixedSize(horizontal: true, vertical: false)" in host_source,
+            "host app should keep activity rows responsive and readable at narrower window widths",
             failures)
     require("ForEach(Array(items.enumerated()), id: \\.element.id)" in host_source,
             "host activity panel should render a stable activity snapshot",

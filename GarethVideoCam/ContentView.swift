@@ -3268,10 +3268,7 @@ private struct ActivityRow: View {
                         activityTimestamp
                     }
                 }
-                Text(item.detail)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .textSelection(.enabled)
+                activityDetail
             }
         }
     }
@@ -3280,6 +3277,17 @@ private struct ActivityRow: View {
     private var activityTitle: some View {
         Text(item.title)
             .font(.callout.weight(.semibold))
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    @ViewBuilder
+    private var activityDetail: some View {
+        Text(item.detail)
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .textSelection(.enabled)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
@@ -3287,6 +3295,8 @@ private struct ActivityRow: View {
         Text(Self.timestampFormatter.string(from: item.date))
             .font(.caption.monospacedDigit())
             .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
     }
 }
 
