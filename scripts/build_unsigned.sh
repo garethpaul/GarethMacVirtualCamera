@@ -4,6 +4,7 @@ set -euo pipefail
 PROJECT_PATH="${PROJECT_PATH:-GarethVideoCam.xcodeproj}"
 TARGET_NAME="${TARGET_NAME:-GarethVideoCam}"
 BUILD_ARCH="${BUILD_ARCH:-$(uname -m)}"
+DERIVED_DATA_PATH="${DERIVED_DATA_PATH:-.build/DerivedData}"
 
 if [ "$#" -gt 0 ]; then
   configurations=("$@")
@@ -16,6 +17,7 @@ for configuration in "${configurations[@]}"; do
     -project "$PROJECT_PATH" \
     -target "$TARGET_NAME" \
     -configuration "$configuration" \
+    -derivedDataPath "$DERIVED_DATA_PATH" \
     ARCHS="$BUILD_ARCH" \
     ONLY_ACTIVE_ARCH=NO \
     CODE_SIGNING_ALLOWED=NO \
