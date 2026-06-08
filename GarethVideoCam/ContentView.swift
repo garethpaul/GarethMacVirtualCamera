@@ -652,6 +652,24 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         ]
     }
 
+    var readinessProgressSummary: String {
+        let checks = readinessChecks
+        let readyCount = checks.filter { $0.status == .passing }.count
+        let blockedCount = checks.filter { $0.status == .blocked }.count
+        let pendingCount = checks.filter { $0.status == .pending }.count
+        let baseSummary = "\(readyCount)/\(checks.count) checks ready"
+
+        if blockedCount > 0 {
+            return "\(baseSummary), \(blockedCount) blocked"
+        }
+
+        if pendingCount > 0 {
+            return "\(baseSummary), \(pendingCount) pending"
+        }
+
+        return baseSummary
+    }
+
     var requestReadinessDetail: String? {
         if let applicationLocationReadinessDetail {
             return applicationLocationReadinessDetail
@@ -770,6 +788,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         Pending Request: \(pendingRequestStatus)
         State Guidance: \(stateGuidanceDetail ?? "None")
         Last Failure: \(lastFailureDetail ?? "No failure recorded.")
+        Readiness Summary: \(readinessProgressSummary)
         Readiness Checks:
         \(readinessDescription)
 
@@ -1628,6 +1647,9 @@ private struct ReadinessPanel: View {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Readiness")
                     .font(.title3.weight(.semibold))
+                Text(manager.readinessProgressSummary)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
 
                 VStack(spacing: 0) {
                     ForEach(Array(checks.enumerated()), id: \.element.id) { index, check in
