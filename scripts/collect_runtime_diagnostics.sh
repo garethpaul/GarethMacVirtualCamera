@@ -153,6 +153,42 @@ print_yes_no_unknown() {
   printf '%s: %s\n' "$label" "$value"
 }
 
+print_readiness_check() {
+  local label="$1"
+  local value="$2"
+
+  readiness_total_count=$((readiness_total_count + 1))
+
+  case "$value" in
+    yes)
+      readiness_ready_count=$((readiness_ready_count + 1))
+      ;;
+    no)
+      readiness_blocked_count=$((readiness_blocked_count + 1))
+      ;;
+    *)
+      readiness_unknown_count=$((readiness_unknown_count + 1))
+      ;;
+  esac
+
+  print_yes_no_unknown "$label" "$value"
+}
+
+print_readiness_rollup() {
+  local readiness_result="ready"
+
+  if [ "$readiness_blocked_count" -gt 0 ]; then
+    readiness_result="blocked"
+  elif [ "$readiness_unknown_count" -gt 0 ]; then
+    readiness_result="incomplete"
+  fi
+
+  printf 'Runtime readiness result: %s\n' "$readiness_result"
+  printf 'Runtime readiness checks ready: %s/%s\n' "$readiness_ready_count" "$readiness_total_count"
+  printf 'Runtime readiness checks blocked: %s\n' "$readiness_blocked_count"
+  printf 'Runtime readiness checks unknown: %s\n' "$readiness_unknown_count"
+}
+
 print_quarantine_status() {
   local label="$1"
   local bundle_path="$2"
@@ -364,35 +400,40 @@ else
 fi
 
 section "Runtime Readiness Summary"
+readiness_ready_count=0
+readiness_blocked_count=0
+readiness_unknown_count=0
+readiness_total_count=0
+
 if [ "$APP_PATH" = "$EXPECTED_APP_PATH" ]; then
-  print_yes_no_unknown "Application location ready" "yes"
+  print_readiness_check "Application location ready" "yes"
 else
-  print_yes_no_unknown "Application location ready" "no"
+  print_readiness_check "Application location ready" "no"
 fi
 
 if [ -d "$APP_PATH" ]; then
   app_bundle_identifier="$(read_bundle_identifier "$APP_PATH")"
   if [ "$app_bundle_identifier" = "$APP_ID" ]; then
-    print_yes_no_unknown "App bundle identifier ready" "yes"
+    print_readiness_check "App bundle identifier ready" "yes"
   else
-    print_yes_no_unknown "App bundle identifier ready" "no"
+    print_readiness_check "App bundle identifier ready" "no"
   fi
 
   if /usr/bin/codesign --verify --deep --strict "$APP_PATH" >/dev/null 2>&1; then
-    print_yes_no_unknown "App signature ready" "yes"
+    print_readiness_check "App signature ready" "yes"
   else
-    print_yes_no_unknown "App signature ready" "no"
+    print_readiness_check "App signature ready" "no"
   fi
 
   if has_boolean_entitlement "$APP_PATH" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT"; then
-    print_yes_no_unknown "App System Extension entitlement ready" "yes"
+    print_readiness_check "App System Extension entitlement ready" "yes"
   else
-    print_yes_no_unknown "App System Extension entitlement ready" "no"
+    print_readiness_check "App System Extension entitlement ready" "no"
   fi
 else
-  print_yes_no_unknown "App bundle identifier ready" "unknown"
-  print_yes_no_unknown "App signature ready" "unknown"
-  print_yes_no_unknown "App System Extension entitlement ready" "unknown"
+  print_readiness_check "App bundle identifier ready" "unknown"
+  print_readiness_check "App signature ready" "unknown"
+  print_readiness_check "App System Extension entitlement ready" "unknown"
 fi
 
 if [ -d "$EXTENSION_PATH" ]; then
@@ -400,66 +441,68 @@ if [ -d "$EXTENSION_PATH" ]; then
   extension_executable="$(read_info_plist_value "$EXTENSION_PATH" CFBundleExecutable)"
   extension_mach_service_name="$(read_extension_mach_service_name)"
   if [ "$extension_bundle_identifier" = "$EXTENSION_ID" ]; then
-    print_yes_no_unknown "Extension bundle identifier ready" "yes"
+    print_readiness_check "Extension bundle identifier ready" "yes"
   else
-    print_yes_no_unknown "Extension bundle identifier ready" "no"
+    print_readiness_check "Extension bundle identifier ready" "no"
   fi
 
   if /usr/bin/codesign --verify --strict "$EXTENSION_PATH" >/dev/null 2>&1; then
-    print_yes_no_unknown "Extension signature ready" "yes"
+    print_readiness_check "Extension signature ready" "yes"
   else
-    print_yes_no_unknown "Extension signature ready" "no"
+    print_readiness_check "Extension signature ready" "no"
   fi
 
   if has_boolean_entitlement "$EXTENSION_PATH" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT"; then
-    print_yes_no_unknown "Extension host-only entitlement absent" "no"
+    print_readiness_check "Extension host-only entitlement absent" "no"
   else
-    print_yes_no_unknown "Extension host-only entitlement absent" "yes"
+    print_readiness_check "Extension host-only entitlement absent" "yes"
   fi
 
   if [ -n "$extension_executable" ] && [ -f "${EXTENSION_PATH}/Contents/MacOS/${extension_executable}" ] && [ -x "${EXTENSION_PATH}/Contents/MacOS/${extension_executable}" ]; then
-    print_yes_no_unknown "Extension executable ready" "yes"
+    print_readiness_check "Extension executable ready" "yes"
   else
-    print_yes_no_unknown "Extension executable ready" "no"
+    print_readiness_check "Extension executable ready" "no"
   fi
 
   if [ -n "$extension_mach_service_name" ]; then
-    print_yes_no_unknown "Extension CMIO Mach service ready" "yes"
+    print_readiness_check "Extension CMIO Mach service ready" "yes"
   else
-    print_yes_no_unknown "Extension CMIO Mach service ready" "no"
+    print_readiness_check "Extension CMIO Mach service ready" "no"
   fi
 else
-  print_yes_no_unknown "Extension bundle identifier ready" "unknown"
-  print_yes_no_unknown "Extension signature ready" "unknown"
-  print_yes_no_unknown "Extension host-only entitlement absent" "unknown"
-  print_yes_no_unknown "Extension executable ready" "unknown"
-  print_yes_no_unknown "Extension CMIO Mach service ready" "unknown"
+  print_readiness_check "Extension bundle identifier ready" "unknown"
+  print_readiness_check "Extension signature ready" "unknown"
+  print_readiness_check "Extension host-only entitlement absent" "unknown"
+  print_readiness_check "Extension executable ready" "unknown"
+  print_readiness_check "Extension CMIO Mach service ready" "unknown"
 fi
 
 if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
   app_team_identifier="$(read_team_identifier "$APP_PATH" || true)"
   extension_team_identifier="$(read_team_identifier "$EXTENSION_PATH" || true)"
   if [ -n "$app_team_identifier" ] && [ -n "$extension_team_identifier" ] && [ "$app_team_identifier" = "$extension_team_identifier" ]; then
-    print_yes_no_unknown "Signing Team match ready" "yes"
+    print_readiness_check "Signing Team match ready" "yes"
   elif [ -n "$app_team_identifier" ] && [ -n "$extension_team_identifier" ]; then
-    print_yes_no_unknown "Signing Team match ready" "no"
+    print_readiness_check "Signing Team match ready" "no"
   else
-    print_yes_no_unknown "Signing Team match ready" "unknown"
+    print_readiness_check "Signing Team match ready" "unknown"
   fi
 else
-  print_yes_no_unknown "Signing Team match ready" "unknown"
+  print_readiness_check "Signing Team match ready" "unknown"
 fi
 
 if [ -f "$VIDEO_PATH" ]; then
   video_byte_count="$(file_byte_count "$VIDEO_PATH")"
   if [ -n "$video_byte_count" ] && [ "$video_byte_count" != "0" ]; then
-    print_yes_no_unknown "Bundled video ready" "yes"
+    print_readiness_check "Bundled video ready" "yes"
   else
-    print_yes_no_unknown "Bundled video ready" "no"
+    print_readiness_check "Bundled video ready" "no"
   fi
 else
-  print_yes_no_unknown "Bundled video ready" "no"
+  print_readiness_check "Bundled video ready" "no"
 fi
+
+print_readiness_rollup
 
 section "System Extension Registration"
 if [ -x /usr/bin/systemextensionsctl ]; then
