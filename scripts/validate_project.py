@@ -36,6 +36,44 @@ def png_dimensions(path):
     return width, height
 
 
+def mp4_video_dimensions(path):
+    data = path.read_bytes()
+    dimensions = []
+
+    def walk(start, end):
+        offset = start
+        while offset + 8 <= end:
+            atom_size = struct.unpack(">I", data[offset:offset + 4])[0]
+            atom_type = data[offset + 4:offset + 8].decode("latin1")
+            header_size = 8
+
+            if atom_size == 1:
+                if offset + 16 > end:
+                    return
+                atom_size = struct.unpack(">Q", data[offset + 8:offset + 16])[0]
+                header_size = 16
+            elif atom_size == 0:
+                atom_size = end - offset
+
+            if atom_size < header_size or offset + atom_size > end:
+                return
+
+            payload_start = offset + header_size
+            payload_end = offset + atom_size
+
+            if atom_type in {"moov", "trak", "mdia", "minf", "stbl"}:
+                walk(payload_start, payload_end)
+            elif atom_type == "stsd":
+                walk(payload_start + 8, payload_end)
+            elif atom_type in {"avc1", "hvc1", "hev1", "mp4v"} and payload_start + 28 <= payload_end:
+                dimensions.append(struct.unpack(">HH", data[payload_start + 24:payload_start + 28]))
+
+            offset += atom_size
+
+    walk(0, len(data))
+    return dimensions[0] if dimensions else None
+
+
 def expected_icon_pixel_size(image):
     point_size = int(image.get("size", "0x0").split("x", maxsplit=1)[0])
     scale = int(image.get("scale", "1x").removesuffix("x"))
@@ -86,6 +124,10 @@ def main():
     video_path = ROOT / "Extension/video.mp4"
     require(video_path.exists() and video_path.stat().st_size > 0,
             "Extension/video.mp4 is missing or empty",
+            failures)
+    video_dimensions = mp4_video_dimensions(video_path) if video_path.exists() else None
+    require(video_dimensions is not None,
+            "Extension/video.mp4 should expose parseable video dimensions",
             failures)
     require(not (ROOT / "GarethVideoCam/video.mp4").exists(),
             "duplicate host-app video.mp4 should not be checked in",
@@ -166,6 +208,11 @@ def main():
     require("advanceLoopTiming(by: assetDuration)" in extension_source and "private func advanceLoopTiming(by duration: CMTime)" in extension_source,
             "extension should advance timestamps explicitly at bundled-video loop boundaries",
             failures)
+    if video_dimensions is not None:
+        video_width, video_height = video_dimensions
+        require(f"CMVideoDimensions(width: {video_width}, height: {video_height})" in extension_source,
+                "extension stream dimensions should match the bundled video dimensions",
+                failures)
     require("Unable to loop the bundled video: \\(error.localizedDescription" in extension_source,
             "extension should log loop restart failures with actionable error details",
             failures)

@@ -20,7 +20,7 @@ private enum CameraExtensionConfiguration {
     static let bundledVideoExtension = "mp4"
 
     static let frameRate: Int32 = 30
-    static let dimensions = CMVideoDimensions(width: 1920, height: 1080)
+    static let dimensions = CMVideoDimensions(width: 1280, height: 720)
     static let pixelFormat = kCVPixelFormatType_420YpCbCr8BiPlanarFullRange
     static let frameDuration = CMTime(value: 1, timescale: frameRate)
 
