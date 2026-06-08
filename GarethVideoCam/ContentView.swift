@@ -425,6 +425,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     func copyDiagnostics() {
+        refreshExtensionInfo()
+
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setString(diagnosticSummary, forType: .string)

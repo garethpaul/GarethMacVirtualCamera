@@ -207,6 +207,9 @@ def main():
     require("diagnosticSummary" in host_source and "NSPasteboard.general" in host_source and "Copy Diagnostics" in host_source,
             "host app should expose copyable diagnostics for activation troubleshooting",
             failures)
+    require("func copyDiagnostics() {\n        refreshExtensionInfo()" in host_source,
+            "host app should refresh readiness before copying diagnostics",
+            failures)
     require("Button(action: manager.refreshExtensionInfo)" in host_source and "Refresh Status" in host_source,
             "host app should let users refresh extension and signing readiness in-place",
             failures)
