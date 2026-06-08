@@ -18,6 +18,7 @@ Priority:
 - Preserve the host app and embedded camera extension relationship
 - Keep build-product, entitlement, signing, and bundled-video validation strong
 - Maintain local checks and CI-equivalent unsigned build paths
+- Keep `make check` aligned with `./scripts/check_project.sh`
 - Make runtime activation blockers clear to users
 
 Next priorities:

@@ -292,6 +292,12 @@ def main():
         except ET.ParseError:
             readme_overview_xml_valid = False
     gitignore_text = (ROOT / ".gitignore").read_text()
+    makefile_path = ROOT / "Makefile"
+    makefile_text = makefile_path.read_text() if makefile_path.exists() else ""
+    changes_path = ROOT / "CHANGES.md"
+    changes_text = changes_path.read_text() if changes_path.exists() else ""
+    plan_path = ROOT / "docs/plans/2026-06-08-make-check-baseline.md"
+    plan_text = plan_path.read_text() if plan_path.exists() else ""
     check_project_path = ROOT / "scripts/check_project.sh"
     check_project_source = check_project_path.read_text()
     build_unsigned_path = ROOT / "scripts/build_unsigned.sh"
@@ -326,8 +332,23 @@ def main():
     require(".build/" in gitignore_text and "build-*.log" in gitignore_text and "*.xcresult" in gitignore_text,
             "gitignore should exclude local Xcode build products, logs, and result bundles",
             failures)
+    require(makefile_path.exists() and ".PHONY: check" in makefile_text and "./scripts/check_project.sh" in makefile_text,
+            "Makefile should expose make check as the conventional validation entry point",
+            failures)
+    require(plan_path.exists() and "status: completed" in plan_text and "make check" in plan_text and "./scripts/check_project.sh" in plan_text,
+            "docs/plans should record the completed make-check baseline plan",
+            failures)
+    require(changes_path.exists() and "make check" in changes_text and "docs/plans/" in changes_text,
+            "CHANGES should record the make-check validation baseline",
+            failures)
     require("<!-- README-OVERVIEW-IMAGE -->" in readme_text and "![Project overview](docs/readme-overview.svg)" in readme_text,
             "README should include the project overview SVG near the top",
+            failures)
+    require("make check" in readme_text and "./scripts/check_project.sh" in readme_text,
+            "README should document both validation entry points",
+            failures)
+    require("make check" in vision_text and "./scripts/check_project.sh" in vision_text,
+            "VISION should keep the Makefile validation entry point aligned with the project script",
             failures)
     require(readme_overview_path.exists() and readme_overview_path.stat().st_size > 0,
             "README overview SVG should exist and be non-empty",
