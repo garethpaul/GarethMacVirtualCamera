@@ -457,6 +457,36 @@ if ! grep -q "Missing Debug extension NSSystemExtensionUsageDescription" "$TMP_D
   exit 1
 fi
 
+WRONG_APP_SYSTEM_EXTENSION_USAGE_PRODUCTS="$TMP_DIR/wrong-app-system-extension-usage/Products"
+write_product_fixture "$WRONG_APP_SYSTEM_EXTENSION_USAGE_PRODUCTS" Debug
+set_info_plist_key "$WRONG_APP_SYSTEM_EXTENSION_USAGE_PRODUCTS/Debug/GarethVideoCam.app" "NSSystemExtensionUsageDescription" "System extension usage fixture"
+
+if PRODUCTS_PATH="$WRONG_APP_SYSTEM_EXTENSION_USAGE_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/wrong-app-system-extension-usage.out" 2>"$TMP_DIR/wrong-app-system-extension-usage.err"; then
+  printf 'Expected verifier to reject a wrong app system extension usage description.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Unexpected Debug app NSSystemExtensionUsageDescription" "$TMP_DIR/wrong-app-system-extension-usage.err"; then
+  printf 'Verifier failure did not explain the wrong app system extension usage description.\n' >&2
+  cat "$TMP_DIR/wrong-app-system-extension-usage.err" >&2
+  exit 1
+fi
+
+WRONG_EXTENSION_SYSTEM_EXTENSION_USAGE_PRODUCTS="$TMP_DIR/wrong-extension-system-extension-usage/Products"
+write_product_fixture "$WRONG_EXTENSION_SYSTEM_EXTENSION_USAGE_PRODUCTS" Debug
+set_info_plist_key "$WRONG_EXTENSION_SYSTEM_EXTENSION_USAGE_PRODUCTS/Debug/GarethVideoCam.app/Contents/Library/SystemExtensions/$EXTENSION_NAME" "NSSystemExtensionUsageDescription" "System extension usage fixture"
+
+if PRODUCTS_PATH="$WRONG_EXTENSION_SYSTEM_EXTENSION_USAGE_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/wrong-extension-system-extension-usage.out" 2>"$TMP_DIR/wrong-extension-system-extension-usage.err"; then
+  printf 'Expected verifier to reject a wrong extension system extension usage description.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Unexpected Debug extension NSSystemExtensionUsageDescription" "$TMP_DIR/wrong-extension-system-extension-usage.err"; then
+  printf 'Verifier failure did not explain the wrong extension system extension usage description.\n' >&2
+  cat "$TMP_DIR/wrong-extension-system-extension-usage.err" >&2
+  exit 1
+fi
+
 WRONG_APP_USAGE_PRODUCTS="$TMP_DIR/wrong-app-usage/Products"
 write_product_fixture "$WRONG_APP_USAGE_PRODUCTS" Debug
 set_info_plist_key "$WRONG_APP_USAGE_PRODUCTS/Debug/GarethVideoCam.app" "NSCameraUsageDescription" "Camera usage fixture"
