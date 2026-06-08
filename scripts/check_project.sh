@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+./scripts/validate_project.py
+./scripts/test_scan_build_log.py
+bash -n ./scripts/collect_runtime_diagnostics.sh
+bash -n ./scripts/build_unsigned.sh
+git diff --check

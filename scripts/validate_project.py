@@ -261,6 +261,8 @@ def main():
     extension_source = (ROOT / "Extension/ExtensionProvider.swift").read_text()
     extension_main_source = (ROOT / "Extension/main.swift").read_text()
     readme_text = (ROOT / "README.md").read_text()
+    check_project_path = ROOT / "scripts/check_project.sh"
+    check_project_source = check_project_path.read_text()
     build_unsigned_path = ROOT / "scripts/build_unsigned.sh"
     build_unsigned_source = build_unsigned_path.read_text()
     build_log_scanner_source = (ROOT / "scripts/scan_build_log.py").read_text()
@@ -538,6 +540,9 @@ def main():
     require("didOpenSettings" in host_source and "System Settings Unavailable" in host_source,
             "host app should report System Settings launch failures",
             failures)
+    require("./scripts/check_project.sh" in readme_text and "project metadata validation, build-log scanner tests, shell syntax checks, and whitespace checks" in readme_text,
+            "README should document the local pre-push project check",
+            failures)
     require("CI-equivalent unsigned compile" in readme_text and "./scripts/build_unsigned.sh" in readme_text and "./scripts/scan_build_log.py build-Debug.log build-Release.log" in readme_text,
             "README should document the CI-equivalent unsigned Debug and Release target builds with log scanning",
             failures)
@@ -570,6 +575,12 @@ def main():
             failures)
     require(build_unsigned_path.stat().st_mode & 0o111,
             "unsigned build script should be executable",
+            failures)
+    require("./scripts/validate_project.py" in check_project_source and "./scripts/test_scan_build_log.py" in check_project_source and "bash -n ./scripts/collect_runtime_diagnostics.sh" in check_project_source and "bash -n ./scripts/build_unsigned.sh" in check_project_source and "git diff --check" in check_project_source,
+            "project check script should run validation, scanner tests, shell syntax checks, and whitespace checks",
+            failures)
+    require(check_project_path.stat().st_mode & 0o111,
+            "project check script should be executable",
             failures)
     require("codesign -d --entitlements :-" in runtime_diagnostics_source and "spctl --assess" in runtime_diagnostics_source and "systemextensionsctl list" in runtime_diagnostics_source and "Camera Devices" in runtime_diagnostics_source and "SPCameraDataType" in runtime_diagnostics_source and "Running App and Extension Processes" in runtime_diagnostics_source and "/bin/ps -axo" in runtime_diagnostics_source and "script_pid=\"$$\"" in runtime_diagnostics_source and "collect_runtime_diagnostics.sh" in runtime_diagnostics_source and "$4 ~ /(^|\\/)awk$/" in runtime_diagnostics_source and "Bundle short version:" in runtime_diagnostics_source and "Bundle build version:" in runtime_diagnostics_source and "CFBundleShortVersionString" in runtime_diagnostics_source and "CFBundleVersion" in runtime_diagnostics_source and "LOG_WINDOW" in runtime_diagnostics_source and "Bundled Video" in runtime_diagnostics_source and "VIDEO_PATH" in runtime_diagnostics_source and "Video resource exists:" in runtime_diagnostics_source and "Video byte size:" in runtime_diagnostics_source and "Video resource is empty:" in runtime_diagnostics_source and "Video SHA-256:" in runtime_diagnostics_source and "print_file_sha256" in runtime_diagnostics_source and "kMDItemPixelWidth" in runtime_diagnostics_source and "kMDItemPixelHeight" in runtime_diagnostics_source and "kMDItemDurationSeconds" in runtime_diagnostics_source and "Application Location Check" in runtime_diagnostics_source and "EXPECTED_APP_PATH" in runtime_diagnostics_source and "App path is inside /Applications:" in runtime_diagnostics_source and "App path matches expected app path:" in runtime_diagnostics_source and "Bundle Identifier Check" in runtime_diagnostics_source and "read_bundle_identifier" in runtime_diagnostics_source and "App bundle identifier matches:" in runtime_diagnostics_source and "Extension bundle identifier matches:" in runtime_diagnostics_source and "Signing Team Match" in runtime_diagnostics_source and "read_team_identifier" in runtime_diagnostics_source and "Team identifiers match:" in runtime_diagnostics_source and "Entitlement Check" in runtime_diagnostics_source and "HOST_SYSTEM_EXTENSION_ENTITLEMENT" in runtime_diagnostics_source and "has_boolean_entitlement" in runtime_diagnostics_source and "App System Extension entitlement present:" in runtime_diagnostics_source and "Extension carries host-only System Extension entitlement:" in runtime_diagnostics_source and "Runtime Readiness Summary" in runtime_diagnostics_source and "print_yes_no_unknown" in runtime_diagnostics_source and 'if [ "$APP_PATH" = "$EXPECTED_APP_PATH" ]; then' in runtime_diagnostics_source and "Application location ready" in runtime_diagnostics_source and "App bundle identifier ready" in runtime_diagnostics_source and "App signature ready" in runtime_diagnostics_source and "App System Extension entitlement ready" in runtime_diagnostics_source and "Extension bundle identifier ready" in runtime_diagnostics_source and "Extension signature ready" in runtime_diagnostics_source and "Extension host-only entitlement absent" in runtime_diagnostics_source and "Signing Team match ready" in runtime_diagnostics_source and "Bundled video ready" in runtime_diagnostics_source and "systemextensionsd" in runtime_diagnostics_source and "com.apple.CoreMediaIO" in runtime_diagnostics_source,
             "runtime diagnostics script should collect labeled entitlements, entitlement readiness, readiness summary, Gatekeeper assessment, bundle versions, system-extension registration, camera inventory, process inventory, configurable log windows, and recent app/system-extension logs",
