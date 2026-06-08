@@ -28,3 +28,4 @@
 - Made runtime video metadata parsing tolerant of quoted and whitespace-padded values.
 - Covered missing app and extension display names in build-product verifier fixtures.
 - Verified bundled runtime diagnostics video-metadata self-tests inside built app products.
+- Verified bundled runtime diagnostics application-group self-tests inside built app products.
