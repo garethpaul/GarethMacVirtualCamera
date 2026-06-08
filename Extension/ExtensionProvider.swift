@@ -183,6 +183,7 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
             streamPreparationTask = Task { [weak self] in
                 await self?.prepareAndStartStreaming(with: videoURL, generation: generation)
             }
+            logger.info("Preparing stream with bundled video: \(videoURL.lastPathComponent, privacy: .public)")
         }
     }
 

@@ -306,6 +306,9 @@ def main():
     require("Attached streaming client; active clients" in extension_source and "Detached streaming client; active clients" in extension_source,
             "extension should log multi-client streaming attach and detach counts",
             failures)
+    require("Preparing stream with bundled video" in extension_source,
+            "extension should log initial bundled-video stream preparation",
+            failures)
     require("guard _timer == nil else" in extension_source and "Duplicate stream timer start ignored" in extension_source,
             "extension should keep stream timer startup idempotent",
             failures)
