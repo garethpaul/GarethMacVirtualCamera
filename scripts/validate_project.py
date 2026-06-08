@@ -883,6 +883,9 @@ def main():
     require("Application group dotted-prefix fixture ready: no" in runtime_diagnostics_test_source and "dotted_prefix_group" in runtime_diagnostics_source and "application_group_matches_expected_identifier" in runtime_diagnostics_source,
             "runtime diagnostics test should reject app groups with dotted non-Team-ID prefixes",
             failures)
+    require("Application group empty format fixture: none" in runtime_diagnostics_test_source and "Application group list format fixture: ABCDE12345.com.garethpaul.GarethVideoCam, ZYXWV98765.com.garethpaul.GarethVideoCam" in runtime_diagnostics_test_source and "format_application_groups" in runtime_diagnostics_source and "formatted_groups" in runtime_diagnostics_source,
+            "runtime diagnostics test should cover empty and multi-value app-group formatting",
+            failures)
     require(runtime_diagnostics_test_path.stat().st_mode & 0o111,
             "runtime diagnostics test script should be executable",
             failures)

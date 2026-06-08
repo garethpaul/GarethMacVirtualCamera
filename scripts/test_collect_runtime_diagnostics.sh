@@ -97,6 +97,8 @@ require_output "$application_group_output" "Application group mismatched fixture
 require_output "$application_group_output" "Application group wrong suffix fixture ready: no"
 require_output "$application_group_output" "Application group dotted-prefix fixture ready: no"
 require_output "$application_group_output" "Application group unresolved fixture ready: no"
+require_output "$application_group_output" "Application group empty format fixture: none"
+require_output "$application_group_output" "Application group list format fixture: ABCDE12345.com.garethpaul.GarethVideoCam, ZYXWV98765.com.garethpaul.GarethVideoCam"
 
 require_output "$camera_device_output" "Camera device present fixture: yes"
 require_output "$camera_device_output" "Camera device missing fixture: no"

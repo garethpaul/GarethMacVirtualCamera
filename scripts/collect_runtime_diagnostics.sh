@@ -840,6 +840,7 @@ run_application_group_self_test() {
   local other_team_group="ZYXWV98765.$APP_GROUP_BASE_ID"
   local wrong_group="ABCDE12345.com.example.Other"
   local dotted_prefix_group="com.example.$APP_GROUP_BASE_ID"
+  local formatted_groups
 
   printf 'Application group direct fixture ready: %s\n' "$(application_groups_ready_value "$direct_group" "$direct_group")"
   printf 'Application group shared fixture ready: %s\n' "$(application_groups_ready_value "$shared_group" "$shared_group")"
@@ -848,6 +849,9 @@ run_application_group_self_test() {
   printf 'Application group wrong suffix fixture ready: %s\n' "$(application_groups_ready_value "$wrong_group" "$wrong_group")"
   printf 'Application group dotted-prefix fixture ready: %s\n' "$(application_groups_ready_value "$dotted_prefix_group" "$dotted_prefix_group")"
   printf 'Application group unresolved fixture ready: %s\n' "$(application_groups_ready_value '$(TeamIdentifierPrefix)com.garethpaul.GarethVideoCam' '$(TeamIdentifierPrefix)com.garethpaul.GarethVideoCam')"
+  printf 'Application group empty format fixture: %s\n' "$(format_application_groups "")"
+  formatted_groups="$(format_application_groups "$shared_group"$'\n'"$other_team_group")"
+  printf 'Application group list format fixture: %s\n' "$formatted_groups"
 }
 
 run_camera_device_self_test() {

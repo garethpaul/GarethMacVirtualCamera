@@ -15,3 +15,4 @@
 - Limited CI workflow token permissions to read-only repository contents.
 - Added activity feedback for automatic foreground refreshes when visible readiness state changes after returning to the app.
 - Covered non-executable host app binaries and missing extension executable declarations in build-product verifier fixtures.
+- Covered empty and multi-value application-group formatting in runtime diagnostics self-tests.
