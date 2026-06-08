@@ -866,6 +866,9 @@ def main():
     require("GARETH_DIAGNOSTICS_SELF_TEST=mach-service" in verify_build_products_source and "Mach service direct fixture ready: yes" in verify_build_products_source and "Mach service dotted-prefix fixture ready: no" in verify_build_products_source and "Mach service unresolved fixture resolved: no" in verify_build_products_source,
             "build-product verifier should run the bundled runtime diagnostics mach-service self-test",
             failures)
+    require('verify_bundled_video_metadata "$configuration" "$video_path"\n  verify_app_diagnostics_resources "$configuration" "$app_path"' in verify_build_products_source,
+            "build-product verifier should run bundled app diagnostics self-tests after extension and video metadata checks",
+            failures)
     require("APP_CAMERA_USAGE_DESCRIPTION" in verify_build_products_source and "APP_SYSTEM_EXTENSION_USAGE_DESCRIPTION" in verify_build_products_source and "EXTENSION_CAMERA_USAGE_DESCRIPTION" in verify_build_products_source and "EXTENSION_SYSTEM_EXTENSION_USAGE_DESCRIPTION" in verify_build_products_source and "verify_info_plist_value \"$configuration\" \"app\" \"$app_path\" \"NSCameraUsageDescription\"" in verify_build_products_source and "verify_info_plist_value \"$configuration\" \"extension\" \"$extension_path\" \"NSCameraUsageDescription\"" in verify_build_products_source,
             "build-product verifier should require exact product-specific app and extension privacy usage strings",
             failures)

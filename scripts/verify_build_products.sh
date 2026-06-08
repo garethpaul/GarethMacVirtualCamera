@@ -426,7 +426,6 @@ for configuration in "${configurations[@]}"; do
   verify_info_plist_value "$configuration" "app" "$app_path" "CFBundleDisplayName" "$APP_DISPLAY_NAME"
   verify_info_plist_value "$configuration" "app" "$app_path" "NSCameraUsageDescription" "$APP_CAMERA_USAGE_DESCRIPTION"
   verify_info_plist_value "$configuration" "app" "$app_path" "NSSystemExtensionUsageDescription" "$APP_SYSTEM_EXTENSION_USAGE_DESCRIPTION"
-  verify_app_diagnostics_resources "$configuration" "$app_path"
 
   if [ ! -d "$extension_path" ]; then
     printf 'Missing %s embedded system extension: %s\n' "$configuration" "$extension_path" >&2
@@ -451,6 +450,7 @@ for configuration in "${configurations[@]}"; do
     exit 1
   fi
   verify_bundled_video_metadata "$configuration" "$video_path"
+  verify_app_diagnostics_resources "$configuration" "$app_path"
 
   printf 'Verified %s app product, embedded system extension, versions, executables, display metadata, privacy usage strings, resolved CMIO metadata, and bundled video metadata.\n' "$configuration"
 done
