@@ -43,10 +43,12 @@ struct GarethVideoCamApp: App {
                 Button("Copy Runtime Diagnostics Command") {
                     systemExtensionRequestManager.copyRuntimeDiagnosticsCommand()
                 }
+                .keyboardShortcut("d", modifiers: [.command, .shift])
 
                 Button("Copy Expected Runtime Evidence") {
                     systemExtensionRequestManager.copyRuntimeEvidenceExpectedDiagnostics()
                 }
+                .keyboardShortcut("e", modifiers: [.command, .shift])
 
                 Button("Open System Settings") {
                     systemExtensionRequestManager.openSystemSettings()

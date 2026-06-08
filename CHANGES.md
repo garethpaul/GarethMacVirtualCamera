@@ -19,3 +19,4 @@
 - Covered decimal, non-numeric, and negative-duration bundled-video metadata readiness cases in runtime diagnostics self-tests.
 - Guarded CI concurrency cancellation and job timeout settings in project validation.
 - Covered wrong host and extension System Extension usage descriptions in build-product verifier fixtures.
+- Added native keyboard shortcuts for copying the runtime diagnostics command and expected runtime evidence.
