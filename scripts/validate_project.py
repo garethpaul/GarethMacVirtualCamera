@@ -126,6 +126,12 @@ def main():
     require("case .locatingExtension, .activating, .needsApproval, .deactivating, .requiresRestart:" in host_source,
             "host app should keep controls disabled while approval or restart is pending",
             failures)
+    require("private enum RequestKind" in host_source and "pendingRequestKind = .activation" in host_source and "pendingRequestKind = .deactivation" in host_source,
+            "host app should track whether the pending system-extension request is install or uninstall",
+            failures)
+    require("case deactivated" in host_source and "return .deactivated" in host_source and "Uninstall Completed" in host_source,
+            "host app should report successful deactivation separately from activation",
+            failures)
     require(f'expectedExtensionBundleIdentifier = "{EXTENSION_BUNDLE_ID}"' in host_source and "unexpectedBundleIdentifier" in host_source,
             "host app should verify the bundled system extension identifier before submitting requests",
             failures)

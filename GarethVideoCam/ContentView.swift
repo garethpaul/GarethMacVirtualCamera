@@ -66,6 +66,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         case activating
         case needsApproval
         case activated
+        case deactivated
         case deactivating
         case requiresRestart
         case failed(String)
@@ -86,6 +87,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
                 return "Approval Required"
             case .activated:
                 return "Installed"
+            case .deactivated:
+                return "Removed"
             case .deactivating:
                 return "Removing"
             case .requiresRestart:
@@ -107,6 +110,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
                 return "person.badge.shield.checkmark"
             case .activated:
                 return "checkmark.seal.fill"
+            case .deactivated:
+                return "checkmark.circle.fill"
             case .requiresRestart:
                 return "restart.circle.fill"
             case .failed:
@@ -128,6 +133,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
                 return .orange
             case .activated:
                 return .green
+            case .deactivated:
+                return .secondary
             case .failed:
                 return .red
             }
@@ -181,9 +188,61 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         let detail: String
     }
 
+    private enum RequestKind {
+        case activation
+        case deactivation
+
+        var approvalDetail: String {
+            switch self {
+            case .activation:
+                return "System Settings must allow the camera extension before it can run."
+            case .deactivation:
+                return "System Settings must allow removal before the camera extension can be deactivated."
+            }
+        }
+
+        var completedTitle: String {
+            switch self {
+            case .activation:
+                return "Install Completed"
+            case .deactivation:
+                return "Uninstall Completed"
+            }
+        }
+
+        var completedDetail: String {
+            switch self {
+            case .activation:
+                return "The camera extension is active."
+            case .deactivation:
+                return "The camera extension was removed."
+            }
+        }
+
+        var completedState: InstallState {
+            switch self {
+            case .activation:
+                return .activated
+            case .deactivation:
+                return .deactivated
+            }
+        }
+
+        var restartDetail: String {
+            switch self {
+            case .activation:
+                return "macOS will finish installing the camera extension after restart."
+            case .deactivation:
+                return "macOS will finish removing the camera extension after restart."
+            }
+        }
+    }
+
     @Published var state: InstallState = .idle
     @Published var extensionInfo: ExtensionInfo?
     @Published var activity: [ActivityItem] = []
+
+    private var pendingRequestKind: RequestKind?
 
     var logText: String {
         activity.map { "\($0.title): \($0.detail)" }.joined(separator: "\n")
@@ -226,6 +285,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             let extensionInfo = try loadBundledExtensionInfo()
             self.extensionInfo = extensionInfo
             state = .activating
+            pendingRequestKind = .activation
             appendActivity(level: .info,
                            title: "Install Requested",
                            detail: extensionInfo.identifier)
@@ -247,6 +307,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             let extensionInfo = try loadBundledExtensionInfo()
             self.extensionInfo = extensionInfo
             state = .deactivating
+            pendingRequestKind = .deactivation
             appendActivity(level: .info,
                            title: "Uninstall Requested",
                            detail: extensionInfo.identifier)
@@ -264,7 +325,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         do {
             extensionInfo = try loadBundledExtensionInfo()
             switch state {
-            case .idle, .ready, .needsApplicationLocation:
+            case .idle, .ready, .needsApplicationLocation, .deactivated:
                 state = canSubmitSystemExtensionRequests ? .ready : .needsApplicationLocation
             default:
                 break
@@ -334,6 +395,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
     private func handleFailure(_ error: Error) {
         let message = error.localizedDescription
+        pendingRequestKind = nil
         state = .failed(message)
         appendActivity(level: .error, title: "Request Failed", detail: message)
     }
@@ -357,24 +419,28 @@ extension SystemExtensionRequestManager: OSSystemExtensionRequestDelegate {
     }
 
     public func requestNeedsUserApproval(_ request: OSSystemExtensionRequest) {
+        let requestKind = pendingRequestKind ?? .activation
         state = .needsApproval
         appendActivity(level: .warning,
                        title: "Approval Required",
-                       detail: "System Settings must allow the camera extension before it can run.")
+                       detail: requestKind.approvalDetail)
     }
 
     public func request(_ request: OSSystemExtensionRequest, didFinishWithResult result: OSSystemExtensionRequest.Result) {
+        let requestKind = pendingRequestKind ?? .activation
+        pendingRequestKind = nil
+
         switch result.rawValue {
         case 0:
-            state = .activated
+            state = requestKind.completedState
             appendActivity(level: .success,
-                           title: "Request Completed",
-                           detail: "The camera extension is active.")
+                           title: requestKind.completedTitle,
+                           detail: requestKind.completedDetail)
         case 1:
             state = .requiresRestart
             appendActivity(level: .warning,
                            title: "Restart Required",
-                           detail: "The request completed and macOS reported that a restart is required.")
+                           detail: requestKind.restartDetail)
         default:
             state = .ready
             appendActivity(level: .info,
@@ -418,6 +484,7 @@ extension SystemExtensionRequestManager: OSSystemExtensionRequestDelegate {
             errorString = "unknown code \(errorCode)"
         }
         state = .failed(errorString)
+        pendingRequestKind = nil
         appendActivity(level: .error,
                        title: "Request Failed",
                        detail: "\(errorString) (\(nsError.domain) \(errorCode)): \(nsError.localizedDescription)")
