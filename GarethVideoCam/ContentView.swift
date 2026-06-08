@@ -872,32 +872,20 @@ private struct ActionPanel: View {
     var body: some View {
         SectionSurface {
             VStack(alignment: .leading, spacing: 14) {
-                HStack(alignment: .center, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Camera Extension")
-                            .font(.title3.weight(.semibold))
-                        Text(manager.extensionInfo?.identifier ?? "No bundled extension")
-                            .font(.callout.monospaced())
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .textSelection(.enabled)
-                    }
-                    .layoutPriority(1)
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .center, spacing: 12) {
+                        extensionIdentity
+                            .layoutPriority(1)
 
-                    Spacer(minLength: 16)
+                        Spacer(minLength: 16)
 
-                    Button(action: manager.install) {
-                        Label("Install", systemImage: "arrow.down.circle.fill")
+                        requestButtons
                     }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(manager.isBusy || !manager.canSubmitSystemExtensionRequests)
 
-                    Button(action: manager.uninstall) {
-                        Label("Uninstall", systemImage: "trash")
+                    VStack(alignment: .leading, spacing: 12) {
+                        extensionIdentity
+                        requestButtons
                     }
-                    .buttonStyle(.bordered)
-                    .disabled(manager.isBusy || !manager.canSubmitSystemExtensionRequests)
                 }
 
                 if let requestReadinessMessage = manager.requestReadinessMessage {
@@ -907,6 +895,53 @@ private struct ActionPanel: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private var extensionIdentity: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Camera Extension")
+                .font(.title3.weight(.semibold))
+            Text(manager.extensionInfo?.identifier ?? "No bundled extension")
+                .font(.callout.monospaced())
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+                .textSelection(.enabled)
+        }
+    }
+
+    @ViewBuilder
+    private var requestButtons: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 10) {
+                installButton
+                uninstallButton
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                installButton
+                uninstallButton
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var installButton: some View {
+        Button(action: manager.install) {
+            Label("Install", systemImage: "arrow.down.circle.fill")
+        }
+        .buttonStyle(.borderedProminent)
+        .disabled(manager.isBusy || !manager.canSubmitSystemExtensionRequests)
+    }
+
+    @ViewBuilder
+    private var uninstallButton: some View {
+        Button(action: manager.uninstall) {
+            Label("Uninstall", systemImage: "trash")
+        }
+        .buttonStyle(.bordered)
+        .disabled(manager.isBusy || !manager.canSubmitSystemExtensionRequests)
     }
 }
 
