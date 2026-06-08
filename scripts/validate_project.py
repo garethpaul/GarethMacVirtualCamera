@@ -171,6 +171,9 @@ def main():
     require("invalidActiveFormatIndex" in extension_source and "throw CameraExtensionError.invalidActiveFormatIndex" in extension_source,
             "extension stream should reject unsupported active format indices",
             failures)
+    require("invalidFrameDuration" in extension_source and "throw CameraExtensionError.invalidFrameDuration" in extension_source and "streamProperties.frameDuration" in extension_source,
+            "extension stream should reject unsupported frame-duration requests",
+            failures)
     require("case needsApplicationLocation" in host_source and "canSubmitSystemExtensionRequests" in host_source,
             "host app should model the /Applications requirement before submitting system-extension requests",
             failures)

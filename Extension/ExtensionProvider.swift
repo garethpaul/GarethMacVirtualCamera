@@ -42,6 +42,7 @@ private enum CameraExtensionError: LocalizedError {
     case failedToAddStream(String)
     case failedToAddDevice(String)
     case invalidActiveFormatIndex(Int)
+    case invalidFrameDuration(CMTime)
 
     var errorDescription: String? {
         switch self {
@@ -65,6 +66,8 @@ private enum CameraExtensionError: LocalizedError {
             return "Failed to add the camera device: \(detail)"
         case .invalidActiveFormatIndex(let activeFormatIndex):
             return "The requested active stream format index is invalid: \(activeFormatIndex)"
+        case .invalidFrameDuration(let frameDuration):
+            return "The requested stream frame duration is unsupported: \(frameDuration.value)/\(frameDuration.timescale)"
         }
     }
 }
@@ -513,6 +516,14 @@ final class ExtensionStreamSource: NSObject, CMIOExtensionStreamSource {
             }
 
             self.activeFormatIndex = activeFormatIndex
+        }
+
+        if let frameDuration = streamProperties.frameDuration {
+            guard frameDuration.flags.contains(.valid),
+                  CMTimeCompare(frameDuration, CameraExtensionConfiguration.frameDuration) == 0 else {
+                logger.error("Invalid frame duration: \(frameDuration.value, privacy: .public)/\(frameDuration.timescale, privacy: .public)")
+                throw CameraExtensionError.invalidFrameDuration(frameDuration)
+            }
         }
     }
 
