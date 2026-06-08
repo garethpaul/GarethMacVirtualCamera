@@ -93,6 +93,17 @@ read_bundle_identifier() {
   read_info_plist_value "$bundle_path" CFBundleIdentifier
 }
 
+executable_readiness_value() {
+  local executable_name="$1"
+  local executable_path="$2"
+
+  if [ -n "$executable_name" ] && [ -f "$executable_path" ] && [ -x "$executable_path" ]; then
+    printf 'yes\n'
+  else
+    printf 'no\n'
+  fi
+}
+
 bundle_versions_match_readiness_value() {
   local app_short_version="$1"
   local app_build_version="$2"
@@ -732,6 +743,26 @@ run_bundle_version_match_self_test() {
   printf 'Bundle version missing fixture: %s\n' "$(bundle_versions_match_readiness_value "1.0" "" "1.0" "100")"
 }
 
+run_executable_readiness_self_test() {
+  local temp_dir
+  local executable_path
+
+  temp_dir="$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/gareth-executable.XXXXXX")" || return 1
+  executable_path="$temp_dir/Runner"
+
+  printf 'Executable missing name fixture: %s\n' "$(executable_readiness_value "" "$executable_path")"
+  printf 'Executable missing file fixture: %s\n' "$(executable_readiness_value "Runner" "$executable_path")"
+
+  : >"$executable_path"
+  /bin/chmod 0644 "$executable_path"
+  printf 'Executable non-executable fixture: %s\n' "$(executable_readiness_value "Runner" "$executable_path")"
+
+  /bin/chmod 0755 "$executable_path"
+  printf 'Executable ready fixture: %s\n' "$(executable_readiness_value "Runner" "$executable_path")"
+
+  /bin/rm -rf "$temp_dir"
+}
+
 run_mach_service_self_test() {
   printf 'Mach service direct fixture resolved: %s\n' "$(mach_service_resolved_value "$EXTENSION_ID")"
   printf 'Mach service direct fixture matches expected: %s\n' "$(mach_service_matches_expected_value "$EXTENSION_ID" "$EXTENSION_ID")"
@@ -848,6 +879,10 @@ case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
     ;;
   bundle-version-match)
     run_bundle_version_match_self_test
+    exit 0
+    ;;
+  executable-readiness)
+    run_executable_readiness_self_test
     exit 0
     ;;
   mach-service)
@@ -1236,11 +1271,7 @@ if [ -d "$APP_PATH" ]; then
   fi
 
   app_executable="$(read_info_plist_value "$APP_PATH" CFBundleExecutable)"
-  if [ -n "$app_executable" ] && [ -f "${APP_PATH}/Contents/MacOS/${app_executable}" ] && [ -x "${APP_PATH}/Contents/MacOS/${app_executable}" ]; then
-    print_readiness_check "App executable ready" "yes"
-  else
-    print_readiness_check "App executable ready" "no"
-  fi
+  print_readiness_check "App executable ready" "$(executable_readiness_value "$app_executable" "${APP_PATH}/Contents/MacOS/${app_executable}")"
 else
   print_readiness_check "App bundle identifier ready" "unknown"
   print_readiness_check "App signature ready" "unknown"
@@ -1270,11 +1301,7 @@ if [ -d "$EXTENSION_PATH" ]; then
     print_readiness_check "Extension host-only entitlement absent" "yes"
   fi
 
-  if [ -n "$extension_executable" ] && [ -f "${EXTENSION_PATH}/Contents/MacOS/${extension_executable}" ] && [ -x "${EXTENSION_PATH}/Contents/MacOS/${extension_executable}" ]; then
-    print_readiness_check "Extension executable ready" "yes"
-  else
-    print_readiness_check "Extension executable ready" "no"
-  fi
+  print_readiness_check "Extension executable ready" "$(executable_readiness_value "$extension_executable" "${EXTENSION_PATH}/Contents/MacOS/${extension_executable}")"
 
   print_readiness_check "Extension CMIO Mach service ready" "$(mach_service_readiness_value "$extension_mach_service_name" "$EXTENSION_ID")"
 else
