@@ -3,7 +3,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-VALIDATE_PROJECT_SCRIPT="${ROOT}/scripts/validate_project.py"
+VALIDATE_PROJECT_SCRIPT="${SCRIPT_DIR}/validate_project.py"
+if [ ! -f "$VALIDATE_PROJECT_SCRIPT" ]; then
+  VALIDATE_PROJECT_SCRIPT="${ROOT}/scripts/validate_project.py"
+fi
 APP_PATH="${1:-/Applications/GarethVideoCam.app}"
 LOG_WINDOW="${2:-30m}"
 EXPECTED_APP_PATH="/Applications/GarethVideoCam.app"

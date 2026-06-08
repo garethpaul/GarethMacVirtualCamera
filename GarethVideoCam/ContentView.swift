@@ -576,6 +576,19 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         return trimmedValue.isEmpty ? nil : trimmedValue
     }
 
+    private static func bundledRuntimeDiagnosticsScriptPath() -> String? {
+        guard let scriptURL = Bundle.main.url(forResource: "collect_runtime_diagnostics",
+                                              withExtension: "sh") else {
+            return nil
+        }
+
+        return FileManager.default.fileExists(atPath: scriptURL.path) ? scriptURL.path : nil
+    }
+
+    private static func shellQuoted(_ value: String) -> String {
+        return "'\(value.replacingOccurrences(of: "'", with: "'\\''"))'"
+    }
+
     var applicationBundleIdentifier: String {
         return Bundle.main.bundleIdentifier ?? "Unknown"
     }
@@ -1214,7 +1227,9 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     var runtimeDiagnosticsCommand: String {
-        return "./scripts/collect_runtime_diagnostics.sh \(expectedApplicationPath) 1h"
+        let scriptPath = Self.bundledRuntimeDiagnosticsScriptPath()
+            ?? "./scripts/collect_runtime_diagnostics.sh"
+        return "/bin/bash \(Self.shellQuoted(scriptPath)) \(Self.shellQuoted(expectedApplicationPath)) 1h"
     }
 
     var runtimeEvidenceChecks: [RuntimeEvidenceCheck] {

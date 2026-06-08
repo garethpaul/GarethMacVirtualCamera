@@ -155,6 +155,33 @@ verify_info_plist_value() {
   fi
 }
 
+verify_app_diagnostics_resources() {
+  local configuration="$1"
+  local app_path="$2"
+  local script_path="$app_path/Contents/Resources/collect_runtime_diagnostics.sh"
+  local parser_path="$app_path/Contents/Resources/validate_project.py"
+
+  if [ ! -f "$script_path" ]; then
+    printf 'Missing %s app runtime diagnostics script: %s\n' "$configuration" "$script_path" >&2
+    exit 1
+  fi
+
+  if [ ! -f "$parser_path" ]; then
+    printf 'Missing %s app runtime diagnostics parser: %s\n' "$configuration" "$parser_path" >&2
+    exit 1
+  fi
+
+  if ! /usr/bin/grep -F "VALIDATE_PROJECT_SCRIPT" "$script_path" >/dev/null; then
+    printf 'Unexpected %s app runtime diagnostics script content: %s\n' "$configuration" "$script_path" >&2
+    exit 1
+  fi
+
+  if ! /usr/bin/grep -F "mp4_video_metadata" "$parser_path" >/dev/null; then
+    printf 'Unexpected %s app runtime diagnostics parser content: %s\n' "$configuration" "$parser_path" >&2
+    exit 1
+  fi
+}
+
 verify_extension_cmio_metadata() {
   local configuration="$1"
   local bundle_path="$2"
@@ -276,6 +303,7 @@ for configuration in "${configurations[@]}"; do
   verify_info_plist_value "$configuration" "app" "$app_path" "CFBundleDisplayName" "$APP_DISPLAY_NAME"
   verify_info_plist_string "$configuration" "app" "$app_path" "NSCameraUsageDescription"
   verify_info_plist_string "$configuration" "app" "$app_path" "NSSystemExtensionUsageDescription"
+  verify_app_diagnostics_resources "$configuration" "$app_path"
 
   if [ ! -d "$extension_path" ]; then
     printf 'Missing %s embedded system extension: %s\n' "$configuration" "$extension_path" >&2

@@ -100,6 +100,7 @@ write_product_fixture() {
   local app_path="$products_path/$configuration/GarethVideoCam.app"
   local extension_path="$app_path/Contents/Library/SystemExtensions/$EXTENSION_NAME"
   local video_path="$extension_path/Contents/Resources/video.mp4"
+  local app_resources_path="$app_path/Contents/Resources"
 
   write_info_plist "$app_path" "$APP_ID" "GarethVideoCam" "" "$app_short_version" "$app_build_version"
   write_info_plist "$extension_path" "$extension_identifier" "$EXTENSION_ID" "$extension_mach_service_name" "$extension_short_version" "$extension_build_version"
@@ -107,6 +108,9 @@ write_product_fixture() {
   set_info_plist_key "$extension_path" "CFBundleDisplayName" "Gareth Video Cam Extension"
   write_executable_fixture "$app_path" "GarethVideoCam"
   write_executable_fixture "$extension_path" "$EXTENSION_ID"
+  mkdir -p "$app_resources_path"
+  cp "$ROOT/scripts/collect_runtime_diagnostics.sh" "$app_resources_path/collect_runtime_diagnostics.sh"
+  cp "$ROOT/scripts/validate_project.py" "$app_resources_path/validate_project.py"
   mkdir -p "$(dirname "$video_path")"
   cp "$ROOT/Extension/video.mp4" "$video_path"
 }
@@ -144,6 +148,21 @@ fi
 if ! grep -q "Missing or empty Debug bundled video resource" "$TMP_DIR/missing-video.err"; then
   printf 'Verifier failure did not explain the missing bundled video resource.\n' >&2
   cat "$TMP_DIR/missing-video.err" >&2
+  exit 1
+fi
+
+MISSING_DIAGNOSTICS_PRODUCTS="$TMP_DIR/missing-diagnostics/Products"
+write_product_fixture "$MISSING_DIAGNOSTICS_PRODUCTS" Debug
+rm "$MISSING_DIAGNOSTICS_PRODUCTS/Debug/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh"
+
+if PRODUCTS_PATH="$MISSING_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/missing-diagnostics.out" 2>"$TMP_DIR/missing-diagnostics.err"; then
+  printf 'Expected verifier to reject a missing runtime diagnostics script.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug app runtime diagnostics script" "$TMP_DIR/missing-diagnostics.err"; then
+  printf 'Verifier failure did not explain the missing runtime diagnostics script.\n' >&2
+  cat "$TMP_DIR/missing-diagnostics.err" >&2
   exit 1
 fi
 

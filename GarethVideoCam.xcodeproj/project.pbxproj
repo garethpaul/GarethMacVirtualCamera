@@ -15,6 +15,8 @@
 		8C3B7E6828A3E48200E7BAFB /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B7E6728A3E48200E7BAFB /* main.swift */; };
 		8C3B7E6D28A3E48200E7BAFB /* com.garethpaul.GarethVideoCam.Extension.systemextension in Embed System Extensions */ = {isa = PBXBuildFile; fileRef = 8C3B7E6328A3E48200E7BAFB /* com.garethpaul.GarethVideoCam.Extension.systemextension */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		C3B7BE802B88518900C8EDB0 /* video.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = C3B7BE7F2B88518900C8EDB0 /* video.mp4 */; };
+		C3D100102E00000000C8EDB0 /* collect_runtime_diagnostics.sh in Resources */ = {isa = PBXBuildFile; fileRef = C3D1000E2E00000000C8EDB0 /* collect_runtime_diagnostics.sh */; };
+		C3D100112E00000000C8EDB0 /* validate_project.py in Resources */ = {isa = PBXBuildFile; fileRef = C3D1000F2E00000000C8EDB0 /* validate_project.py */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -54,6 +56,8 @@
 		8C3B7E6928A3E48200E7BAFB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8C3B7E6A28A3E48200E7BAFB /* Extension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Extension.entitlements; sourceTree = "<group>"; };
 		C3B7BE7F2B88518900C8EDB0 /* video.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = video.mp4; sourceTree = "<group>"; };
+		C3D1000E2E00000000C8EDB0 /* collect_runtime_diagnostics.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = scripts/collect_runtime_diagnostics.sh; sourceTree = "<group>"; };
+		C3D1000F2E00000000C8EDB0 /* validate_project.py */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.python; path = scripts/validate_project.py; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -79,6 +83,7 @@
 			children = (
 				8C3B7E4F28A3E43200E7BAFB /* GarethVideoCam */,
 				8C3B7E6428A3E48200E7BAFB /* Extension */,
+				C3D1000D2E00000000C8EDB0 /* Runtime Diagnostics */,
 				8C3B7E4E28A3E43200E7BAFB /* Products */,
 			);
 			sourceTree = "<group>";
@@ -122,6 +127,15 @@
 				8C3B7E6A28A3E48200E7BAFB /* Extension.entitlements */,
 			);
 			path = Extension;
+			sourceTree = "<group>";
+		};
+		C3D1000D2E00000000C8EDB0 /* Runtime Diagnostics */ = {
+			isa = PBXGroup;
+			children = (
+				C3D1000E2E00000000C8EDB0 /* collect_runtime_diagnostics.sh */,
+				C3D1000F2E00000000C8EDB0 /* validate_project.py */,
+			);
+			name = "Runtime Diagnostics";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -205,7 +219,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C3D100102E00000000C8EDB0 /* collect_runtime_diagnostics.sh in Resources */,
 				8C3B7E5828A3E43300E7BAFB /* Preview Assets.xcassets in Resources */,
+				C3D100112E00000000C8EDB0 /* validate_project.py in Resources */,
 				8C3B7E5528A3E43300E7BAFB /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
