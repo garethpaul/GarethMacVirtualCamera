@@ -160,10 +160,18 @@ passing_outputs = {
 }
 
 stale_outputs = {
+    "resource-discovery": [
+        "Diagnostics parser source: repository fallback",
+        "Diagnostics parser available: no",
+    ],
     "readiness-rollup": [
         "Runtime readiness result: ready",
         "Runtime readiness checks ready: 3/3",
         "Runtime readiness next action: none",
+    ],
+    "executable-readiness": [
+        "Executable ready fixture: no",
+        "Executable non-executable fixture: yes",
     ],
     "team-id": [
         "Team ID match fixture: no",
@@ -208,6 +216,9 @@ stale_outputs = {
         "Runtime activation evidence checks ready: 0/3",
         "Runtime activation evidence next action: none",
     ],
+    "video-parser": [
+        "Video parser metadata ready fixture: no",
+    ],
 }
 
 if stale_self_test not in stale_outputs:
@@ -243,10 +254,22 @@ write_stale_team_id_diagnostics_fixture() {
   write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "team-id"
 }
 
+write_stale_resource_discovery_diagnostics_fixture() {
+  local products_path="$1"
+  local configuration="$2"
+  write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "resource-discovery"
+}
+
 write_stale_readiness_rollup_diagnostics_fixture() {
   local products_path="$1"
   local configuration="$2"
   write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "readiness-rollup"
+}
+
+write_stale_executable_readiness_diagnostics_fixture() {
+  local products_path="$1"
+  local configuration="$2"
+  write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "executable-readiness"
 }
 
 write_stale_application_identity_diagnostics_fixture() {
@@ -289,6 +312,12 @@ write_stale_activation_evidence_diagnostics_fixture() {
   local products_path="$1"
   local configuration="$2"
   write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "activation-evidence"
+}
+
+write_stale_video_parser_diagnostics_fixture() {
+  local products_path="$1"
+  local configuration="$2"
+  write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "video-parser"
 }
 
 remove_info_plist_key() {
@@ -435,6 +464,21 @@ if ! grep -q "Missing Debug app runtime diagnostics parser" "$TMP_DIR/missing-di
   exit 1
 fi
 
+STALE_RESOURCE_DISCOVERY_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-resource-discovery-diagnostics/Products"
+write_product_fixture "$STALE_RESOURCE_DISCOVERY_DIAGNOSTICS_PRODUCTS" Debug
+write_stale_resource_discovery_diagnostics_fixture "$STALE_RESOURCE_DISCOVERY_DIAGNOSTICS_PRODUCTS" Debug
+
+if PRODUCTS_PATH="$STALE_RESOURCE_DISCOVERY_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stale-resource-discovery-diagnostics.out" 2>"$TMP_DIR/stale-resource-discovery-diagnostics.err"; then
+  printf 'Expected verifier to reject stale bundled runtime diagnostics resource-discovery self-test output.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Unexpected Debug app bundled runtime diagnostics resource self-test output" "$TMP_DIR/stale-resource-discovery-diagnostics.err"; then
+  printf 'Verifier failure did not explain the stale bundled runtime diagnostics resource-discovery self-test output.\n' >&2
+  cat "$TMP_DIR/stale-resource-discovery-diagnostics.err" >&2
+  exit 1
+fi
+
 STALE_READINESS_ROLLUP_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-readiness-rollup-diagnostics/Products"
 write_product_fixture "$STALE_READINESS_ROLLUP_DIAGNOSTICS_PRODUCTS" Debug
 write_stale_readiness_rollup_diagnostics_fixture "$STALE_READINESS_ROLLUP_DIAGNOSTICS_PRODUCTS" Debug
@@ -447,6 +491,21 @@ fi
 if ! grep -q "Unexpected Debug app bundled runtime diagnostics readiness-rollup self-test output" "$TMP_DIR/stale-readiness-rollup-diagnostics.err"; then
   printf 'Verifier failure did not explain the stale bundled runtime diagnostics readiness-rollup self-test output.\n' >&2
   cat "$TMP_DIR/stale-readiness-rollup-diagnostics.err" >&2
+  exit 1
+fi
+
+STALE_EXECUTABLE_READINESS_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-executable-readiness-diagnostics/Products"
+write_product_fixture "$STALE_EXECUTABLE_READINESS_DIAGNOSTICS_PRODUCTS" Debug
+write_stale_executable_readiness_diagnostics_fixture "$STALE_EXECUTABLE_READINESS_DIAGNOSTICS_PRODUCTS" Debug
+
+if PRODUCTS_PATH="$STALE_EXECUTABLE_READINESS_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stale-executable-readiness-diagnostics.out" 2>"$TMP_DIR/stale-executable-readiness-diagnostics.err"; then
+  printf 'Expected verifier to reject stale bundled runtime diagnostics executable-readiness self-test output.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Unexpected Debug app bundled runtime diagnostics executable-readiness self-test output" "$TMP_DIR/stale-executable-readiness-diagnostics.err"; then
+  printf 'Verifier failure did not explain the stale bundled runtime diagnostics executable-readiness self-test output.\n' >&2
+  cat "$TMP_DIR/stale-executable-readiness-diagnostics.err" >&2
   exit 1
 fi
 
@@ -567,6 +626,21 @@ fi
 if ! grep -q "Unexpected Debug app bundled runtime diagnostics activation-evidence self-test output" "$TMP_DIR/stale-activation-evidence-diagnostics.err"; then
   printf 'Verifier failure did not explain the stale bundled runtime diagnostics activation-evidence self-test output.\n' >&2
   cat "$TMP_DIR/stale-activation-evidence-diagnostics.err" >&2
+  exit 1
+fi
+
+STALE_VIDEO_PARSER_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-video-parser-diagnostics/Products"
+write_product_fixture "$STALE_VIDEO_PARSER_DIAGNOSTICS_PRODUCTS" Debug
+write_stale_video_parser_diagnostics_fixture "$STALE_VIDEO_PARSER_DIAGNOSTICS_PRODUCTS" Debug
+
+if PRODUCTS_PATH="$STALE_VIDEO_PARSER_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stale-video-parser-diagnostics.out" 2>"$TMP_DIR/stale-video-parser-diagnostics.err"; then
+  printf 'Expected verifier to reject stale bundled runtime diagnostics video-parser self-test output.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Unexpected Debug app bundled runtime diagnostics parser self-test output" "$TMP_DIR/stale-video-parser-diagnostics.err"; then
+  printf 'Verifier failure did not explain the stale bundled runtime diagnostics video-parser self-test output.\n' >&2
+  cat "$TMP_DIR/stale-video-parser-diagnostics.err" >&2
   exit 1
 fi
 

@@ -896,8 +896,14 @@ def main():
     require("write_diagnostics_fixture_script" in verify_build_products_test_source and "stale_outputs" in verify_build_products_test_source and "shell_single_quote" in verify_build_products_test_source and "printf '%s\\\\n'" in verify_build_products_test_source and "write_stale_team_id_diagnostics_fixture" in verify_build_products_test_source and "stale-team-id-diagnostics" in verify_build_products_test_source and "Unexpected Debug app bundled runtime diagnostics Team ID self-test output" in verify_build_products_test_source,
             "build-product verifier tests should reject stale bundled runtime diagnostics Team ID self-test output",
             failures)
+    require("write_stale_resource_discovery_diagnostics_fixture" in verify_build_products_test_source and "stale-resource-discovery-diagnostics" in verify_build_products_test_source and "Unexpected Debug app bundled runtime diagnostics resource self-test output" in verify_build_products_test_source,
+            "build-product verifier tests should reject stale bundled runtime diagnostics resource-discovery self-test output",
+            failures)
     require("write_stale_readiness_rollup_diagnostics_fixture" in verify_build_products_test_source and "stale-readiness-rollup-diagnostics" in verify_build_products_test_source and "Unexpected Debug app bundled runtime diagnostics readiness-rollup self-test output" in verify_build_products_test_source,
             "build-product verifier tests should reject stale bundled runtime diagnostics readiness-rollup self-test output",
+            failures)
+    require("write_stale_executable_readiness_diagnostics_fixture" in verify_build_products_test_source and "stale-executable-readiness-diagnostics" in verify_build_products_test_source and "Unexpected Debug app bundled runtime diagnostics executable-readiness self-test output" in verify_build_products_test_source,
+            "build-product verifier tests should reject stale bundled runtime diagnostics executable-readiness self-test output",
             failures)
     require("write_stale_application_identity_diagnostics_fixture" in verify_build_products_test_source and "stale-application-identity-diagnostics" in verify_build_products_test_source and "Unexpected Debug app bundled runtime diagnostics application-identity self-test output" in verify_build_products_test_source,
             "build-product verifier tests should reject stale bundled runtime diagnostics application-identity self-test output",
@@ -919,6 +925,9 @@ def main():
             failures)
     require("write_stale_activation_evidence_diagnostics_fixture" in verify_build_products_test_source and "stale-activation-evidence-diagnostics" in verify_build_products_test_source and "Unexpected Debug app bundled runtime diagnostics activation-evidence self-test output" in verify_build_products_test_source,
             "build-product verifier tests should reject stale bundled runtime diagnostics activation-evidence self-test output",
+            failures)
+    require("write_stale_video_parser_diagnostics_fixture" in verify_build_products_test_source and "stale-video-parser-diagnostics" in verify_build_products_test_source and "Unexpected Debug app bundled runtime diagnostics parser self-test output" in verify_build_products_test_source,
+            "build-product verifier tests should reject stale bundled runtime diagnostics video-parser self-test output",
             failures)
     require(verify_build_products_test_path.stat().st_mode & 0o111,
             "build-product verifier test script should be executable",

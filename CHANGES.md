@@ -44,3 +44,4 @@
 - Expanded copied signed-host runtime evidence expectations to cover all critical readiness gates.
 - Guarded fresh extension metadata before copying the signed runtime activation checklist.
 - Verified packaged runtime diagnostics readiness-rollup self-tests in built app products.
+- Added stale packaged diagnostics rejection coverage for resource, executable, and parser self-tests.
