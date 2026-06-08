@@ -33,6 +33,12 @@ def main():
     require(app_entitlements.get("com.apple.developer.system-extension.install") is True,
             "host app is missing the System Extension entitlement",
             failures)
+    require(app_entitlements.get("com.apple.security.app-sandbox") is True,
+            "host app should remain sandboxed",
+            failures)
+    require(extension_entitlements.get("com.apple.security.app-sandbox") is True,
+            "extension should remain sandboxed",
+            failures)
     require(APP_GROUP in app_entitlements.get("com.apple.security.application-groups", []),
             "host app is missing the shared app group",
             failures)
@@ -78,6 +84,15 @@ def main():
             failures)
     require(project_text.count("ENABLE_HARDENED_RUNTIME = YES;") >= 4,
             "all app and extension configurations should enable hardened runtime",
+            failures)
+    require("$(SYSTEM_EXTENSIONS_FOLDER_PATH)" in project_text and "Embed System Extensions" in project_text,
+            "project should embed the extension in the app SystemExtensions folder",
+            failures)
+    require('explicitFileType = "wrapper.system-extension";' in project_text and 'productType = "com.apple.product-type.system-extension";' in project_text,
+            "project should keep the extension configured as a system extension product",
+            failures)
+    require("video.mp4 in Resources" in project_text,
+            "project should bundle Extension/video.mp4 in the extension resources",
             failures)
     marketing_versions = set(re.findall(r"MARKETING_VERSION = ([^;]+);", project_text))
     build_versions = set(re.findall(r"CURRENT_PROJECT_VERSION = ([^;]+);", project_text))
