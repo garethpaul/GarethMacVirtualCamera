@@ -66,6 +66,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         case idle
         case ready
         case needsApplicationLocation
+        case needsBundleIdentifier
         case needsSigning
         case locatingExtension
         case activating
@@ -84,6 +85,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
                 return "Ready"
             case .needsApplicationLocation:
                 return "Move to Applications"
+            case .needsBundleIdentifier:
+                return "Bundle ID Required"
             case .needsSigning:
                 return "Signing Required"
             case .locatingExtension:
@@ -111,6 +114,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
                 return "circle.dashed"
             case .needsApplicationLocation:
                 return "exclamationmark.triangle.fill"
+            case .needsBundleIdentifier:
+                return "tag.fill"
             case .needsSigning:
                 return "lock.fill"
             case .locatingExtension, .activating, .deactivating:
@@ -135,6 +140,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             case .ready:
                 return .blue
             case .needsApplicationLocation:
+                return .orange
+            case .needsBundleIdentifier:
                 return .orange
             case .needsSigning:
                 return .orange
@@ -367,8 +374,13 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         return expectedExtensionBundleIdentifier
     }
 
+    var applicationBundleIdentifierStatus: String {
+        return applicationIdentifierReadinessDetail == nil ? "Matches" : "Mismatch"
+    }
+
     var canSubmitSystemExtensionRequests: Bool {
         return isRunningFromApplications
+            && applicationIdentifierReadinessDetail == nil
             && appCodeSigningStatus.isValid
             && appEntitlementReadinessDetail == nil
             && extensionCodeSigningStatus.isValid
@@ -382,6 +394,10 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     var requestReadinessMessage: String? {
         if !isRunningFromApplications {
             return "System extension requests require /Applications."
+        }
+
+        if applicationIdentifierReadinessDetail != nil {
+            return "System extension requests require the expected app bundle identifier."
         }
 
         if !appCodeSigningStatus.isValid {
@@ -410,6 +426,10 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     var requestReadinessDetail: String? {
         if !isRunningFromApplications {
             return "The app must run from /Applications/GarethVideoCam.app before macOS will accept system extension requests."
+        }
+
+        if let applicationIdentifierReadinessDetail {
+            return applicationIdentifierReadinessDetail
         }
 
         if !appCodeSigningStatus.isValid {
@@ -487,6 +507,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         App Version: \(applicationVersion)
         Expected App ID: \(expectedApplicationIdentifier)
         Actual App ID: \(applicationBundleIdentifier)
+        App Bundle ID Check: \(applicationBundleIdentifierStatus)
         Expected Extension ID: \(expectedExtensionIdentifier)
         App Location: \(applicationLocationStatus)
         App Path: \(applicationBundlePath)
@@ -550,7 +571,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
                                                                         validDetail: "The embedded system extension code signature is valid.")
 
             switch state {
-            case .idle, .ready, .needsApplicationLocation, .needsSigning, .deactivated, .failed:
+            case .idle, .ready, .needsApplicationLocation, .needsBundleIdentifier, .needsSigning, .deactivated, .failed:
                 state = readinessState
             default:
                 break
@@ -708,6 +729,14 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             return nil
         }
 
+        if let applicationIdentifierReadinessDetail {
+            state = .needsBundleIdentifier
+            appendActivity(level: .warning,
+                           title: "App Identifier Required",
+                           detail: applicationIdentifierReadinessDetail)
+            return nil
+        }
+
         guard appCodeSigningStatus.isValid else {
             state = .needsSigning
             appendActivity(level: .warning,
@@ -761,6 +790,10 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             return .needsApplicationLocation
         }
 
+        if applicationIdentifierReadinessDetail != nil {
+            return .needsBundleIdentifier
+        }
+
         if !appCodeSigningStatus.isValid
             || appEntitlementReadinessDetail != nil
             || !extensionCodeSigningStatus.isValid
@@ -769,6 +802,14 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
 
         return .ready
+    }
+
+    private var applicationIdentifierReadinessDetail: String? {
+        guard applicationBundleIdentifier != expectedApplicationBundleIdentifier else {
+            return nil
+        }
+
+        return "The app bundle identifier \(applicationBundleIdentifier) does not match the expected identifier \(expectedApplicationBundleIdentifier)."
     }
 
     private var appEntitlementReadinessDetail: String? {
@@ -1175,6 +1216,7 @@ private struct DetailsPanel: View {
 
                 DetailRow(title: "App Version", value: manager.applicationVersion)
                 DetailRow(title: "App Bundle ID", value: manager.applicationBundleIdentifier)
+                DetailRow(title: "App Bundle ID Check", value: manager.applicationBundleIdentifierStatus)
                 DetailRow(title: "Expected App ID", value: manager.expectedApplicationIdentifier)
                 DetailRow(title: "Expected Extension ID", value: manager.expectedExtensionIdentifier)
                 DetailRow(title: "Extension Version", value: manager.extensionInfo?.version ?? "Unknown")

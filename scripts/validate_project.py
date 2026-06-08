@@ -342,8 +342,8 @@ def main():
     require("invalidFrameDuration" in extension_source and "throw CameraExtensionError.invalidFrameDuration" in extension_source and "streamProperties.frameDuration" in extension_source,
             "extension stream should reject unsupported frame-duration requests",
             failures)
-    require("case needsApplicationLocation" in host_source and "canSubmitSystemExtensionRequests" in host_source,
-            "host app should model the /Applications requirement before submitting system-extension requests",
+    require("case needsApplicationLocation" in host_source and "case needsBundleIdentifier" in host_source and "canSubmitSystemExtensionRequests" in host_source,
+            "host app should model the /Applications and host bundle identifier requirements before submitting system-extension requests",
             failures)
     require("import Security" in host_source and "CodeSigningStatus" in host_source and "SecStaticCodeCheckValidityWithErrors" in host_source,
             "host app should check code-signing validity before submitting system-extension requests",
@@ -362,6 +362,9 @@ def main():
             failures)
     require("requestReadinessStatus" in host_source and "requestReadinessDetail" in host_source and "Request Readiness" in host_source and "Readiness Detail" in host_source,
             "host app should show and copy exact system-extension request readiness blockers",
+            failures)
+    require("applicationIdentifierReadinessDetail" in host_source and "applicationBundleIdentifierStatus" in host_source and "App Bundle ID Check" in host_source and "App Identifier Required" in host_source,
+            "host app should block requests when the host bundle identifier does not match the expected identifier",
             failures)
     require("lastFailureDetail" in host_source and "Last Failure" in host_source and "No failure recorded." in host_source,
             "host app should preserve the last request failure in details and copied diagnostics",
@@ -414,7 +417,7 @@ def main():
     require("System Extension Entitlement" in host_source and "App System Extension Entitlement:" in host_source,
             "host app should show and copy app System Extension entitlement diagnostics",
             failures)
-    require("expectedApplicationBundleIdentifier" in host_source and "applicationBundleIdentifier" in host_source and "Expected App ID" in host_source and "Actual App ID" in host_source and "Expected Extension ID" in host_source,
+    require("expectedApplicationBundleIdentifier" in host_source and "applicationBundleIdentifier" in host_source and "Expected App ID" in host_source and "Actual App ID" in host_source and "App Bundle ID Check" in host_source and "Expected Extension ID" in host_source,
             "host app should show and copy expected and actual bundle identifier diagnostics",
             failures)
     require("func copyDiagnostics() {\n        refreshExtensionInfo()" in host_source,
@@ -423,7 +426,7 @@ def main():
     require("Button(action: manager.refreshExtensionInfo)" in host_source and "Refresh Status" in host_source,
             "host app should let users refresh extension and signing readiness in-place",
             failures)
-    require("case .idle, .ready, .needsApplicationLocation, .needsSigning, .deactivated, .failed:" in host_source,
+    require("case .idle, .ready, .needsApplicationLocation, .needsBundleIdentifier, .needsSigning, .deactivated, .failed:" in host_source,
             "host app should let a successful refresh recover from stale readiness failures",
             failures)
     require("private struct DetailsActions" in host_source and "ViewThatFits(in: .horizontal)" in host_source,
@@ -456,7 +459,7 @@ def main():
     require("Runtime Activation" in readme_text and "valid Apple Developer signing identity" in readme_text,
             "README should document signed runtime activation requirements",
             failures)
-    require("System Settings shortcut" in readme_text and "reveal the app and embedded extension in Finder" in readme_text and "diagnostics snapshot" in readme_text and "generation timestamp" in readme_text and "bundle identifiers" in readme_text and "missing the System Extension entitlement" in readme_text and "bundled system extension signature is invalid" in readme_text and "Team IDs" in readme_text and "last recorded request failure" in readme_text,
+    require("System Settings shortcut" in readme_text and "reveal the app and embedded extension in Finder" in readme_text and "diagnostics snapshot" in readme_text and "generation timestamp" in readme_text and "bundle identifiers" in readme_text and "host app bundle identifier does not match the expected identifier" in readme_text and "missing the System Extension entitlement" in readme_text and "bundled system extension signature is invalid" in readme_text and "Team IDs" in readme_text and "last recorded request failure" in readme_text,
             "README should document the in-app approval and diagnostics actions",
             failures)
     require("collect_runtime_diagnostics.sh" in readme_text and "bundle versions" in readme_text and "bundled-video byte size, checksum, metadata" in readme_text and "expected bundle identifier checks" in readme_text and "matching Team IDs" in readme_text and "Gatekeeper assessment" in readme_text and "signed entitlements" in readme_text and "explicit host System Extension entitlement checks" in readme_text and "systemextensionsctl" in readme_text and "unified-log window" in readme_text and "system-extension/CMIO log context" in readme_text,
