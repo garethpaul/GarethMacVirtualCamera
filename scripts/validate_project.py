@@ -279,6 +279,7 @@ def main():
     extension_source = (ROOT / "Extension/ExtensionProvider.swift").read_text()
     extension_main_source = (ROOT / "Extension/main.swift").read_text()
     readme_text = (ROOT / "README.md").read_text()
+    gitignore_text = (ROOT / ".gitignore").read_text()
     check_project_path = ROOT / "scripts/check_project.sh"
     check_project_source = check_project_path.read_text()
     build_unsigned_path = ROOT / "scripts/build_unsigned.sh"
@@ -303,6 +304,9 @@ def main():
             failures)
     require("LastUpgradeCheck = 2600;" in project_text,
             "project is not marked as upgraded for Xcode 26",
+            failures)
+    require(".build/" in gitignore_text and "build-*.log" in gitignore_text and "*.xcresult" in gitignore_text,
+            "gitignore should exclude local Xcode build products, logs, and result bundles",
             failures)
     require("Swift 6 language mode" in readme_text and project_text.count("SWIFT_VERSION = 6.0;") == 4 and "SWIFT_VERSION = 5.0;" not in project_text,
             "app and extension targets should use Swift 6 language mode",
