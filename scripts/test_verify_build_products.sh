@@ -457,6 +457,21 @@ if ! grep -q "Unexpected Debug app CFBundleDisplayName" "$TMP_DIR/wrong-display.
   exit 1
 fi
 
+WRONG_EXTENSION_DISPLAY_PRODUCTS="$TMP_DIR/wrong-extension-display/Products"
+write_product_fixture "$WRONG_EXTENSION_DISPLAY_PRODUCTS" Debug
+set_info_plist_key "$WRONG_EXTENSION_DISPLAY_PRODUCTS/Debug/GarethVideoCam.app/Contents/Library/SystemExtensions/$EXTENSION_NAME" "CFBundleDisplayName" "GarethVideoCamExtension"
+
+if PRODUCTS_PATH="$WRONG_EXTENSION_DISPLAY_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/wrong-extension-display.out" 2>"$TMP_DIR/wrong-extension-display.err"; then
+  printf 'Expected verifier to reject a wrong extension display name.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Unexpected Debug extension CFBundleDisplayName" "$TMP_DIR/wrong-extension-display.err"; then
+  printf 'Verifier failure did not explain the wrong extension display name.\n' >&2
+  cat "$TMP_DIR/wrong-extension-display.err" >&2
+  exit 1
+fi
+
 WRONG_EXTENSION_USAGE_PRODUCTS="$TMP_DIR/wrong-extension-usage/Products"
 write_product_fixture "$WRONG_EXTENSION_USAGE_PRODUCTS" Debug
 set_info_plist_key "$WRONG_EXTENSION_USAGE_PRODUCTS/Debug/GarethVideoCam.app/Contents/Library/SystemExtensions/$EXTENSION_NAME" "NSCameraUsageDescription" "Camera usage fixture"
