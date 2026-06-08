@@ -104,7 +104,6 @@ write_product_fixture() {
   write_info_plist "$app_path" "$APP_ID" "GarethVideoCam" "" "$app_short_version" "$app_build_version"
   write_info_plist "$extension_path" "$extension_identifier" "$EXTENSION_ID" "$extension_mach_service_name" "$extension_short_version" "$extension_build_version"
   set_info_plist_key "$app_path" "CFBundleDisplayName" "Gareth Video Cam"
-  set_info_plist_key "$app_path" "CFBundleName" "Gareth Video Cam"
   set_info_plist_key "$extension_path" "CFBundleDisplayName" "Gareth Video Cam Extension"
   write_executable_fixture "$app_path" "GarethVideoCam"
   write_executable_fixture "$extension_path" "$EXTENSION_ID"

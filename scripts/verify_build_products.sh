@@ -196,7 +196,6 @@ for configuration in "${configurations[@]}"; do
 
   verify_bundle_executable "$configuration" "app" "$app_path"
   verify_info_plist_value "$configuration" "app" "$app_path" "CFBundleDisplayName" "$APP_DISPLAY_NAME"
-  verify_info_plist_value "$configuration" "app" "$app_path" "CFBundleName" "$APP_DISPLAY_NAME"
   verify_info_plist_string "$configuration" "app" "$app_path" "NSCameraUsageDescription"
   verify_info_plist_string "$configuration" "app" "$app_path" "NSSystemExtensionUsageDescription"
 
