@@ -3,7 +3,7 @@ set -euo pipefail
 
 PROJECT_PATH="${PROJECT_PATH:-GarethVideoCam.xcodeproj}"
 TARGET_NAME="${TARGET_NAME:-GarethVideoCam}"
-RUNNER_ARCH="${RUNNER_ARCH:-$(uname -m)}"
+BUILD_ARCH="${BUILD_ARCH:-$(uname -m)}"
 
 if [ "$#" -gt 0 ]; then
   configurations=("$@")
@@ -16,7 +16,7 @@ for configuration in "${configurations[@]}"; do
     -project "$PROJECT_PATH" \
     -target "$TARGET_NAME" \
     -configuration "$configuration" \
-    ARCHS="$RUNNER_ARCH" \
+    ARCHS="$BUILD_ARCH" \
     ONLY_ACTIVE_ARCH=NO \
     CODE_SIGNING_ALLOWED=NO \
     CODE_SIGNING_REQUIRED=NO \

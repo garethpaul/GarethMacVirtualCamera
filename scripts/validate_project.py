@@ -562,7 +562,7 @@ def main():
     require("test_ignores_appintents_metadata_notice" in build_log_scanner_test_source and "test_fails_on_actionable_warning" in build_log_scanner_test_source and "test_fails_on_other_appintents_warning" in build_log_scanner_test_source and ":2: SwiftCompile warning: real source warning" in build_log_scanner_test_source,
             "build-log scanner should have regression coverage for ignored and actionable warnings",
             failures)
-    require("xcodebuild" in build_unsigned_source and "-target \"$TARGET_NAME\"" in build_unsigned_source and "CODE_SIGNING_ALLOWED=NO" in build_unsigned_source and "CODE_SIGNING_REQUIRED=NO" in build_unsigned_source and "RUNNER_ARCH" in build_unsigned_source and "configurations=(Debug Release)" in build_unsigned_source and "build-${configuration}.log" in build_unsigned_source,
+    require("xcodebuild" in build_unsigned_source and "-target \"$TARGET_NAME\"" in build_unsigned_source and "CODE_SIGNING_ALLOWED=NO" in build_unsigned_source and "CODE_SIGNING_REQUIRED=NO" in build_unsigned_source and "BUILD_ARCH" in build_unsigned_source and "RUNNER_ARCH" not in build_unsigned_source and "configurations=(Debug Release)" in build_unsigned_source and "build-${configuration}.log" in build_unsigned_source,
             "unsigned build script should perform Debug and Release app target builds without code signing",
             failures)
     require(build_unsigned_path.stat().st_mode & 0o111,
@@ -613,7 +613,7 @@ def main():
         require("-target \"$TARGET_NAME\"" in build_unsigned_source,
                 "unsigned build script should build the app target without running scheme post-actions",
                 failures)
-        require("RUNNER_ARCH=\"${RUNNER_ARCH:-$(uname -m)}\"" in build_unsigned_source and "ARCHS=\"$RUNNER_ARCH\"" in build_unsigned_source,
+        require("BUILD_ARCH=\"${BUILD_ARCH:-$(uname -m)}\"" in build_unsigned_source and "ARCHS=\"$BUILD_ARCH\"" in build_unsigned_source,
                 "unsigned build script should build the target for the runner architecture",
                 failures)
         require("configurations=(Debug Release)" in build_unsigned_source,
