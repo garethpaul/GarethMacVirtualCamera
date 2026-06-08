@@ -351,6 +351,9 @@ def main():
     require("requestReadinessStatus" in host_source and "requestReadinessDetail" in host_source and "Request Readiness" in host_source and "Readiness Detail" in host_source,
             "host app should show and copy exact system-extension request readiness blockers",
             failures)
+    require("lastFailureDetail" in host_source and "Last Failure" in host_source and "No failure recorded." in host_source,
+            "host app should preserve the last request failure in details and copied diagnostics",
+            failures)
     require(".disabled(manager.isBusy || !manager.canSubmitSystemExtensionRequests)" in host_source,
             "host app should disable install controls when system-extension requests cannot be submitted",
             failures)
@@ -429,7 +432,7 @@ def main():
     require("Runtime Activation" in readme_text and "valid Apple Developer signing identity" in readme_text,
             "README should document signed runtime activation requirements",
             failures)
-    require("System Settings shortcut" in readme_text and "diagnostics snapshot" in readme_text and "bundled system extension signature is invalid" in readme_text and "Team IDs" in readme_text,
+    require("System Settings shortcut" in readme_text and "diagnostics snapshot" in readme_text and "bundled system extension signature is invalid" in readme_text and "Team IDs" in readme_text and "last recorded request failure" in readme_text,
             "README should document the in-app approval and diagnostics actions",
             failures)
     require("collect_runtime_diagnostics.sh" in readme_text and "bundle versions" in readme_text and "bundled-video metadata" in readme_text and "expected bundle identifier checks" in readme_text and "matching Team IDs" in readme_text and "Gatekeeper assessment" in readme_text and "signed entitlements" in readme_text and "systemextensionsctl" in readme_text and "unified-log window" in readme_text and "system-extension/CMIO log context" in readme_text,

@@ -295,6 +295,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     @Published var activity: [ActivityItem] = []
     @Published var appCodeSigningStatus: CodeSigningStatus = .invalid("App code-signing status has not been checked yet.")
     @Published var extensionCodeSigningStatus: CodeSigningStatus = .invalid("System extension code-signing status has not been checked yet.")
+    @Published var lastFailureDetail: String?
 
     private var pendingRequestKind: RequestKind?
 
@@ -441,6 +442,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         App Path: \(applicationBundlePath)
         Request Readiness: \(requestReadinessStatus)
         Request Readiness Detail: \(requestReadinessDetail ?? "System extension requests can be submitted.")
+        Last Failure: \(lastFailureDetail ?? "No failure recorded.")
         App Code Signing: \(appCodeSigningStatus.title)
         App Code Signing Detail: \(appCodeSigningStatus.detail)
         App Team ID: \(appTeamIdentifier)
@@ -459,6 +461,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         state = .activating
         pendingRequestKind = .activation
+        lastFailureDetail = nil
         appendActivity(level: .info,
                        title: "Install Requested",
                        detail: extensionInfo.identifier)
@@ -474,6 +477,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         state = .deactivating
         pendingRequestKind = .deactivation
+        lastFailureDetail = nil
         appendActivity(level: .info,
                        title: "Uninstall Requested",
                        detail: extensionInfo.identifier)
@@ -748,6 +752,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     private func handleFailure(_ error: Error) {
         let message = error.localizedDescription
         pendingRequestKind = nil
+        lastFailureDetail = message
         state = .failed(message)
         appendActivity(level: .error, title: "Request Failed", detail: message)
     }
@@ -784,16 +789,19 @@ extension SystemExtensionRequestManager: OSSystemExtensionRequestDelegate {
 
         switch result {
         case .completed:
+            lastFailureDetail = nil
             state = requestKind.completedState
             appendActivity(level: .success,
                            title: requestKind.completedTitle,
                            detail: requestKind.completedDetail)
         case .willCompleteAfterReboot:
+            lastFailureDetail = nil
             state = .requiresRestart
             appendActivity(level: .warning,
                            title: "Restart Required",
                            detail: requestKind.restartDetail)
         @unknown default:
+            lastFailureDetail = nil
             state = .ready
             appendActivity(level: .info,
                            title: "Request Completed",
@@ -835,11 +843,13 @@ extension SystemExtensionRequestManager: OSSystemExtensionRequestDelegate {
         default:
             errorString = "unknown code \(errorCode)"
         }
+        let failureDetail = "\(errorString) (\(nsError.domain) \(errorCode)): \(nsError.localizedDescription)"
         state = .failed(errorString)
         pendingRequestKind = nil
+        lastFailureDetail = failureDetail
         appendActivity(level: .error,
                        title: "Request Failed",
-                       detail: "\(errorString) (\(nsError.domain) \(errorCode)): \(nsError.localizedDescription)")
+                       detail: failureDetail)
     }
 }
 
@@ -1049,6 +1059,9 @@ private struct DetailsPanel: View {
                 DetailRow(title: "Request Readiness", value: manager.requestReadinessStatus)
                 if let requestReadinessDetail = manager.requestReadinessDetail {
                     DetailRow(title: "Readiness Detail", value: requestReadinessDetail)
+                }
+                if let lastFailureDetail = manager.lastFailureDetail {
+                    DetailRow(title: "Last Failure", value: lastFailureDetail)
                 }
                 DetailRow(title: "App Signature", value: manager.appCodeSigningStatus.title)
                 if !manager.appCodeSigningStatus.isValid {
