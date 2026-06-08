@@ -36,11 +36,11 @@ def png_dimensions(path):
     return width, height
 
 
-def mp4_video_dimensions(path):
+def mp4_video_metadata(path):
     data = path.read_bytes()
-    dimensions = []
+    video_metadata = {"dimensions": None, "frame_rate": None}
 
-    def walk(start, end):
+    def iter_atoms(start, end):
         offset = start
         while offset + 8 <= end:
             atom_size = struct.unpack(">I", data[offset:offset + 4])[0]
@@ -58,20 +58,107 @@ def mp4_video_dimensions(path):
             if atom_size < header_size or offset + atom_size > end:
                 return
 
-            payload_start = offset + header_size
-            payload_end = offset + atom_size
-
-            if atom_type in {"moov", "trak", "mdia", "minf", "stbl"}:
-                walk(payload_start, payload_end)
-            elif atom_type == "stsd":
-                walk(payload_start + 8, payload_end)
-            elif atom_type in {"avc1", "hvc1", "hev1", "mp4v"} and payload_start + 28 <= payload_end:
-                dimensions.append(struct.unpack(">HH", data[payload_start + 24:payload_start + 28]))
-
+            yield atom_type, offset + header_size, offset + atom_size
             offset += atom_size
 
-    walk(0, len(data))
-    return dimensions[0] if dimensions else None
+    def parse_mdhd(payload_start, payload_end):
+        version = data[payload_start]
+
+        if version == 1:
+            timescale_offset = payload_start + 20
+            duration_offset = payload_start + 24
+            if duration_offset + 8 > payload_end:
+                return None
+            return (
+                struct.unpack(">I", data[timescale_offset:timescale_offset + 4])[0],
+                struct.unpack(">Q", data[duration_offset:duration_offset + 8])[0],
+            )
+
+        timescale_offset = payload_start + 12
+        duration_offset = payload_start + 16
+        if duration_offset + 4 > payload_end:
+            return None
+        return (
+            struct.unpack(">I", data[timescale_offset:timescale_offset + 4])[0],
+            struct.unpack(">I", data[duration_offset:duration_offset + 4])[0],
+        )
+
+    def parse_hdlr(payload_start, payload_end):
+        if payload_start + 12 > payload_end:
+            return None
+        return data[payload_start + 8:payload_start + 12].decode("latin1")
+
+    def parse_stts(payload_start, payload_end):
+        if payload_start + 8 > payload_end:
+            return []
+
+        entry_count = struct.unpack(">I", data[payload_start + 4:payload_start + 8])[0]
+        entries = []
+        entry_offset = payload_start + 8
+
+        for _ in range(entry_count):
+            if entry_offset + 8 > payload_end:
+                break
+            entries.append(struct.unpack(">II", data[entry_offset:entry_offset + 8]))
+            entry_offset += 8
+
+        return entries
+
+    def find_stts_entries(start, end):
+        for atom_type, payload_start, payload_end in iter_atoms(start, end):
+            if atom_type == "stts":
+                return parse_stts(payload_start, payload_end)
+            if atom_type in {"minf", "stbl"}:
+                nested_entries = find_stts_entries(payload_start, payload_end)
+                if nested_entries:
+                    return nested_entries
+        return []
+
+    def parse_stsd_dimensions(payload_start, payload_end):
+        for atom_type, sample_start, sample_end in iter_atoms(payload_start + 8, payload_end):
+            if atom_type in {"avc1", "hvc1", "hev1", "mp4v"} and sample_start + 28 <= sample_end:
+                return struct.unpack(">HH", data[sample_start + 24:sample_start + 28])
+        return None
+
+    for atom_type, payload_start, payload_end in iter_atoms(0, len(data)):
+        if atom_type != "moov":
+            continue
+
+        for track_type, track_start, track_end in iter_atoms(payload_start, payload_end):
+            if track_type != "trak":
+                continue
+
+            for media_type, media_start, media_end in iter_atoms(track_start, track_end):
+                if media_type != "mdia":
+                    continue
+
+                handler = None
+                timescale = None
+                sample_durations = []
+
+                for media_atom_type, atom_start, atom_end in iter_atoms(media_start, media_end):
+                    if media_atom_type == "mdhd":
+                        mdhd = parse_mdhd(atom_start, atom_end)
+                        if mdhd is not None:
+                            timescale, _ = mdhd
+                    elif media_atom_type == "hdlr":
+                        handler = parse_hdlr(atom_start, atom_end)
+                    elif media_atom_type == "minf":
+                        sample_durations = find_stts_entries(atom_start, atom_end)
+                        for minf_atom_type, minf_start, minf_end in iter_atoms(atom_start, atom_end):
+                            if minf_atom_type == "stbl":
+                                for stbl_atom_type, stbl_start, stbl_end in iter_atoms(minf_start, minf_end):
+                                    if stbl_atom_type == "stsd":
+                                        video_dimensions = parse_stsd_dimensions(stbl_start, stbl_end)
+                                        if video_dimensions is not None:
+                                            video_metadata["dimensions"] = video_dimensions
+
+                if handler == "vide" and timescale and len(sample_durations) == 1:
+                    _, sample_delta = sample_durations[0]
+                    if sample_delta and timescale % sample_delta == 0:
+                        video_metadata["frame_rate"] = timescale // sample_delta
+
+    return video_metadata
 
 
 def expected_icon_pixel_size(image):
@@ -125,9 +212,14 @@ def main():
     require(video_path.exists() and video_path.stat().st_size > 0,
             "Extension/video.mp4 is missing or empty",
             failures)
-    video_dimensions = mp4_video_dimensions(video_path) if video_path.exists() else None
+    video_metadata = mp4_video_metadata(video_path) if video_path.exists() else {}
+    video_dimensions = video_metadata.get("dimensions")
+    video_frame_rate = video_metadata.get("frame_rate")
     require(video_dimensions is not None,
             "Extension/video.mp4 should expose parseable video dimensions",
+            failures)
+    require(video_frame_rate is not None,
+            "Extension/video.mp4 should expose a constant parseable video frame rate",
             failures)
     require(not (ROOT / "GarethVideoCam/video.mp4").exists(),
             "duplicate host-app video.mp4 should not be checked in",
@@ -212,6 +304,10 @@ def main():
         video_width, video_height = video_dimensions
         require(f"CMVideoDimensions(width: {video_width}, height: {video_height})" in extension_source,
                 "extension stream dimensions should match the bundled video dimensions",
+                failures)
+    if video_frame_rate is not None:
+        require(f"static let frameRate: Int32 = {video_frame_rate}" in extension_source,
+                "extension stream frame rate should match the bundled video frame rate",
                 failures)
     require("Unable to loop the bundled video: \\(error.localizedDescription" in extension_source,
             "extension should log loop restart failures with actionable error details",
