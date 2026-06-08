@@ -315,6 +315,21 @@ if ! grep -q "Missing or non-executable Debug extension executable" "$TMP_DIR/mi
   exit 1
 fi
 
+MISSING_APP_EXECUTABLE_PRODUCTS="$TMP_DIR/missing-app-executable/Products"
+write_product_fixture "$MISSING_APP_EXECUTABLE_PRODUCTS" Debug
+rm "$MISSING_APP_EXECUTABLE_PRODUCTS/Debug/GarethVideoCam.app/Contents/MacOS/GarethVideoCam"
+
+if PRODUCTS_PATH="$MISSING_APP_EXECUTABLE_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/missing-app-executable.out" 2>"$TMP_DIR/missing-app-executable.err"; then
+  printf 'Expected verifier to reject a missing app executable.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing or non-executable Debug app executable" "$TMP_DIR/missing-app-executable.err"; then
+  printf 'Verifier failure did not explain the missing app executable.\n' >&2
+  cat "$TMP_DIR/missing-app-executable.err" >&2
+  exit 1
+fi
+
 MISSING_USAGE_PRODUCTS="$TMP_DIR/missing-usage/Products"
 write_product_fixture "$MISSING_USAGE_PRODUCTS" Debug
 remove_info_plist_key "$MISSING_USAGE_PRODUCTS/Debug/GarethVideoCam.app" "NSSystemExtensionUsageDescription"
