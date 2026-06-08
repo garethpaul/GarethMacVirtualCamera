@@ -280,6 +280,9 @@ def main():
     require("LastUpgradeCheck = 2600;" in project_text,
             "project is not marked as upgraded for Xcode 26",
             failures)
+    require("Swift 6 language mode" in readme_text and project_text.count("SWIFT_VERSION = 6.0;") == 4 and "SWIFT_VERSION = 5.0;" not in project_text,
+            "app and extension targets should use Swift 6 language mode",
+            failures)
     require(project_text.count("ENABLE_HARDENED_RUNTIME = YES;") >= 4,
             "all app and extension configurations should enable hardened runtime",
             failures)

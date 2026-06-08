@@ -5,6 +5,7 @@ A macOS CoreMediaIO camera extension packaged in a SwiftUI host app. The extensi
 ## Current Target
 
 - Xcode 26.5 with the macOS 26.5 SDK
+- Swift 6 language mode
 - macOS Tahoe 26.5.1 as the current compatibility reference
 - Deployment target: macOS 14.0 or later
 - Host app bundle ID: `com.garethpaul.GarethVideoCam`
