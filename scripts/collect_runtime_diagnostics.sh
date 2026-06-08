@@ -359,9 +359,12 @@ run_if_available system_profiler SPCameraDataType
 
 section "Running App and Extension Processes"
 if [ -x /bin/ps ]; then
-  /bin/ps -axo pid,ppid,stat,comm,args | /usr/bin/awk -v app_id="$APP_ID" -v extension_id="$EXTENSION_ID" '
+  /bin/ps -axo pid,ppid,stat,comm,args | /usr/bin/awk -v app_id="$APP_ID" -v extension_id="$EXTENSION_ID" -v script_pid="$$" '
     NR == 1 {
       print
+      next
+    }
+    $1 == script_pid || $4 ~ /(^|\/)awk$/ || index($0, "collect_runtime_diagnostics.sh") {
       next
     }
     index($0, "GarethVideoCam") || index($0, app_id) || index($0, extension_id) {
