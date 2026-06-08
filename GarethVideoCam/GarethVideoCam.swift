@@ -38,6 +38,17 @@ struct GarethVideoCamApp: App {
                 Button("Open System Settings") {
                     systemExtensionRequestManager.openSystemSettings()
                 }
+
+                Divider()
+
+                Button("Reveal App in Finder") {
+                    systemExtensionRequestManager.revealApplicationInFinder()
+                }
+
+                Button("Reveal Extension in Finder") {
+                    systemExtensionRequestManager.revealBundledExtensionInFinder()
+                }
+                .disabled(!systemExtensionRequestManager.canRevealBundledExtension)
             }
         }
     }
