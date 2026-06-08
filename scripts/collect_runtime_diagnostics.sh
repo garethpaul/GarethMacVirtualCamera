@@ -26,6 +26,29 @@ run_if_available() {
   fi
 }
 
+read_info_plist_value() {
+  local bundle_path="$1"
+  local key="$2"
+  local info_plist="${bundle_path}/Contents/Info.plist"
+  local value=""
+
+  if [ -f "$info_plist" ]; then
+    if [ -x /usr/libexec/PlistBuddy ]; then
+      value="$(/usr/libexec/PlistBuddy -c "Print :${key}" "$info_plist" 2>/dev/null || true)"
+    fi
+
+    if [ -z "$value" ] && [ -x /usr/bin/plutil ]; then
+      value="$(/usr/bin/plutil -extract "$key" raw -o - "$info_plist" 2>/dev/null || true)"
+    fi
+  fi
+
+  if [ -z "$value" ] && [ -x /usr/bin/defaults ]; then
+    value="$(/usr/bin/defaults read "${bundle_path}/Contents/Info" "$key" 2>/dev/null || true)"
+  fi
+
+  printf '%s\n' "$value"
+}
+
 print_bundle_metadata() {
   local bundle_path="$1"
   local bundle_identifier
@@ -33,8 +56,8 @@ print_bundle_metadata() {
   local build_version
 
   bundle_identifier="$(read_bundle_identifier "$bundle_path")"
-  short_version="$(/usr/bin/defaults read "${bundle_path}/Contents/Info" CFBundleShortVersionString 2>/dev/null || true)"
-  build_version="$(/usr/bin/defaults read "${bundle_path}/Contents/Info" CFBundleVersion 2>/dev/null || true)"
+  short_version="$(read_info_plist_value "$bundle_path" CFBundleShortVersionString)"
+  build_version="$(read_info_plist_value "$bundle_path" CFBundleVersion)"
 
   printf 'Bundle identifier: %s\n' "${bundle_identifier:-unknown}"
   printf 'Bundle short version: %s\n' "${short_version:-unknown}"
@@ -44,7 +67,7 @@ print_bundle_metadata() {
 read_bundle_identifier() {
   local bundle_path="$1"
 
-  /usr/bin/defaults read "${bundle_path}/Contents/Info" CFBundleIdentifier 2>/dev/null || true
+  read_info_plist_value "$bundle_path" CFBundleIdentifier
 }
 
 read_team_identifier() {
