@@ -441,6 +441,9 @@ def main():
     require("diagnosticGeneratedAt" in host_source and "Generated At:" in host_source and "ISO8601DateFormatter" in host_source,
             "host app copied diagnostics should include an ISO-8601 generation timestamp",
             failures)
+    require("pendingRequestStatus" in host_source and "Pending Request:" in host_source and "diagnosticTitle" in host_source and "DetailRow(title: \"Pending Request\"" in host_source,
+            "host app should show and copy pending system-extension request direction diagnostics",
+            failures)
     require("didCopyDiagnostics" in host_source and "Diagnostics Copy Failed" in host_source,
             "host app should report clipboard failures when copying diagnostics",
             failures)

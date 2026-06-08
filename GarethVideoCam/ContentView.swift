@@ -358,6 +358,15 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
                 return "macOS will finish removing the camera extension after restart."
             }
         }
+
+        var diagnosticTitle: String {
+            switch self {
+            case .activation:
+                return "Activation"
+            case .deactivation:
+                return "Deactivation"
+            }
+        }
     }
 
     @Published var state: InstallState = .idle
@@ -479,6 +488,10 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
     var requestReadinessStatus: String {
         return canSubmitSystemExtensionRequests ? "Ready" : "Blocked"
+    }
+
+    var pendingRequestStatus: String {
+        return pendingRequestKind?.diagnosticTitle ?? "None"
     }
 
     var readinessChecks: [ReadinessCheck] {
@@ -654,6 +667,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         App Path: \(applicationBundlePath)
         Request Readiness: \(requestReadinessStatus)
         Request Readiness Detail: \(requestReadinessDetail ?? "System extension requests can be submitted.")
+        Pending Request: \(pendingRequestStatus)
         Last Failure: \(lastFailureDetail ?? "No failure recorded.")
         Readiness Checks:
         \(readinessDescription)
@@ -1489,6 +1503,7 @@ private struct DetailsPanel: View {
                 DetailRow(title: "Extension Version", value: manager.extensionInfo?.version ?? "Unknown")
                 DetailRow(title: "Application Location", value: manager.applicationLocationStatus)
                 DetailRow(title: "Request Readiness", value: manager.requestReadinessStatus)
+                DetailRow(title: "Pending Request", value: manager.pendingRequestStatus)
                 if let requestReadinessDetail = manager.requestReadinessDetail {
                     DetailRow(title: "Readiness Detail", value: requestReadinessDetail)
                 }
