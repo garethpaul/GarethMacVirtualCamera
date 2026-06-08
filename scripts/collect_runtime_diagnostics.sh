@@ -308,6 +308,34 @@ else
   printf 'App path matches expected app path: no\n'
 fi
 
+section "Application Runtime Metadata"
+if [ -d "$APP_PATH" ]; then
+  app_executable="$(read_info_plist_value "$APP_PATH" CFBundleExecutable)"
+  app_executable_path="${APP_PATH}/Contents/MacOS/${app_executable}"
+
+  printf 'App CFBundleExecutable: %s\n' "${app_executable:-unknown}"
+  if [ -n "$app_executable" ]; then
+    printf 'App executable path: %s\n' "$app_executable_path"
+    if [ -f "$app_executable_path" ]; then
+      printf 'App executable exists: yes\n'
+      if [ -x "$app_executable_path" ]; then
+        printf 'App executable is executable: yes\n'
+      else
+        printf 'App executable is executable: no\n'
+      fi
+    else
+      printf 'App executable exists: no\n'
+      printf 'App executable is executable: no\n'
+    fi
+  else
+    printf 'App executable path: unknown\n'
+    printf 'App executable exists: unknown\n'
+    printf 'App executable is executable: unknown\n'
+  fi
+else
+  printf 'Application runtime metadata requires the app bundle.\n'
+fi
+
 section "Quarantine Check"
 print_quarantine_status "App" "$APP_PATH"
 print_quarantine_status "Extension" "$EXTENSION_PATH"
@@ -493,10 +521,18 @@ if [ -d "$APP_PATH" ]; then
   else
     print_readiness_check "App System Extension entitlement ready" "no"
   fi
+
+  app_executable="$(read_info_plist_value "$APP_PATH" CFBundleExecutable)"
+  if [ -n "$app_executable" ] && [ -f "${APP_PATH}/Contents/MacOS/${app_executable}" ] && [ -x "${APP_PATH}/Contents/MacOS/${app_executable}" ]; then
+    print_readiness_check "App executable ready" "yes"
+  else
+    print_readiness_check "App executable ready" "no"
+  fi
 else
   print_readiness_check "App bundle identifier ready" "unknown"
   print_readiness_check "App signature ready" "unknown"
   print_readiness_check "App System Extension entitlement ready" "unknown"
+  print_readiness_check "App executable ready" "unknown"
 fi
 
 if [ -d "$EXTENSION_PATH" ]; then
