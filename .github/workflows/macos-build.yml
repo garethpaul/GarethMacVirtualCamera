@@ -45,6 +45,7 @@ jobs:
 
       - name: Build GarethVideoCam
         run: |
+          set -o pipefail
           xcodebuild \
             -project GarethVideoCam.xcodeproj \
             -scheme GarethVideoCam \
@@ -55,4 +56,18 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM="" \
             COMPILER_INDEX_STORE_ENABLE=NO \
-            build
+            build 2>&1 | tee build.log
+
+      - name: Scan build log for source warnings
+        run: |
+          filtered_warnings="$(
+            grep -E "warning:|deprecated|error:" build.log \
+              | grep -v "appintentsmetadataprocessor" \
+              | grep -v "Metadata extraction skipped. No AppIntents.framework dependency found." \
+              || true
+          )"
+
+          if [ -n "$filtered_warnings" ]; then
+            echo "$filtered_warnings"
+            exit 1
+          fi

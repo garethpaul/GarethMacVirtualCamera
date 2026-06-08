@@ -76,12 +76,6 @@ def main():
     require(project_text.count("ENABLE_HARDENED_RUNTIME = YES;") >= 4,
             "all app and extension configurations should enable hardened runtime",
             failures)
-    require(project_text.count("ENABLE_APP_INTENTS_METADATA_GENERATION = NO;") >= 4,
-            "app and extension configurations should skip unused AppIntents metadata generation",
-            failures)
-    require(project_text.count("ENABLE_APPINTENTS_METADATA = NO;") >= 4,
-            "app and extension configurations should disable unused AppIntents metadata extraction",
-            failures)
     marketing_versions = set(re.findall(r"MARKETING_VERSION = ([^;]+);", project_text))
     build_versions = set(re.findall(r"CURRENT_PROJECT_VERSION = ([^;]+);", project_text))
     require(len(marketing_versions) == 1,
@@ -122,6 +116,12 @@ def main():
                 failures)
         require("xcodebuild" in workflow_text and "CODE_SIGNING_ALLOWED=NO" in workflow_text,
                 "macOS build workflow should perform an unsigned xcodebuild",
+                failures)
+        require("tee build.log" in workflow_text,
+                "macOS build workflow should capture xcodebuild output",
+                failures)
+        require("warning:|deprecated|error:" in workflow_text and "appintentsmetadataprocessor" in workflow_text,
+                "macOS build workflow should fail on source warnings while ignoring Xcode AppIntents metadata noise",
                 failures)
 
     if failures:
