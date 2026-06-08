@@ -381,7 +381,7 @@ def main():
     require("requestReadinessStatus" in host_source and "requestReadinessDetail" in host_source and "Request Readiness" in host_source and "Readiness Detail" in host_source,
             "host app should show and copy exact system-extension request readiness blockers",
             failures)
-    require("struct ReadinessCheck" in host_source and "readinessChecks" in host_source and "ReadinessPanel(manager: manager)" in host_source and "ReadinessRow" in host_source and "Team ID Match" in host_source and "Readiness Checks:" in host_source,
+    require("struct ReadinessCheck" in host_source and "readinessChecks" in host_source and "ReadinessPanel(manager: manager)" in host_source and "ReadinessRow" in host_source and "Team ID Match" in host_source and "Bundled Video" in host_source and "Readiness Checks:" in host_source,
             "host app should show and copy a compact readiness checklist for activation gates",
             failures)
     require("let checks = manager.readinessChecks" in host_source and "ForEach(Array(checks.enumerated()), id: \\.element.id)" in host_source,
@@ -422,6 +422,9 @@ def main():
             failures)
     require("missingBundledVideoResource" in host_source and "emptyBundledVideoResource" in host_source and "bundledVideoByteCount" in host_source,
             "host app should fail readiness when the embedded extension video resource is missing or empty",
+            failures)
+    require("extensionInfo != nil" in host_source and "bundledVideoReadinessDetail == nil" in host_source and "isBundledVideoFailureDetail" in host_source,
+            "host app should make bundled-video readiness an explicit system-extension request gate",
             failures)
     require("Bundled Video Path" in host_source and "Bundled Video Size" in host_source and "Video Path" in host_source and "Video Size" in host_source,
             "host app should show and copy bundled-video diagnostics",

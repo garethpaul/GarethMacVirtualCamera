@@ -435,6 +435,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             && applicationIdentifierReadinessDetail == nil
             && appCodeSigningStatus.isValid
             && appEntitlementReadinessDetail == nil
+            && extensionInfo != nil
+            && bundledVideoReadinessDetail == nil
             && extensionCodeSigningStatus.isValid
             && signingTeamReadinessDetail == nil
     }
@@ -458,6 +460,10 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         if appEntitlementReadinessDetail != nil {
             return "System extension requests require the app System Extension entitlement."
+        }
+
+        if bundledVideoReadinessDetail != nil {
+            return "System extension requests require the bundled loop video."
         }
 
         if !extensionCodeSigningStatus.isValid {
@@ -498,6 +504,19 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             teamDetail = "App and extension Team IDs match."
         }
 
+        let bundledVideoStatus: ReadinessCheck.Status
+        let bundledVideoDetail: String
+        if let extensionInfo {
+            bundledVideoStatus = .passing
+            bundledVideoDetail = "\(bundledVideoSize) at \(extensionInfo.videoPath)"
+        } else if let bundledVideoReadinessDetail {
+            bundledVideoStatus = .blocked
+            bundledVideoDetail = bundledVideoReadinessDetail
+        } else {
+            bundledVideoStatus = .pending
+            bundledVideoDetail = "Bundled video metadata is pending until the embedded extension is loaded."
+        }
+
         return [
             ReadinessCheck(id: "location",
                            title: "Application Location",
@@ -519,6 +538,10 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
                            title: "Extension Signature",
                            detail: extensionCodeSigningStatus.detail,
                            status: extensionSignatureStatus),
+            ReadinessCheck(id: "bundled-video",
+                           title: "Bundled Video",
+                           detail: bundledVideoDetail,
+                           status: bundledVideoStatus),
             ReadinessCheck(id: "team-id",
                            title: "Team ID Match",
                            detail: teamDetail,
@@ -541,6 +564,10 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         if let appEntitlementReadinessDetail {
             return appEntitlementReadinessDetail
+        }
+
+        if let bundledVideoReadinessDetail {
+            return bundledVideoReadinessDetail
         }
 
         if !extensionCodeSigningStatus.isValid {
@@ -582,6 +609,10 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
 
         return ByteCountFormatter.string(fromByteCount: videoByteCount, countStyle: .file)
+    }
+
+    var bundledVideoReadinessStatus: String {
+        return bundledVideoReadinessDetail == nil && extensionInfo != nil ? "Present" : "Missing"
     }
 
     var canRevealBundledExtension: Bool {
@@ -916,6 +947,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         if !appCodeSigningStatus.isValid
             || appEntitlementReadinessDetail != nil
+            || bundledVideoReadinessDetail != nil
             || !extensionCodeSigningStatus.isValid
             || signingTeamReadinessDetail != nil {
             return .needsSigning
@@ -939,6 +971,23 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         guard appCodeSigningStatus.hasEnabledEntitlement(requiredSystemExtensionInstallEntitlement) else {
             return "The app signature does not include the \(requiredSystemExtensionInstallEntitlement) entitlement."
+        }
+
+        return nil
+    }
+
+    private var bundledVideoReadinessDetail: String? {
+        if let extensionInfo {
+            guard extensionInfo.videoByteCount > 0 else {
+                return "The bundled extension video resource at \(extensionInfo.videoPath) is empty."
+            }
+
+            return nil
+        }
+
+        let extensionSigningDetail = extensionCodeSigningStatus.detail
+        if Self.isBundledVideoFailureDetail(extensionSigningDetail) {
+            return extensionSigningDetail
         }
 
         return nil
@@ -1028,6 +1077,11 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
             return nil
         })
+    }
+
+    private static func isBundledVideoFailureDetail(_ detail: String) -> Bool {
+        return detail.localizedCaseInsensitiveContains("video resource")
+            || detail.localizedCaseInsensitiveContains("video.mp4")
     }
 
     private func handleReadinessFailure(_ error: Error) {
@@ -1439,6 +1493,7 @@ private struct DetailsPanel: View {
                     DetailRow(title: "Extension Signature Detail", value: manager.extensionCodeSigningStatus.detail)
                 }
                 DetailRow(title: "Extension Team ID", value: manager.extensionTeamIdentifier)
+                DetailRow(title: "Bundled Video", value: manager.bundledVideoReadinessStatus)
                 DetailRow(title: "Application Path", value: manager.applicationBundlePath, monospaced: true)
 
                 if let bundlePath = manager.extensionInfo?.bundlePath {
