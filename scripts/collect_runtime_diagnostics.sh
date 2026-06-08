@@ -189,6 +189,23 @@ print_readiness_rollup() {
   printf 'Runtime readiness checks unknown: %s\n' "$readiness_unknown_count"
 }
 
+run_readiness_rollup_self_test() {
+  readiness_ready_count=0
+  readiness_blocked_count=0
+  readiness_unknown_count=0
+  readiness_total_count=0
+
+  print_readiness_check "Ready fixture" "yes"
+  print_readiness_check "Blocked fixture" "no"
+  print_readiness_check "Unknown fixture" "unknown"
+  print_readiness_rollup
+}
+
+if [ "${GARETH_DIAGNOSTICS_SELF_TEST:-}" = "readiness-rollup" ]; then
+  run_readiness_rollup_self_test
+  exit 0
+fi
+
 print_quarantine_status() {
   local label="$1"
   local bundle_path="$2"

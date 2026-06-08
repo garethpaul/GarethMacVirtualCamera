@@ -272,6 +272,8 @@ def main():
     build_log_scanner_source = (ROOT / "scripts/scan_build_log.py").read_text()
     build_log_scanner_test_source = (ROOT / "scripts/test_scan_build_log.py").read_text()
     runtime_diagnostics_source = (ROOT / "scripts/collect_runtime_diagnostics.sh").read_text()
+    runtime_diagnostics_test_path = ROOT / "scripts/test_collect_runtime_diagnostics.sh"
+    runtime_diagnostics_test_source = runtime_diagnostics_test_path.read_text()
     require(f"PRODUCT_BUNDLE_IDENTIFIER = {APP_BUNDLE_ID};" in project_text,
             "project is missing the host app bundle identifier",
             failures)
@@ -565,7 +567,7 @@ def main():
     require("didOpenSettings" in host_source and "System Settings Unavailable" in host_source,
             "host app should report System Settings launch failures",
             failures)
-    require("./scripts/check_project.sh" in readme_text and "project metadata validation, build-log scanner tests, build-product verifier tests, shell syntax checks, and whitespace checks" in readme_text and "bundle identifiers, declared executables, CoreMediaIO extension metadata, and the bundled video resource" in readme_text,
+    require("./scripts/check_project.sh" in readme_text and "project metadata validation, build-log scanner tests, runtime diagnostics tests, build-product verifier tests, shell syntax checks, and whitespace checks" in readme_text and "bundle identifiers, declared executables, CoreMediaIO extension metadata, and the bundled video resource" in readme_text,
             "README should document the local pre-push project check",
             failures)
     require("CI-equivalent unsigned compile" in readme_text and "./scripts/build_unsigned.sh" in readme_text and "./scripts/scan_build_log.py build-Debug.log build-Release.log" in readme_text and ".build/Xcode" in readme_text and "BUILD_OUTPUT_PATH" in readme_text,
@@ -616,7 +618,13 @@ def main():
     require(verify_build_products_test_path.stat().st_mode & 0o111,
             "build-product verifier test script should be executable",
             failures)
-    require("./scripts/validate_project.py" in check_project_source and "./scripts/test_scan_build_log.py" in check_project_source and "./scripts/test_verify_build_products.sh" in check_project_source and "bash -n ./scripts/collect_runtime_diagnostics.sh" in check_project_source and "bash -n ./scripts/build_unsigned.sh" in check_project_source and "bash -n ./scripts/verify_build_products.sh" in check_project_source and "bash -n ./scripts/test_verify_build_products.sh" in check_project_source and "git diff --check" in check_project_source and "git diff-tree --check --root --no-commit-id -r HEAD" in check_project_source,
+    require("GARETH_DIAGNOSTICS_SELF_TEST=readiness-rollup" in runtime_diagnostics_test_source and "Runtime readiness result: blocked" in runtime_diagnostics_test_source and "Runtime readiness checks ready: 1/3" in runtime_diagnostics_test_source and "Runtime diagnostics tests passed." in runtime_diagnostics_test_source,
+            "runtime diagnostics test should cover the counted readiness rollup",
+            failures)
+    require(runtime_diagnostics_test_path.stat().st_mode & 0o111,
+            "runtime diagnostics test script should be executable",
+            failures)
+    require("./scripts/validate_project.py" in check_project_source and "./scripts/test_scan_build_log.py" in check_project_source and "./scripts/test_collect_runtime_diagnostics.sh" in check_project_source and "./scripts/test_verify_build_products.sh" in check_project_source and "bash -n ./scripts/collect_runtime_diagnostics.sh" in check_project_source and "bash -n ./scripts/build_unsigned.sh" in check_project_source and "bash -n ./scripts/verify_build_products.sh" in check_project_source and "bash -n ./scripts/test_collect_runtime_diagnostics.sh" in check_project_source and "bash -n ./scripts/test_verify_build_products.sh" in check_project_source and "git diff --check" in check_project_source and "git diff-tree --check --root --no-commit-id -r HEAD" in check_project_source,
             "project check script should run validation, scanner tests, shell syntax checks, and whitespace checks",
             failures)
     require(check_project_path.stat().st_mode & 0o111,
@@ -661,7 +669,10 @@ def main():
         require("./scripts/test_verify_build_products.sh" in workflow_text and "Test build product verifier" in workflow_text,
                 "macOS build workflow should test the build-product verifier",
                 failures)
-        require("bash -n ./scripts/collect_runtime_diagnostics.sh" in workflow_text and "bash -n ./scripts/build_unsigned.sh" in workflow_text and "bash -n ./scripts/verify_build_products.sh" in workflow_text and "bash -n ./scripts/test_verify_build_products.sh" in workflow_text,
+        require("./scripts/test_collect_runtime_diagnostics.sh" in workflow_text and "Test runtime diagnostics" in workflow_text,
+                "macOS build workflow should test runtime diagnostics helpers",
+                failures)
+        require("bash -n ./scripts/collect_runtime_diagnostics.sh" in workflow_text and "bash -n ./scripts/build_unsigned.sh" in workflow_text and "bash -n ./scripts/verify_build_products.sh" in workflow_text and "bash -n ./scripts/test_collect_runtime_diagnostics.sh" in workflow_text and "bash -n ./scripts/test_verify_build_products.sh" in workflow_text,
                 "macOS build workflow should syntax-check the runtime diagnostics, unsigned build, and build-product verifier scripts",
                 failures)
         require("git diff-tree --check --root --no-commit-id -r HEAD" in workflow_text,
