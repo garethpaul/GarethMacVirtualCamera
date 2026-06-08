@@ -11,6 +11,7 @@ import SystemExtensions
 struct ContentView: View {
     @ObservedObject var systemExtensionRequestManager: SystemExtensionRequestManager
     @State private var selectedSection: DashboardSection? = .overview
+    @State private var didCompleteInitialAppearance = false
 
     var body: some View {
         NavigationSplitView {
@@ -23,6 +24,11 @@ struct ContentView: View {
         .navigationSplitViewStyle(.balanced)
         .background(Color(nsColor: .windowBackgroundColor))
         .onAppear {
+            guard didCompleteInitialAppearance else {
+                didCompleteInitialAppearance = true
+                return
+            }
+
             systemExtensionRequestManager.refreshExtensionInfo()
         }
     }

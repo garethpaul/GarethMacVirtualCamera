@@ -447,6 +447,9 @@ def main():
     require("refreshStatus()" in host_source and "Status Refreshed" in host_source and "Button(action: manager.refreshStatus)" in host_source and "Refresh Status" in host_source,
             "host app should let users refresh extension and signing readiness in-place with activity feedback",
             failures)
+    require("didCompleteInitialAppearance" in host_source and "guard didCompleteInitialAppearance else" in host_source,
+            "host app should avoid duplicating the manager startup refresh on first view appearance",
+            failures)
     require("case .idle, .ready, .needsApplicationLocation, .needsBundleIdentifier, .needsSigning, .deactivated, .failed:" in host_source,
             "host app should let a successful refresh recover from stale readiness failures",
             failures)
