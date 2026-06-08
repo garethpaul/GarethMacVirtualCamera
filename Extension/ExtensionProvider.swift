@@ -229,7 +229,7 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource {
         }
 
         if assetReader?.status == .failed {
-            logger.error("Asset reader failed while streaming: \(assetReader?.error?.localizedDescription ?? "unknown error", privacy: .public)")
+            logger.error("Asset reader failed while streaming: \(self.assetReader?.error?.localizedDescription ?? "unknown error", privacy: .public)")
             stopStreamingSession()
             return
         }
@@ -422,7 +422,7 @@ final class ExtensionStreamSource: NSObject, CMIOExtensionStreamSource {
 
     private func extensionDeviceSource() throws -> ExtensionDeviceSource {
         guard let deviceSource = device.source as? ExtensionDeviceSource else {
-            logger.error("Unexpected source type: \(String(describing: device.source), privacy: .public)")
+            logger.error("Unexpected source type: \(String(describing: self.device.source), privacy: .public)")
             throw CameraExtensionError.unexpectedDeviceSource
         }
 
