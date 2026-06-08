@@ -198,7 +198,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     enum CodeSigningStatus: Equatable {
-        case valid
+        case valid(String)
         case invalid(String)
 
         var title: String {
@@ -212,8 +212,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         var detail: String {
             switch self {
-            case .valid:
-                return "The app bundle code signature is valid."
+            case .valid(let detail):
+                return detail
             case .invalid(let detail):
                 return detail
             }
@@ -404,12 +404,14 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     func refreshExtensionInfo() {
-        appCodeSigningStatus = Self.evaluateCodeSigningStatus(for: Bundle.main.bundleURL)
+        appCodeSigningStatus = Self.evaluateCodeSigningStatus(for: Bundle.main.bundleURL,
+                                                              validDetail: "The app bundle code signature is valid.")
 
         do {
             let loadedExtensionInfo = try loadBundledExtensionInfo()
             extensionInfo = loadedExtensionInfo
-            extensionCodeSigningStatus = Self.evaluateCodeSigningStatus(for: URL(fileURLWithPath: loadedExtensionInfo.bundlePath))
+            extensionCodeSigningStatus = Self.evaluateCodeSigningStatus(for: URL(fileURLWithPath: loadedExtensionInfo.bundlePath),
+                                                                        validDetail: "The embedded system extension code signature is valid.")
 
             switch state {
             case .idle, .ready, .needsApplicationLocation, .needsSigning, .deactivated:
@@ -498,7 +500,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     private func prepareForSystemExtensionRequest() -> ExtensionInfo? {
-        appCodeSigningStatus = Self.evaluateCodeSigningStatus(for: Bundle.main.bundleURL)
+        appCodeSigningStatus = Self.evaluateCodeSigningStatus(for: Bundle.main.bundleURL,
+                                                              validDetail: "The app bundle code signature is valid.")
 
         guard isRunningFromApplications else {
             state = .needsApplicationLocation
@@ -521,7 +524,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         do {
             extensionInfo = try loadBundledExtensionInfo()
             self.extensionInfo = extensionInfo
-            extensionCodeSigningStatus = Self.evaluateCodeSigningStatus(for: URL(fileURLWithPath: extensionInfo.bundlePath))
+            extensionCodeSigningStatus = Self.evaluateCodeSigningStatus(for: URL(fileURLWithPath: extensionInfo.bundlePath),
+                                                                        validDetail: "The embedded system extension code signature is valid.")
         } catch {
             extensionCodeSigningStatus = .invalid("System extension code-signing status could not be checked: \(error.localizedDescription)")
             handleFailure(error)
@@ -551,7 +555,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         return .ready
     }
 
-    private static func evaluateCodeSigningStatus(for bundleURL: URL) -> CodeSigningStatus {
+    private static func evaluateCodeSigningStatus(for bundleURL: URL, validDetail: String) -> CodeSigningStatus {
         var staticCode: SecStaticCode?
         let createStatus = SecStaticCodeCreateWithPath(bundleURL as CFURL, SecCSFlags(), &staticCode)
         guard createStatus == errSecSuccess, let staticCode else {
@@ -563,7 +567,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             return .invalid(errorMessage(for: checkStatus))
         }
 
-        return .valid
+        return .valid(validDetail)
     }
 
     private static func errorMessage(for status: OSStatus) -> String {

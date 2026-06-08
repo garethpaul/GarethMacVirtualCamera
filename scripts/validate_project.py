@@ -183,7 +183,7 @@ def main():
     require("import Security" in host_source and "CodeSigningStatus" in host_source and "SecStaticCodeCheckValidityWithErrors" in host_source,
             "host app should check code-signing validity before submitting system-extension requests",
             failures)
-    require("appCodeSigningStatus" in host_source and "extensionCodeSigningStatus" in host_source and "Extension Signing Required" in host_source,
+    require("appCodeSigningStatus" in host_source and "extensionCodeSigningStatus" in host_source and "Extension Signing Required" in host_source and "The embedded system extension code signature is valid." in host_source,
             "host app should validate both the container app and embedded system-extension signatures before submitting requests",
             failures)
     require("case needsSigning" in host_source and "requestReadinessMessage" in host_source and "App Signature" in host_source and "Extension Signature" in host_source,
