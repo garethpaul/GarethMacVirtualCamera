@@ -21,3 +21,4 @@
 - Covered wrong host and extension System Extension usage descriptions in build-product verifier fixtures.
 - Added native keyboard shortcuts for copying the runtime diagnostics command and expected runtime evidence.
 - Covered build-log scanner usage failures when no build log path is provided.
+- Documented Camera menu shortcuts for repeated signed-host evidence collection.

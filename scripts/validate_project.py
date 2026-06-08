@@ -802,6 +802,9 @@ def main():
     require("Signed runtime activation checklist:" in readme_text and "System Extension entitlement and app-group entitlement" in readme_text and "/Applications/GarethVideoCam.app" in readme_text and "Confirm the in-app readiness summary has no blocked checks" in readme_text and "Approve the pending camera extension in System Settings" in readme_text and "Runtime Evidence section's Copy Command action" in readme_text and "bundled app resource or a repository fallback" in readme_text and "Runtime readiness result: ready" in readme_text and "Runtime activation evidence result: active" in readme_text and "Extension registration entry present: yes" in readme_text and "Extension registration activated enabled: yes" in readme_text and "Application group match ready: yes" in readme_text and "Expected virtual camera device present: yes" in readme_text and "camera pickers should list `Gareth Video Cam`" in readme_text,
             "README should document a signed-host activation checklist with expected diagnostics",
             failures)
+    require("Camera menu provides keyboard shortcuts" in readme_text and "Command-R refreshes status" in readme_text and "Command-Shift-C copies diagnostics" in readme_text and "Command-Shift-L copies the activation checklist" in readme_text and "Command-Shift-D copies the runtime diagnostics command" in readme_text and "Command-Shift-E copies the expected runtime evidence lines" in readme_text,
+            "README should document native Camera menu shortcuts for repeated evidence collection",
+            failures)
     require("Bundled video metadata ready: yes" in readme_text and "metadata readiness for expected dimensions/frame rate and positive duration" in readme_text,
             "README should document bundled-video metadata readiness diagnostics",
             failures)

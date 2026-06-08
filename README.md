@@ -64,6 +64,8 @@ Signed runtime activation checklist:
 
 The Runtime Evidence section reports whether the copied command is using the bundled app resource or a repository fallback.
 
+The Camera menu provides keyboard shortcuts for repeated evidence collection: Command-R refreshes status, Command-Shift-C copies diagnostics, Command-Shift-L copies the activation checklist, Command-Shift-D copies the runtime diagnostics command, and Command-Shift-E copies the expected runtime evidence lines.
+
 After approval, camera pickers should list `Gareth Video Cam`.
 
 To collect runtime evidence from a signed macOS host:
