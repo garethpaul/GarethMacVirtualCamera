@@ -21,6 +21,7 @@ bundle_version_output="$(GARETH_DIAGNOSTICS_SELF_TEST=bundle-version-match "$ROO
 mach_service_output="$(GARETH_DIAGNOSTICS_SELF_TEST=mach-service "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 application_group_output="$(GARETH_DIAGNOSTICS_SELF_TEST=application-group "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 camera_device_output="$(GARETH_DIAGNOSTICS_SELF_TEST=camera-device "$ROOT/scripts/collect_runtime_diagnostics.sh")"
+registration_output="$(GARETH_DIAGNOSTICS_SELF_TEST=registration "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 
 require_output "$blocked_output" "Ready fixture: yes"
 require_output "$blocked_output" "Blocked fixture: no"
@@ -68,5 +69,11 @@ require_output "$application_group_output" "Application group unresolved fixture
 require_output "$camera_device_output" "Camera device present fixture: yes"
 require_output "$camera_device_output" "Camera device missing fixture: no"
 require_output "$camera_device_output" "Camera device empty fixture: unknown"
+
+require_output "$registration_output" "Registration active fixture present: yes"
+require_output "$registration_output" "Registration active fixture activated enabled: yes"
+require_output "$registration_output" "Registration waiting fixture activated enabled: no"
+require_output "$registration_output" "Registration missing fixture present: no"
+require_output "$registration_output" "Registration empty fixture present: unknown"
 
 printf 'Runtime diagnostics tests passed.\n'

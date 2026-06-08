@@ -334,6 +334,46 @@ camera_device_present_value() {
   fi
 }
 
+extension_registration_entries() {
+  local registration_output="$1"
+  local extension_identifier="$2"
+
+  printf '%s\n' "$registration_output" | /usr/bin/grep -F "$extension_identifier" || true
+}
+
+extension_registration_present_value() {
+  local registration_output="$1"
+  local extension_identifier="$2"
+
+  if [ -z "$registration_output" ]; then
+    printf 'unknown\n'
+  elif [ -n "$(extension_registration_entries "$registration_output" "$extension_identifier")" ]; then
+    printf 'yes\n'
+  else
+    printf 'no\n'
+  fi
+}
+
+extension_registration_activated_enabled_value() {
+  local registration_output="$1"
+  local extension_identifier="$2"
+  local entries
+
+  if [ -z "$registration_output" ]; then
+    printf 'unknown\n'
+    return
+  fi
+
+  entries="$(extension_registration_entries "$registration_output" "$extension_identifier")"
+  if [ -z "$entries" ]; then
+    printf 'no\n'
+  elif printf '%s\n' "$entries" | /usr/bin/grep -E '\[[^]]*activated[^]]*enabled[^]]*\]' >/dev/null; then
+    printf 'yes\n'
+  else
+    printf 'no\n'
+  fi
+}
+
 file_byte_count() {
   local file_path="$1"
 
@@ -485,6 +525,22 @@ run_camera_device_self_test() {
   printf 'Camera device empty fixture: %s\n' "$(camera_device_present_value "" "$EXPECTED_CAMERA_NAME")"
 }
 
+run_registration_self_test() {
+  local active_output
+  local waiting_output
+  local missing_output
+
+  active_output=$'2 extension(s)\n--- com.apple.system_extension.cmio\n* * ABCDE12345 com.garethpaul.GarethVideoCam.Extension (1.18/7) Gareth Video Cam Extension [activated enabled]\n'
+  waiting_output=$'1 extension(s)\n--- com.apple.system_extension.cmio\n* * ABCDE12345 com.garethpaul.GarethVideoCam.Extension (1.18/7) Gareth Video Cam Extension [activated waiting for user]\n'
+  missing_output=$'0 extension(s)\n'
+
+  printf 'Registration active fixture present: %s\n' "$(extension_registration_present_value "$active_output" "$EXTENSION_ID")"
+  printf 'Registration active fixture activated enabled: %s\n' "$(extension_registration_activated_enabled_value "$active_output" "$EXTENSION_ID")"
+  printf 'Registration waiting fixture activated enabled: %s\n' "$(extension_registration_activated_enabled_value "$waiting_output" "$EXTENSION_ID")"
+  printf 'Registration missing fixture present: %s\n' "$(extension_registration_present_value "$missing_output" "$EXTENSION_ID")"
+  printf 'Registration empty fixture present: %s\n' "$(extension_registration_present_value "" "$EXTENSION_ID")"
+}
+
 case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
   readiness-rollup|readiness-rollup-blocked)
     run_readiness_rollup_blocked_self_test
@@ -512,6 +568,10 @@ case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
     ;;
   camera-device)
     run_camera_device_self_test
+    exit 0
+    ;;
+  registration)
+    run_registration_self_test
     exit 0
     ;;
 esac
@@ -934,11 +994,16 @@ print_readiness_rollup
 section "System Extension Registration"
 if [ -x /usr/bin/systemextensionsctl ]; then
   registration_output="$(/usr/bin/systemextensionsctl list 2>&1 || true)"
+  registration_entries="$(extension_registration_entries "$registration_output" "$EXTENSION_ID")"
 
-  if printf '%s\n' "$registration_output" | /usr/bin/grep -F "$EXTENSION_ID" >/dev/null; then
-    print_yes_no_unknown "Extension registration entry present" "yes"
+  print_yes_no_unknown "Extension registration entry present" "$(extension_registration_present_value "$registration_output" "$EXTENSION_ID")"
+  print_yes_no_unknown "Extension registration activated enabled" "$(extension_registration_activated_enabled_value "$registration_output" "$EXTENSION_ID")"
+
+  printf 'Matching system extension registration entries:\n'
+  if [ -n "$registration_entries" ]; then
+    printf '%s\n' "$registration_entries"
   else
-    print_yes_no_unknown "Extension registration entry present" "no"
+    printf 'No matching system extension registration entries.\n'
   fi
 
   printf 'Full systemextensionsctl list output:\n'
@@ -950,6 +1015,7 @@ if [ -x /usr/bin/systemextensionsctl ]; then
 else
   printf 'systemextensionsctl is not available on this host.\n'
   print_yes_no_unknown "Extension registration entry present" "unknown"
+  print_yes_no_unknown "Extension registration activated enabled" "unknown"
 fi
 
 section "Camera Devices"
