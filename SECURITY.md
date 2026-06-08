@@ -1,16 +1,18 @@
 # Security Policy
 
-## Supported Scope
+## Supported Versions
 
 The supported security scope for Gareth Mac Virtual Camera is the current default branch, `main`. Older commits, tags, branches, forks, demos, and generated artifacts are not actively supported unless the repository explicitly marks them as maintained.
 
 Gareth Mac Virtual Camera is a macOS SwiftUI host app with an embedded CoreMediaIO system extension. The extension publishes the bundled `Extension/video.mp4` as a virtual camera named `Gareth Video Cam`.
 
-## Reporting A Vulnerability
+## Reporting a Vulnerability
 
 Report suspected vulnerabilities through GitHub private vulnerability reporting or a draft GitHub Security Advisory for `garethpaul/GarethMacVirtualCamera` when that option is available. If private reporting is unavailable, contact the repository owner through GitHub and avoid posting exploit details publicly until the issue can be assessed.
 
 Do not open a public issue that includes exploit code, secrets, personal data, or detailed reproduction steps for an unpatched vulnerability.
+
+## What to Include
 
 Helpful reports include:
 
@@ -20,7 +22,7 @@ Helpful reports include:
 - reproduction steps using test data, local apps, and devices you control
 - relevant logs, diagnostics, screenshots, or proof-of-concept snippets without private data
 
-## Security Posture
+## Project Security Posture
 
 Virtual camera extensions operate on a privacy-sensitive media surface. Changes should preserve explicit user approval, valid signing, expected bundle identifiers, expected app-group entitlements, and the System Extension entitlement model.
 
@@ -46,7 +48,7 @@ Good-faith research is welcome when it stays within these boundaries:
 - report the minimum evidence needed to verify impact
 - keep vulnerability details confidential until the maintainer has assessed the report
 
-## Dependency And Supply Chain Security
+## Dependency and Supply Chain Security
 
 This repository does not use a root package dependency manifest. If dependencies are added later, use trusted package managers, keep lockfiles in sync when lockfiles exist, and avoid committing credentials, private keys, tokens, generated secrets, or machine-local configuration.
 
