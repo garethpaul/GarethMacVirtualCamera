@@ -809,6 +809,9 @@ def main():
     require("write_stale_team_id_diagnostics_fixture" in verify_build_products_test_source and "stale-team-id-diagnostics" in verify_build_products_test_source and "Unexpected Debug app bundled runtime diagnostics Team ID self-test output" in verify_build_products_test_source,
             "build-product verifier tests should reject stale bundled runtime diagnostics Team ID self-test output",
             failures)
+    require("write_stale_application_identity_diagnostics_fixture" in verify_build_products_test_source and "stale-application-identity-diagnostics" in verify_build_products_test_source and "Unexpected Debug app bundled runtime diagnostics application-identity self-test output" in verify_build_products_test_source,
+            "build-product verifier tests should reject stale bundled runtime diagnostics application-identity self-test output",
+            failures)
     require(verify_build_products_test_path.stat().st_mode & 0o111,
             "build-product verifier test script should be executable",
             failures)

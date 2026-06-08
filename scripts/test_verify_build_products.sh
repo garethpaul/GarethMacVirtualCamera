@@ -105,6 +105,45 @@ esac
 PY
 }
 
+write_stale_application_identity_diagnostics_fixture() {
+  local products_path="$1"
+  local configuration="$2"
+  local script_path="$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh"
+
+  python3 - "$script_path" <<'PY'
+from pathlib import Path
+import sys
+
+script_path = Path(sys.argv[1])
+script_path.write_text("""#!/usr/bin/env bash
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VALIDATE_PROJECT_SCRIPT="${SCRIPT_DIR}/validate_project.py"
+case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
+  resource-discovery)
+    printf 'Diagnostics parser source: adjacent script resource\n'
+    printf 'Diagnostics parser available: yes\n'
+    ;;
+  executable-readiness)
+    printf 'Executable ready fixture: yes\n'
+    printf 'Executable non-executable fixture: no\n'
+    ;;
+  team-id)
+    printf 'Team ID match fixture: yes\n'
+    printf 'Team ID mismatch fixture: no\n'
+    ;;
+  application-identity)
+    printf 'App path match fixture: no\n'
+    printf 'Bundle identifier missing fixture: yes\n'
+    ;;
+  video-parser)
+    printf 'Video parser metadata ready fixture: yes\n'
+    ;;
+esac
+""")
+PY
+}
+
 remove_info_plist_key() {
   local bundle_path="$1"
   local key="$2"
@@ -228,6 +267,21 @@ fi
 if ! grep -q "Unexpected Debug app bundled runtime diagnostics Team ID self-test output" "$TMP_DIR/stale-team-id-diagnostics.err"; then
   printf 'Verifier failure did not explain the stale bundled runtime diagnostics Team ID self-test output.\n' >&2
   cat "$TMP_DIR/stale-team-id-diagnostics.err" >&2
+  exit 1
+fi
+
+STALE_APPLICATION_IDENTITY_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-application-identity-diagnostics/Products"
+write_product_fixture "$STALE_APPLICATION_IDENTITY_DIAGNOSTICS_PRODUCTS" Debug
+write_stale_application_identity_diagnostics_fixture "$STALE_APPLICATION_IDENTITY_DIAGNOSTICS_PRODUCTS" Debug
+
+if PRODUCTS_PATH="$STALE_APPLICATION_IDENTITY_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stale-application-identity-diagnostics.out" 2>"$TMP_DIR/stale-application-identity-diagnostics.err"; then
+  printf 'Expected verifier to reject stale bundled runtime diagnostics application-identity self-test output.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Unexpected Debug app bundled runtime diagnostics application-identity self-test output" "$TMP_DIR/stale-application-identity-diagnostics.err"; then
+  printf 'Verifier failure did not explain the stale bundled runtime diagnostics application-identity self-test output.\n' >&2
+  cat "$TMP_DIR/stale-application-identity-diagnostics.err" >&2
   exit 1
 fi
 
