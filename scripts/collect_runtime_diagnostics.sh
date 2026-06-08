@@ -3,6 +3,7 @@ set -euo pipefail
 
 APP_PATH="${1:-/Applications/GarethVideoCam.app}"
 LOG_WINDOW="${2:-30m}"
+EXPECTED_APP_PATH="/Applications/GarethVideoCam.app"
 APP_ID="com.garethpaul.GarethVideoCam"
 EXTENSION_ID="com.garethpaul.GarethVideoCam.Extension"
 EXTENSION_PATH="${APP_PATH}/Contents/Library/SystemExtensions/${EXTENSION_ID}.systemextension"
@@ -120,6 +121,24 @@ if [ -d "$APP_PATH" ]; then
   print_bundle_metadata "$APP_PATH"
 else
   printf 'App bundle is not installed at the requested path.\n'
+fi
+
+section "Application Location Check"
+printf 'Expected app path: %s\n' "$EXPECTED_APP_PATH"
+printf 'Actual app path: %s\n' "$APP_PATH"
+case "$APP_PATH" in
+  /Applications/*)
+    printf 'App path is inside /Applications: yes\n'
+    ;;
+  *)
+    printf 'App path is inside /Applications: no\n'
+    ;;
+esac
+
+if [ "$APP_PATH" = "$EXPECTED_APP_PATH" ]; then
+  printf 'App path matches expected app path: yes\n'
+else
+  printf 'App path matches expected app path: no\n'
 fi
 
 section "Embedded System Extension"
