@@ -15,6 +15,7 @@ require_output() {
 }
 
 blocked_output="$(GARETH_DIAGNOSTICS_SELF_TEST=readiness-rollup "$ROOT/scripts/collect_runtime_diagnostics.sh")"
+resource_discovery_output="$(GARETH_DIAGNOSTICS_SELF_TEST=resource-discovery "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 unknown_output="$(GARETH_DIAGNOSTICS_SELF_TEST=readiness-rollup-unknown "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 ready_output="$(GARETH_DIAGNOSTICS_SELF_TEST=readiness-rollup-ready "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 bundle_version_output="$(GARETH_DIAGNOSTICS_SELF_TEST=bundle-version-match "$ROOT/scripts/collect_runtime_diagnostics.sh")"
@@ -34,6 +35,12 @@ require_output "$blocked_output" "Runtime readiness checks ready: 1/3"
 require_output "$blocked_output" "Runtime readiness checks blocked: 1"
 require_output "$blocked_output" "Runtime readiness checks unknown: 1"
 require_output "$blocked_output" "Runtime readiness next action: resolve Blocked fixture"
+
+require_output "$resource_discovery_output" "Diagnostics script path:"
+require_output "$resource_discovery_output" "Diagnostics script directory:"
+require_output "$resource_discovery_output" "Diagnostics parser path:"
+require_output "$resource_discovery_output" "Diagnostics parser source: adjacent script resource"
+require_output "$resource_discovery_output" "Diagnostics parser available: yes"
 
 require_output "$unknown_output" "Ready fixture: yes"
 require_output "$unknown_output" "Unknown fixture: unknown"

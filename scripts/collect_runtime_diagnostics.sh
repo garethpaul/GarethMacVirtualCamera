@@ -4,8 +4,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 VALIDATE_PROJECT_SCRIPT="${SCRIPT_DIR}/validate_project.py"
+DIAGNOSTICS_PARSER_SOURCE="adjacent script resource"
 if [ ! -f "$VALIDATE_PROJECT_SCRIPT" ]; then
   VALIDATE_PROJECT_SCRIPT="${ROOT}/scripts/validate_project.py"
+  DIAGNOSTICS_PARSER_SOURCE="repository fallback"
 fi
 APP_PATH="${1:-/Applications/GarethVideoCam.app}"
 LOG_WINDOW="${2:-30m}"
@@ -569,6 +571,19 @@ print_yes_no_unknown() {
   printf '%s: %s\n' "$label" "$value"
 }
 
+print_diagnostics_resources() {
+  printf 'Diagnostics script path: %s\n' "${BASH_SOURCE[0]}"
+  printf 'Diagnostics script directory: %s\n' "$SCRIPT_DIR"
+  printf 'Diagnostics parser path: %s\n' "$VALIDATE_PROJECT_SCRIPT"
+  printf 'Diagnostics parser source: %s\n' "$DIAGNOSTICS_PARSER_SOURCE"
+
+  if [ -f "$VALIDATE_PROJECT_SCRIPT" ]; then
+    printf 'Diagnostics parser available: yes\n'
+  else
+    printf 'Diagnostics parser available: no\n'
+  fi
+}
+
 print_readiness_check() {
   local label="$1"
   local value="$2"
@@ -815,6 +830,10 @@ run_activation_evidence_self_test() {
 }
 
 case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
+  resource-discovery)
+    print_diagnostics_resources
+    exit 0
+    ;;
   readiness-rollup|readiness-rollup-blocked)
     run_readiness_rollup_blocked_self_test
     exit 0
@@ -888,6 +907,9 @@ printf 'Log window: %s\n' "$LOG_WINDOW"
 run_if_available sw_vers
 run_if_available uname -a
 run_if_available xcodebuild -version
+
+section "Diagnostics Resources"
+print_diagnostics_resources
 
 section "Application"
 printf 'App path: %s\n' "$APP_PATH"
