@@ -761,7 +761,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             extensionCodeSigningStatus = Self.evaluateCodeSigningStatus(for: URL(fileURLWithPath: extensionInfo.bundlePath),
                                                                         validDetail: "The embedded system extension code signature is valid.")
         } catch {
-            extensionInfo = nil
+            self.extensionInfo = nil
             extensionCodeSigningStatus = .invalid("System extension code-signing status could not be checked: \(error.localizedDescription)")
             handleReadinessFailure(error)
             return nil
