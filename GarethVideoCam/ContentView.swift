@@ -83,6 +83,9 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     private let requiredSystemExtensionInstallEntitlement = "com.apple.developer.system-extension.install"
     private let requiredApplicationGroupBaseIdentifier = "com.garethpaul.GarethVideoCam"
     private let applicationGroupsEntitlement = "com.apple.security.application-groups"
+    private let expectedBundledVideoWidth = 1280
+    private let expectedBundledVideoHeight = 720
+    private let expectedBundledVideoFrameRate = 24
 
     enum InstallState: Equatable {
         case idle
@@ -202,6 +205,23 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
     }
 
+    struct VideoDimensions: Equatable {
+        var width: Int
+        var height: Int
+    }
+
+    struct BundledVideoMetadata: Equatable {
+        var dimensions: VideoDimensions?
+        var frameRate: Int?
+        var durationSeconds: Double?
+    }
+
+    private struct MP4Atom {
+        var type: String
+        var payloadStart: Int
+        var payloadEnd: Int
+    }
+
     struct ExtensionInfo: Equatable {
         var identifier: String
         var version: String
@@ -213,6 +233,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         var bundlePath: String
         var videoPath: String
         var videoByteCount: Int64
+        var videoMetadata: BundledVideoMetadata
     }
 
     struct ReadinessCheck: Identifiable, Equatable {
@@ -632,7 +653,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
 
         if bundledVideoReadinessDetail != nil {
-            return "System extension requests require the bundled loop video."
+            return "System extension requests require the bundled loop video metadata."
         }
 
         if !extensionCodeSigningStatus.isValid {
@@ -743,12 +764,12 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         let extensionMetadataStatus: ReadinessCheck.Status
         let extensionMetadataDetail: String
-        if let extensionInfo {
-            extensionMetadataStatus = .passing
-            extensionMetadataDetail = "Executable \(extensionInfo.executableName), CMIO Mach service \(extensionInfo.machServiceName)."
-        } else if let extensionMetadataReadinessDetail {
+        if let extensionMetadataReadinessDetail {
             extensionMetadataStatus = .blocked
             extensionMetadataDetail = extensionMetadataReadinessDetail
+        } else if let extensionInfo {
+            extensionMetadataStatus = .passing
+            extensionMetadataDetail = "Executable \(extensionInfo.executableName), CMIO Mach service \(extensionInfo.machServiceName)."
         } else {
             extensionMetadataStatus = .pending
             extensionMetadataDetail = "Embedded extension metadata is pending until the extension is loaded."
@@ -756,12 +777,12 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         let bundledVideoStatus: ReadinessCheck.Status
         let bundledVideoDetail: String
-        if let extensionInfo {
-            bundledVideoStatus = .passing
-            bundledVideoDetail = "\(bundledVideoSize) at \(extensionInfo.videoPath)"
-        } else if let bundledVideoReadinessDetail {
+        if let bundledVideoReadinessDetail {
             bundledVideoStatus = .blocked
             bundledVideoDetail = bundledVideoReadinessDetail
+        } else if let extensionInfo {
+            bundledVideoStatus = .passing
+            bundledVideoDetail = "\(bundledVideoMetadataSummary) at \(extensionInfo.videoPath)"
         } else {
             bundledVideoStatus = .pending
             bundledVideoDetail = "Bundled video metadata is pending until the embedded extension is loaded."
@@ -907,7 +928,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
 
         if let bundledVideoReadinessDetail {
-            return "Rebuild the embedded system extension with a non-empty bundled video resource. \(bundledVideoReadinessDetail)"
+            return "Rebuild the embedded system extension with a bundled loop video that has the expected metadata. \(bundledVideoReadinessDetail)"
         }
 
         if !extensionCodeSigningStatus.isValid {
@@ -1045,6 +1066,34 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         return ByteCountFormatter.string(fromByteCount: videoByteCount, countStyle: .file)
     }
 
+    var bundledVideoDimensions: String {
+        guard let dimensions = extensionInfo?.videoMetadata.dimensions else {
+            return "Unknown"
+        }
+
+        return "\(dimensions.width)x\(dimensions.height)"
+    }
+
+    var bundledVideoFrameRate: String {
+        guard let frameRate = extensionInfo?.videoMetadata.frameRate else {
+            return "Unknown"
+        }
+
+        return "\(frameRate) fps"
+    }
+
+    var bundledVideoDuration: String {
+        guard let durationSeconds = extensionInfo?.videoMetadata.durationSeconds else {
+            return "Unknown"
+        }
+
+        return String(format: "%.3f seconds", durationSeconds)
+    }
+
+    var bundledVideoMetadataSummary: String {
+        return "\(bundledVideoSize), \(bundledVideoDimensions), \(bundledVideoFrameRate), \(bundledVideoDuration)"
+    }
+
     var extensionMetadataStatus: String {
         guard extensionInfo != nil else {
             return "Missing"
@@ -1070,7 +1119,11 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     var bundledVideoReadinessStatus: String {
-        return bundledVideoReadinessDetail == nil && extensionInfo != nil ? "Present" : "Missing"
+        guard extensionInfo != nil else {
+            return "Missing"
+        }
+
+        return bundledVideoReadinessDetail == nil ? "Valid" : "Invalid"
     }
 
     var canRevealBundledExtension: Bool {
@@ -1091,6 +1144,9 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             Extension Path: \(extensionInfo.bundlePath)
             Bundled Video Path: \(extensionInfo.videoPath)
             Bundled Video Size: \(bundledVideoSize)
+            Bundled Video Dimensions: \(bundledVideoDimensions)
+            Bundled Video Frame Rate: \(bundledVideoFrameRate)
+            Bundled Video Duration: \(bundledVideoDuration)
             """
         } else {
             extensionDescription = "Extension: No bundled extension loaded"
@@ -1451,6 +1507,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                 .appendingPathComponent("Resources")
                 .appendingPathComponent("video.mp4")
             let videoByteCount = try Self.bundledVideoByteCount(at: videoURL)
+            let videoMetadata = try Self.bundledVideoMetadata(at: videoURL)
 
             return ExtensionInfo(identifier: identifier,
                                  version: version,
@@ -1461,7 +1518,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                                  machServiceName: machServiceName,
                                  bundlePath: extensionURL.path,
                                  videoPath: videoURL.path,
-                                 videoByteCount: videoByteCount)
+                                 videoByteCount: videoByteCount,
+                                 videoMetadata: videoMetadata)
         }
 
         throw ExtensionRequestError.unexpectedBundleIdentifier(expected: expectedExtensionBundleIdentifier,
@@ -1491,6 +1549,250 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
 
         return byteCount.int64Value
+    }
+
+    private static func bundledVideoMetadata(at videoURL: URL) throws -> BundledVideoMetadata {
+        let videoData: Data
+        do {
+            videoData = try Data(contentsOf: videoURL)
+        } catch {
+            throw ExtensionRequestError.unreadableBundledVideoMetadata(videoURL.path)
+        }
+
+        var videoMetadata = BundledVideoMetadata(dimensions: nil,
+                                                frameRate: nil,
+                                                durationSeconds: nil)
+
+        for atom in atoms(in: videoData, start: 0, end: videoData.count) where atom.type == "moov" {
+            for trackAtom in atoms(in: videoData, start: atom.payloadStart, end: atom.payloadEnd) where trackAtom.type == "trak" {
+                for mediaAtom in atoms(in: videoData, start: trackAtom.payloadStart, end: trackAtom.payloadEnd) where mediaAtom.type == "mdia" {
+                    var handler: String?
+                    var timescale: UInt32?
+                    var mediaDuration: UInt64?
+                    var sampleDurations: [(sampleCount: UInt32, sampleDelta: UInt32)] = []
+
+                    for nestedMediaAtom in atoms(in: videoData, start: mediaAtom.payloadStart, end: mediaAtom.payloadEnd) {
+                        if nestedMediaAtom.type == "mdhd" {
+                            if let mdhd = parseMdhd(in: videoData,
+                                                    payloadStart: nestedMediaAtom.payloadStart,
+                                                    payloadEnd: nestedMediaAtom.payloadEnd) {
+                                timescale = mdhd.timescale
+                                mediaDuration = mdhd.duration
+                            }
+                        } else if nestedMediaAtom.type == "hdlr" {
+                            handler = parseHdlr(in: videoData,
+                                                payloadStart: nestedMediaAtom.payloadStart,
+                                                payloadEnd: nestedMediaAtom.payloadEnd)
+                        } else if nestedMediaAtom.type == "minf" {
+                            sampleDurations = findSttsEntries(in: videoData,
+                                                              start: nestedMediaAtom.payloadStart,
+                                                              end: nestedMediaAtom.payloadEnd)
+                            for minfAtom in atoms(in: videoData,
+                                                  start: nestedMediaAtom.payloadStart,
+                                                  end: nestedMediaAtom.payloadEnd) where minfAtom.type == "stbl" {
+                                for stblAtom in atoms(in: videoData,
+                                                      start: minfAtom.payloadStart,
+                                                      end: minfAtom.payloadEnd) where stblAtom.type == "stsd" {
+                                    if let dimensions = parseStsdDimensions(in: videoData,
+                                                                            payloadStart: stblAtom.payloadStart,
+                                                                            payloadEnd: stblAtom.payloadEnd) {
+                                        videoMetadata.dimensions = dimensions
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    guard handler == "vide" else {
+                        continue
+                    }
+
+                    if let timescale, timescale > 0, let mediaDuration {
+                        videoMetadata.durationSeconds = Double(mediaDuration) / Double(timescale)
+                    }
+
+                    if let timescale, timescale > 0, sampleDurations.count == 1 {
+                        let sampleDelta = sampleDurations[0].sampleDelta
+                        if sampleDelta > 0, timescale % sampleDelta == 0 {
+                            videoMetadata.frameRate = Int(timescale / sampleDelta)
+                        }
+                    }
+                }
+            }
+        }
+
+        return videoMetadata
+    }
+
+    private static func atoms(in data: Data, start: Int, end: Int) -> [MP4Atom] {
+        guard start >= 0, start <= end, end <= data.count else {
+            return []
+        }
+
+        var atoms: [MP4Atom] = []
+        var offset = start
+        while offset + 8 <= end {
+            guard let atomSize32 = readUInt32(data, at: offset, end: end),
+                  let atomType = atomType(in: data, at: offset, end: end) else {
+                return atoms
+            }
+
+            var atomSize = Int(atomSize32)
+            var headerSize = 8
+
+            if atomSize32 == 1 {
+                guard let atomSize64 = readUInt64(data, at: offset + 8, end: end),
+                      atomSize64 <= UInt64(Int.max) else {
+                    return atoms
+                }
+                atomSize = Int(atomSize64)
+                headerSize = 16
+            } else if atomSize32 == 0 {
+                atomSize = end - offset
+            }
+
+            guard atomSize >= headerSize, atomSize <= end - offset else {
+                return atoms
+            }
+
+            atoms.append(MP4Atom(type: atomType,
+                                 payloadStart: offset + headerSize,
+                                 payloadEnd: offset + atomSize))
+            offset += atomSize
+        }
+
+        return atoms
+    }
+
+    private static func parseMdhd(in data: Data, payloadStart: Int, payloadEnd: Int) -> (timescale: UInt32, duration: UInt64)? {
+        guard payloadStart >= 0, payloadStart < payloadEnd, payloadEnd <= data.count else {
+            return nil
+        }
+
+        let version = data[payloadStart]
+        if version == 1 {
+            guard let timescale = readUInt32(data, at: payloadStart + 20, end: payloadEnd),
+                  let duration = readUInt64(data, at: payloadStart + 24, end: payloadEnd) else {
+                return nil
+            }
+
+            return (timescale, duration)
+        }
+
+        guard let timescale = readUInt32(data, at: payloadStart + 12, end: payloadEnd),
+              let duration = readUInt32(data, at: payloadStart + 16, end: payloadEnd) else {
+            return nil
+        }
+
+        return (timescale, UInt64(duration))
+    }
+
+    private static func parseHdlr(in data: Data, payloadStart: Int, payloadEnd: Int) -> String? {
+        guard payloadStart + 12 <= payloadEnd else {
+            return nil
+        }
+
+        return String(data: data.subdata(in: (payloadStart + 8)..<(payloadStart + 12)),
+                      encoding: .isoLatin1)
+    }
+
+    private static func parseStts(in data: Data, payloadStart: Int, payloadEnd: Int) -> [(sampleCount: UInt32, sampleDelta: UInt32)] {
+        guard let entryCount = readUInt32(data, at: payloadStart + 4, end: payloadEnd) else {
+            return []
+        }
+
+        var entries: [(sampleCount: UInt32, sampleDelta: UInt32)] = []
+        var entryOffset = payloadStart + 8
+        let maxEntryCount = max(0, (payloadEnd - entryOffset) / 8)
+        for _ in 0..<min(Int(entryCount), maxEntryCount) {
+            guard let sampleCount = readUInt32(data, at: entryOffset, end: payloadEnd),
+                  let sampleDelta = readUInt32(data, at: entryOffset + 4, end: payloadEnd) else {
+                return entries
+            }
+
+            entries.append((sampleCount, sampleDelta))
+            entryOffset += 8
+        }
+
+        return entries
+    }
+
+    private static func findSttsEntries(in data: Data, start: Int, end: Int) -> [(sampleCount: UInt32, sampleDelta: UInt32)] {
+        for atom in atoms(in: data, start: start, end: end) {
+            if atom.type == "stts" {
+                return parseStts(in: data,
+                                 payloadStart: atom.payloadStart,
+                                 payloadEnd: atom.payloadEnd)
+            }
+
+            if atom.type == "minf" || atom.type == "stbl" {
+                let nestedEntries = findSttsEntries(in: data,
+                                                    start: atom.payloadStart,
+                                                    end: atom.payloadEnd)
+                if !nestedEntries.isEmpty {
+                    return nestedEntries
+                }
+            }
+        }
+
+        return []
+    }
+
+    private static func parseStsdDimensions(in data: Data, payloadStart: Int, payloadEnd: Int) -> VideoDimensions? {
+        guard payloadStart + 8 <= payloadEnd else {
+            return nil
+        }
+
+        for atom in atoms(in: data, start: payloadStart + 8, end: payloadEnd) {
+            guard ["avc1", "hvc1", "hev1", "mp4v"].contains(atom.type),
+                  let width = readUInt16(data, at: atom.payloadStart + 24, end: atom.payloadEnd),
+                  let height = readUInt16(data, at: atom.payloadStart + 26, end: atom.payloadEnd) else {
+                continue
+            }
+
+            return VideoDimensions(width: Int(width), height: Int(height))
+        }
+
+        return nil
+    }
+
+    private static func atomType(in data: Data, at offset: Int, end: Int) -> String? {
+        guard offset + 8 <= end else {
+            return nil
+        }
+
+        return String(data: data.subdata(in: (offset + 4)..<(offset + 8)),
+                      encoding: .isoLatin1)
+    }
+
+    private static func readUInt16(_ data: Data, at offset: Int, end: Int) -> UInt16? {
+        guard offset >= 0, offset + 2 <= end, end <= data.count else {
+            return nil
+        }
+
+        return data[offset..<(offset + 2)].reduce(UInt16(0)) { partialResult, byte in
+            return (partialResult << 8) | UInt16(byte)
+        }
+    }
+
+    private static func readUInt32(_ data: Data, at offset: Int, end: Int) -> UInt32? {
+        guard offset >= 0, offset + 4 <= end, end <= data.count else {
+            return nil
+        }
+
+        return data[offset..<(offset + 4)].reduce(UInt32(0)) { partialResult, byte in
+            return (partialResult << 8) | UInt32(byte)
+        }
+    }
+
+    private static func readUInt64(_ data: Data, at offset: Int, end: Int) -> UInt64? {
+        guard offset >= 0, offset + 8 <= end, end <= data.count else {
+            return nil
+        }
+
+        return data[offset..<(offset + 8)].reduce(UInt64(0)) { partialResult, byte in
+            return (partialResult << 8) | UInt64(byte)
+        }
     }
 
     private static func validateExtensionExecutable(at executableURL: URL) throws {
@@ -1760,6 +2062,28 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                 return "The bundled extension video resource at \(extensionInfo.videoPath) is empty."
             }
 
+            guard let dimensions = extensionInfo.videoMetadata.dimensions else {
+                return "The bundled extension video resource at \(extensionInfo.videoPath) does not expose parseable video dimensions."
+            }
+
+            guard dimensions.width == expectedBundledVideoWidth,
+                  dimensions.height == expectedBundledVideoHeight else {
+                return "The bundled extension video resource at \(extensionInfo.videoPath) is \(dimensions.width)x\(dimensions.height), but must be \(expectedBundledVideoWidth)x\(expectedBundledVideoHeight)."
+            }
+
+            guard let frameRate = extensionInfo.videoMetadata.frameRate else {
+                return "The bundled extension video resource at \(extensionInfo.videoPath) does not expose a parseable constant video frame rate."
+            }
+
+            guard frameRate == expectedBundledVideoFrameRate else {
+                return "The bundled extension video resource at \(extensionInfo.videoPath) is \(frameRate) fps, but must be \(expectedBundledVideoFrameRate) fps."
+            }
+
+            guard let durationSeconds = extensionInfo.videoMetadata.durationSeconds,
+                  durationSeconds > 0 else {
+                return "The bundled extension video resource at \(extensionInfo.videoPath) does not expose a positive video duration."
+            }
+
             return nil
         }
 
@@ -2010,6 +2334,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     private static func isBundledVideoFailureDetail(_ detail: String) -> Bool {
         return detail.localizedCaseInsensitiveContains("video resource")
             || detail.localizedCaseInsensitiveContains("video.mp4")
+            || detail.localizedCaseInsensitiveContains("video metadata")
     }
 
     private static func isExtensionMetadataFailureDetail(_ detail: String) -> Bool {
@@ -2169,6 +2494,7 @@ enum ExtensionRequestError: LocalizedError {
     case missingExtensionMachService(String)
     case missingBundledVideoResource(String)
     case emptyBundledVideoResource(String)
+    case unreadableBundledVideoMetadata(String)
     case unexpectedBundleIdentifier(expected: String, actual: String)
 
     var errorDescription: String? {
@@ -2191,6 +2517,8 @@ enum ExtensionRequestError: LocalizedError {
             return "The bundled extension does not include the required video resource at \(path)."
         case .emptyBundledVideoResource(let path):
             return "The bundled extension video resource at \(path) is empty."
+        case .unreadableBundledVideoMetadata(let path):
+            return "The bundled extension video resource at \(path) could not be read for video metadata."
         case .unexpectedBundleIdentifier(let expected, let actual):
             return "Expected bundled extension \(expected), but found \(actual)."
         }
@@ -2622,6 +2950,9 @@ private struct DetailsPanel: View {
                 if let videoPath = manager.extensionInfo?.videoPath {
                     DetailRow(title: "Bundled Video Path", value: videoPath, monospaced: true)
                     DetailRow(title: "Bundled Video Size", value: manager.bundledVideoSize)
+                    DetailRow(title: "Bundled Video Dimensions", value: manager.bundledVideoDimensions)
+                    DetailRow(title: "Bundled Video Frame Rate", value: manager.bundledVideoFrameRate)
+                    DetailRow(title: "Bundled Video Duration", value: manager.bundledVideoDuration)
                 }
 
                 DetailsActions(manager: manager)
