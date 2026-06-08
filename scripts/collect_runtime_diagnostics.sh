@@ -266,14 +266,11 @@ else
 fi
 
 section "Runtime Readiness Summary"
-case "$APP_PATH" in
-  /Applications/*)
-    print_yes_no_unknown "Application location ready" "yes"
-    ;;
-  *)
-    print_yes_no_unknown "Application location ready" "no"
-    ;;
-esac
+if [ "$APP_PATH" = "$EXPECTED_APP_PATH" ]; then
+  print_yes_no_unknown "Application location ready" "yes"
+else
+  print_yes_no_unknown "Application location ready" "no"
+fi
 
 if [ -d "$APP_PATH" ]; then
   app_bundle_identifier="$(read_bundle_identifier "$APP_PATH")"
