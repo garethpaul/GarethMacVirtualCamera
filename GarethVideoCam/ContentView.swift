@@ -543,6 +543,22 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
                        detail: applicationBundlePath)
     }
 
+    func revealBundledExtensionInFinder() {
+        refreshExtensionInfo()
+
+        guard let bundlePath = extensionInfo?.bundlePath else {
+            appendActivity(level: .warning,
+                           title: "Extension Reveal Unavailable",
+                           detail: "No bundled extension is available to reveal.")
+            return
+        }
+
+        NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: bundlePath)])
+        appendActivity(level: .info,
+                       title: "Extension Revealed",
+                       detail: bundlePath)
+    }
+
     func openSystemSettings() {
         let settingsURL = URL(fileURLWithPath: "/System/Applications/System Settings.app")
         let didOpenSettings = NSWorkspace.shared.open(settingsURL)
@@ -1131,6 +1147,11 @@ private struct DetailsActions: View {
 
         Button(action: manager.revealApplicationInFinder) {
             Label("Reveal App", systemImage: "folder")
+        }
+        .buttonStyle(.bordered)
+
+        Button(action: manager.revealBundledExtensionInFinder) {
+            Label("Reveal Extension", systemImage: "folder")
         }
         .buttonStyle(.bordered)
     }

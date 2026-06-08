@@ -432,6 +432,9 @@ def main():
     require("activateFileViewerSelecting" in host_source and "Reveal App" in host_source,
             "host app should let users reveal the running app bundle in Finder",
             failures)
+    require("revealBundledExtensionInFinder" in host_source and "Reveal Extension" in host_source and "Extension Revealed" in host_source,
+            "host app should let users reveal the embedded system extension bundle in Finder",
+            failures)
     require("openSystemSettings" in host_source and "System Settings" in host_source and "/System/Applications/System Settings.app" in host_source,
             "host app should provide a System Settings shortcut for extension approval",
             failures)
@@ -444,7 +447,7 @@ def main():
     require("Runtime Activation" in readme_text and "valid Apple Developer signing identity" in readme_text,
             "README should document signed runtime activation requirements",
             failures)
-    require("System Settings shortcut" in readme_text and "diagnostics snapshot" in readme_text and "generation timestamp" in readme_text and "bundled system extension signature is invalid" in readme_text and "Team IDs" in readme_text and "last recorded request failure" in readme_text,
+    require("System Settings shortcut" in readme_text and "reveal the app and embedded extension in Finder" in readme_text and "diagnostics snapshot" in readme_text and "generation timestamp" in readme_text and "bundled system extension signature is invalid" in readme_text and "Team IDs" in readme_text and "last recorded request failure" in readme_text,
             "README should document the in-app approval and diagnostics actions",
             failures)
     require("collect_runtime_diagnostics.sh" in readme_text and "bundle versions" in readme_text and "bundled-video byte size, checksum, metadata" in readme_text and "expected bundle identifier checks" in readme_text and "matching Team IDs" in readme_text and "Gatekeeper assessment" in readme_text and "signed entitlements" in readme_text and "systemextensionsctl" in readme_text and "unified-log window" in readme_text and "system-extension/CMIO log context" in readme_text,
