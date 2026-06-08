@@ -256,6 +256,7 @@ verify_app_diagnostics_resources() {
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "camera-device" "camera-device" \
     "Camera device present fixture: yes" \
     "Camera device missing fixture: no" \
+    "Camera device substring fixture: no" \
     "Camera device empty fixture: unknown"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "registration" "registration" \

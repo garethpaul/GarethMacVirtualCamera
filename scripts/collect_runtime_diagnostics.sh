@@ -408,7 +408,19 @@ camera_device_present_value() {
 
   if [ -z "$camera_inventory" ]; then
     printf 'unknown\n'
-  elif printf '%s\n' "$camera_inventory" | /usr/bin/grep -F "$expected_camera_name" >/dev/null; then
+  elif printf '%s\n' "$camera_inventory" | /usr/bin/awk -v expected_camera_name="$expected_camera_name" '
+    {
+      camera_name = $0
+      sub(/^[[:space:]]+/, "", camera_name)
+      sub(/[[:space:]]+$/, "", camera_name)
+      sub(/:$/, "", camera_name)
+      if (camera_name == expected_camera_name) {
+        found = 1
+      }
+    }
+    END {
+      exit found ? 0 : 1
+    }'; then
     printf 'yes\n'
   else
     printf 'no\n'
@@ -868,12 +880,15 @@ run_application_group_self_test() {
 run_camera_device_self_test() {
   local present_inventory
   local missing_inventory
+  local substring_inventory
 
   present_inventory=$'Camera:\n\n    Gareth Video Cam:\n\n      Model ID: Virtual Camera\n'
   missing_inventory=$'Camera:\n\n    FaceTime HD Camera:\n\n      Model ID: Built-In Camera\n'
+  substring_inventory=$'Camera:\n\n    Not Gareth Video Cam:\n\n      Model ID: Other Virtual Camera\n'
 
   printf 'Camera device present fixture: %s\n' "$(camera_device_present_value "$present_inventory" "$EXPECTED_CAMERA_NAME")"
   printf 'Camera device missing fixture: %s\n' "$(camera_device_present_value "$missing_inventory" "$EXPECTED_CAMERA_NAME")"
+  printf 'Camera device substring fixture: %s\n' "$(camera_device_present_value "$substring_inventory" "$EXPECTED_CAMERA_NAME")"
   printf 'Camera device empty fixture: %s\n' "$(camera_device_present_value "" "$EXPECTED_CAMERA_NAME")"
 }
 

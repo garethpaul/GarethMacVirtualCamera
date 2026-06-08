@@ -102,6 +102,7 @@ require_output "$application_group_output" "Application group list format fixtur
 
 require_output "$camera_device_output" "Camera device present fixture: yes"
 require_output "$camera_device_output" "Camera device missing fixture: no"
+require_output "$camera_device_output" "Camera device substring fixture: no"
 require_output "$camera_device_output" "Camera device empty fixture: unknown"
 
 require_output "$video_metadata_output" "Video metadata parsed width fixture: 1280"

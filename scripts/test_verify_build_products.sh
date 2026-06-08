@@ -120,6 +120,7 @@ passing_outputs = {
     "camera-device": [
         "Camera device present fixture: yes",
         "Camera device missing fixture: no",
+        "Camera device substring fixture: no",
         "Camera device empty fixture: unknown",
     ],
     "registration": [
@@ -167,6 +168,7 @@ stale_outputs = {
     "camera-device": [
         "Camera device present fixture: no",
         "Camera device missing fixture: yes",
+        "Camera device substring fixture: yes",
         "Camera device empty fixture: yes",
     ],
     "registration": [
