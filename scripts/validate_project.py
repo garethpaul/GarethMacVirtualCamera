@@ -55,6 +55,9 @@ def main():
     require(video_path.exists() and video_path.stat().st_size > 0,
             "Extension/video.mp4 is missing or empty",
             failures)
+    require(not (ROOT / "GarethVideoCam/video.mp4").exists(),
+            "duplicate host-app video.mp4 should not be checked in",
+            failures)
 
     project_text = (ROOT / "GarethVideoCam.xcodeproj/project.pbxproj").read_text()
     require(f"PRODUCT_BUNDLE_IDENTIFIER = {APP_BUNDLE_ID};" in project_text,
