@@ -167,6 +167,52 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         var videoByteCount: Int64
     }
 
+    struct ReadinessCheck: Identifiable, Equatable {
+        enum Status: Equatable {
+            case passing
+            case blocked
+            case pending
+
+            var title: String {
+                switch self {
+                case .passing:
+                    return "Ready"
+                case .blocked:
+                    return "Blocked"
+                case .pending:
+                    return "Pending"
+                }
+            }
+
+            var symbolName: String {
+                switch self {
+                case .passing:
+                    return "checkmark.circle.fill"
+                case .blocked:
+                    return "xmark.circle.fill"
+                case .pending:
+                    return "clock.fill"
+                }
+            }
+
+            var color: Color {
+                switch self {
+                case .passing:
+                    return .green
+                case .blocked:
+                    return .orange
+                case .pending:
+                    return .secondary
+                }
+            }
+        }
+
+        let id: String
+        let title: String
+        let detail: String
+        let status: Status
+    }
+
     struct ActivityItem: Identifiable, Equatable {
         enum Level {
             case info
@@ -421,6 +467,57 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
     var requestReadinessStatus: String {
         return canSubmitSystemExtensionRequests ? "Ready" : "Blocked"
+    }
+
+    var readinessChecks: [ReadinessCheck] {
+        let appSignatureStatus: ReadinessCheck.Status = appCodeSigningStatus.isValid ? .passing : .blocked
+        let extensionSignatureStatus: ReadinessCheck.Status = extensionCodeSigningStatus.isValid ? .passing : .blocked
+        let entitlementStatus: ReadinessCheck.Status
+        if appCodeSigningStatus.isValid {
+            entitlementStatus = appEntitlementReadinessDetail == nil ? .passing : .blocked
+        } else {
+            entitlementStatus = .pending
+        }
+
+        let teamStatus: ReadinessCheck.Status
+        let teamDetail: String
+        if !appCodeSigningStatus.isValid || !extensionCodeSigningStatus.isValid {
+            teamStatus = .pending
+            teamDetail = "Valid app and extension signatures are required before Team IDs can be compared."
+        } else if let signingTeamReadinessDetail {
+            teamStatus = .blocked
+            teamDetail = signingTeamReadinessDetail
+        } else {
+            teamStatus = .passing
+            teamDetail = "App and extension Team IDs match."
+        }
+
+        return [
+            ReadinessCheck(id: "location",
+                           title: "Application Location",
+                           detail: isRunningFromApplications ? applicationBundlePath : "Run the app from /Applications/GarethVideoCam.app.",
+                           status: isRunningFromApplications ? .passing : .blocked),
+            ReadinessCheck(id: "bundle-id",
+                           title: "Host Bundle ID",
+                           detail: applicationIdentifierReadinessDetail ?? applicationBundleIdentifier,
+                           status: applicationIdentifierReadinessDetail == nil ? .passing : .blocked),
+            ReadinessCheck(id: "app-signature",
+                           title: "App Signature",
+                           detail: appCodeSigningStatus.detail,
+                           status: appSignatureStatus),
+            ReadinessCheck(id: "app-entitlement",
+                           title: "System Extension Entitlement",
+                           detail: appEntitlementReadinessDetail ?? appSystemExtensionEntitlementStatus,
+                           status: entitlementStatus),
+            ReadinessCheck(id: "extension-signature",
+                           title: "Extension Signature",
+                           detail: extensionCodeSigningStatus.detail,
+                           status: extensionSignatureStatus),
+            ReadinessCheck(id: "team-id",
+                           title: "Team ID Match",
+                           detail: teamDetail,
+                           status: teamStatus)
+        ]
     }
 
     var requestReadinessDetail: String? {
@@ -1092,6 +1189,7 @@ private struct DashboardView: View {
                 switch selectedSection {
                 case .overview:
                     ActionPanel(manager: manager)
+                    ReadinessPanel(manager: manager)
                     DetailsPanel(manager: manager)
                     ActivityPanel(items: Array(manager.activity.prefix(5)))
                 case .activity:
@@ -1202,6 +1300,76 @@ private struct ActionPanel: View {
         }
         .buttonStyle(.bordered)
         .disabled(manager.isBusy || !manager.canSubmitSystemExtensionRequests)
+    }
+}
+
+private struct ReadinessPanel: View {
+    @ObservedObject var manager: SystemExtensionRequestManager
+
+    var body: some View {
+        SectionSurface {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Readiness")
+                    .font(.title3.weight(.semibold))
+
+                VStack(spacing: 0) {
+                    ForEach(manager.readinessChecks) { check in
+                        ReadinessRow(check: check)
+                            .padding(.vertical, 10)
+
+                        if check.id != manager.readinessChecks.last?.id {
+                            Divider()
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct ReadinessRow: View {
+    var check: SystemExtensionRequestManager.ReadinessCheck
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: check.status.symbolName)
+                .foregroundStyle(check.status.color)
+                .frame(width: 18)
+
+            VStack(alignment: .leading, spacing: 4) {
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .firstTextBaseline) {
+                        readinessTitle
+                        Spacer(minLength: 12)
+                        readinessStatus
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        readinessTitle
+                        readinessStatus
+                    }
+                }
+
+                Text(check.detail)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .textSelection(.enabled)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var readinessTitle: some View {
+        Text(check.title)
+            .font(.callout.weight(.semibold))
+    }
+
+    @ViewBuilder
+    private var readinessStatus: some View {
+        Text(check.status.title)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(check.status.color)
     }
 }
 

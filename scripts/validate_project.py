@@ -366,6 +366,9 @@ def main():
     require("requestReadinessStatus" in host_source and "requestReadinessDetail" in host_source and "Request Readiness" in host_source and "Readiness Detail" in host_source,
             "host app should show and copy exact system-extension request readiness blockers",
             failures)
+    require("struct ReadinessCheck" in host_source and "readinessChecks" in host_source and "ReadinessPanel(manager: manager)" in host_source and "ReadinessRow" in host_source and "Team ID Match" in host_source,
+            "host app should show a compact readiness checklist for activation gates",
+            failures)
     require("applicationIdentifierReadinessDetail" in host_source and "applicationBundleIdentifierStatus" in host_source and "App Bundle ID Check" in host_source and "App Identifier Required" in host_source,
             "host app should block requests when the host bundle identifier does not match the expected identifier",
             failures)
@@ -462,7 +465,7 @@ def main():
     require("Runtime Activation" in readme_text and "valid Apple Developer signing identity" in readme_text,
             "README should document signed runtime activation requirements",
             failures)
-    require("System Settings shortcut" in readme_text and "reveal the app and embedded extension in Finder" in readme_text and "diagnostics snapshot" in readme_text and "generation timestamp" in readme_text and "bundle identifiers" in readme_text and "host app bundle identifier does not match the expected identifier" in readme_text and "missing the System Extension entitlement" in readme_text and "bundled system extension signature is invalid" in readme_text and "Team IDs" in readme_text and "last recorded failure" in readme_text,
+    require("readiness checklist" in readme_text and "System Settings shortcut" in readme_text and "reveal the app and embedded extension in Finder" in readme_text and "diagnostics snapshot" in readme_text and "generation timestamp" in readme_text and "bundle identifiers" in readme_text and "host app bundle identifier does not match the expected identifier" in readme_text and "missing the System Extension entitlement" in readme_text and "bundled system extension signature is invalid" in readme_text and "Team IDs" in readme_text and "last recorded failure" in readme_text,
             "README should document the in-app approval and diagnostics actions",
             failures)
     require("collect_runtime_diagnostics.sh" in readme_text and "bundle versions" in readme_text and "bundled-video byte size, checksum, metadata" in readme_text and "expected application-location and bundle identifier checks" in readme_text and "matching Team IDs" in readme_text and "Gatekeeper assessment" in readme_text and "signed entitlements" in readme_text and "explicit host System Extension entitlement checks" in readme_text and "systemextensionsctl" in readme_text and "unified-log window" in readme_text and "system-extension/CMIO log context" in readme_text,
