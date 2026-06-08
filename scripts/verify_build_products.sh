@@ -263,6 +263,7 @@ verify_app_diagnostics_resources() {
     "Registration active fixture present: yes" \
     "Registration active fixture activated enabled: yes" \
     "Registration waiting fixture activated enabled: no" \
+    "Registration deactivated fixture activated enabled: no" \
     "Registration longer identifier fixture present: no" \
     "Registration longer identifier fixture activated enabled: no" \
     "Registration empty fixture present: unknown"

@@ -39,3 +39,4 @@
 - Shell-escaped generated stale diagnostics fixture output in build-product verifier tests.
 - Matched expected virtual camera device evidence against exact normalized camera names.
 - Matched system-extension registration evidence against the exact extension identifier field.
+- Matched system-extension registration status evidence against exact activated/enabled tokens.
