@@ -374,6 +374,9 @@ def main():
     require("validFrameDurations: [CameraExtensionConfiguration.frameDuration]" in extension_source,
             "extension stream should advertise the fixed frame duration it enforces",
             failures)
+    require("timing.duration = CameraExtensionConfiguration.frameDuration" in extension_source and "if !timing.duration.flags.contains(.valid)" not in extension_source,
+            "extension should retime every emitted sample to the advertised fixed frame duration",
+            failures)
     require("case needsApplicationLocation" in host_source and "case needsBundleIdentifier" in host_source and "canSubmitSystemExtensionRequests" in host_source,
             "host app should model the /Applications and host bundle identifier requirements before submitting system-extension requests",
             failures)

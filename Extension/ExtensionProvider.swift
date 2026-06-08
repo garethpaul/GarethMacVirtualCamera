@@ -462,10 +462,7 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
             return nil
         }
 
-        if !timing.duration.flags.contains(.valid) {
-            timing.duration = CameraExtensionConfiguration.frameDuration
-        }
-
+        timing.duration = CameraExtensionConfiguration.frameDuration
         timing.presentationTimeStamp = adjustedPresentationTime
 
         if timing.decodeTimeStamp.flags.contains(.valid) {
