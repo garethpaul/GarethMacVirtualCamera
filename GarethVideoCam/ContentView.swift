@@ -1505,6 +1505,11 @@ private struct HeaderView: View {
                 Text("Gareth Video Cam")
                     .font(.system(size: 34, weight: .semibold, design: .default))
                 StatusBadge(state: manager.state)
+                Text(manager.requestReadinessDetail ?? "System extension requests can be submitted.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .textSelection(.enabled)
             }
 
             Spacer()

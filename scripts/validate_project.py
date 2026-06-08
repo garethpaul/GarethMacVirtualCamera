@@ -415,6 +415,9 @@ def main():
     require("requestReadinessStatus" in host_source and "requestReadinessDetail" in host_source and "Request Readiness" in host_source and "Readiness Detail" in host_source,
             "host app should show and copy exact system-extension request readiness blockers",
             failures)
+    require("HeaderView(manager: manager)" in host_source and 'Text(manager.requestReadinessDetail ?? "System extension requests can be submitted.")' in host_source,
+            "host app header should surface the current request readiness detail",
+            failures)
     require("struct ReadinessCheck" in host_source and "readinessChecks" in host_source and "ReadinessPanel(manager: manager)" in host_source and "ReadinessRow" in host_source and "Team ID Match" in host_source and "Bundled Video" in host_source and "Readiness Checks:" in host_source,
             "host app should show and copy a compact readiness checklist for activation gates",
             failures)
