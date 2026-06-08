@@ -414,7 +414,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
                                                                         validDetail: "The embedded system extension code signature is valid.")
 
             switch state {
-            case .idle, .ready, .needsApplicationLocation, .needsSigning, .deactivated:
+            case .idle, .ready, .needsApplicationLocation, .needsSigning, .deactivated, .failed:
                 state = readinessState
             default:
                 break
