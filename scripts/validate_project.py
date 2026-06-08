@@ -345,6 +345,9 @@ def main():
     require("Failed to start camera extension service" in extension_main_source and "exit(EXIT_FAILURE)" in extension_main_source,
             "extension entry point should log startup failures before exiting",
             failures)
+    require("Camera extension service started" in extension_main_source,
+            "extension entry point should log successful service startup before entering the run loop",
+            failures)
     require("invalidActiveFormatIndex" in extension_source and "throw CameraExtensionError.invalidActiveFormatIndex" in extension_source,
             "extension stream should reject unsupported active format indices",
             failures)

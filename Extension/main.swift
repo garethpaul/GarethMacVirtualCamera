@@ -16,6 +16,7 @@ private let logger = Logger(subsystem: "com.garethpaul.GarethVideoCam",
 do {
     let providerSource = try ExtensionProviderSource(clientQueue: nil)
     CMIOExtensionProvider.startService(provider: providerSource.provider)
+    logger.info("Camera extension service started")
     CFRunLoopRun()
 } catch {
     logger.error("Failed to start camera extension service: \(error.localizedDescription, privacy: .public)")
