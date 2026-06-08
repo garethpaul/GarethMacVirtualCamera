@@ -166,6 +166,21 @@ if ! grep -q "Missing Debug app runtime diagnostics script" "$TMP_DIR/missing-di
   exit 1
 fi
 
+MISSING_DIAGNOSTICS_PARSER_PRODUCTS="$TMP_DIR/missing-diagnostics-parser/Products"
+write_product_fixture "$MISSING_DIAGNOSTICS_PARSER_PRODUCTS" Debug
+rm "$MISSING_DIAGNOSTICS_PARSER_PRODUCTS/Debug/GarethVideoCam.app/Contents/Resources/validate_project.py"
+
+if PRODUCTS_PATH="$MISSING_DIAGNOSTICS_PARSER_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/missing-diagnostics-parser.out" 2>"$TMP_DIR/missing-diagnostics-parser.err"; then
+  printf 'Expected verifier to reject a missing runtime diagnostics parser.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug app runtime diagnostics parser" "$TMP_DIR/missing-diagnostics-parser.err"; then
+  printf 'Verifier failure did not explain the missing runtime diagnostics parser.\n' >&2
+  cat "$TMP_DIR/missing-diagnostics-parser.err" >&2
+  exit 1
+fi
+
 BAD_VIDEO_METADATA_PRODUCTS="$TMP_DIR/bad-video-metadata/Products"
 write_product_fixture "$BAD_VIDEO_METADATA_PRODUCTS" Debug
 printf 'video fixture\n' > "$BAD_VIDEO_METADATA_PRODUCTS/Debug/GarethVideoCam.app/Contents/Library/SystemExtensions/$EXTENSION_NAME/Contents/Resources/video.mp4"
