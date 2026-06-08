@@ -524,6 +524,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             && extensionMetadataReadinessDetail == nil
             && bundledVideoReadinessDetail == nil
             && extensionCodeSigningStatus.isValid
+            && extensionHostOnlyEntitlementReadinessDetail == nil
             && signingTeamReadinessDetail == nil
     }
 
@@ -564,6 +565,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return "System extension requests require a valid system extension signature."
         }
 
+        if extensionHostOnlyEntitlementReadinessDetail != nil {
+            return "System extension requests require the embedded extension to omit the host System Extension entitlement."
+        }
+
         if signingTeamReadinessDetail != nil {
             return "System extension requests require matching app and extension team identifiers."
         }
@@ -600,6 +605,21 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             entitlementStatus = appEntitlementReadinessDetail == nil ? .passing : .blocked
         } else {
             entitlementStatus = .pending
+        }
+
+        let extensionHostOnlyEntitlementStatus: ReadinessCheck.Status
+        let extensionHostOnlyEntitlementDetail: String
+        if extensionCodeSigningStatus.isValid {
+            if let extensionHostOnlyEntitlementReadinessDetail {
+                extensionHostOnlyEntitlementStatus = .blocked
+                extensionHostOnlyEntitlementDetail = extensionHostOnlyEntitlementReadinessDetail
+            } else {
+                extensionHostOnlyEntitlementStatus = .passing
+                extensionHostOnlyEntitlementDetail = "The embedded system extension does not carry the host-only System Extension entitlement."
+            }
+        } else {
+            extensionHostOnlyEntitlementStatus = .pending
+            extensionHostOnlyEntitlementDetail = "A valid extension signature is required before extension entitlements can be checked."
         }
 
         let teamStatus: ReadinessCheck.Status
@@ -662,6 +682,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                            title: "Extension Signature",
                            detail: extensionCodeSigningStatus.detail,
                            status: extensionSignatureStatus),
+            ReadinessCheck(id: "extension-host-entitlement",
+                           title: "Extension Host Entitlement",
+                           detail: extensionHostOnlyEntitlementDetail,
+                           status: extensionHostOnlyEntitlementStatus),
             ReadinessCheck(id: "extension-metadata",
                            title: "Extension Metadata",
                            detail: extensionMetadataDetail,
@@ -724,6 +748,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return extensionCodeSigningStatus.detail
         }
 
+        if let extensionHostOnlyEntitlementReadinessDetail {
+            return extensionHostOnlyEntitlementReadinessDetail
+        }
+
         if let signingTeamReadinessDetail {
             return signingTeamReadinessDetail
         }
@@ -760,6 +788,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return "Sign the embedded system extension with a valid Apple Developer identity. \(extensionCodeSigningStatus.detail)"
         }
 
+        if let extensionHostOnlyEntitlementReadinessDetail {
+            return "Remove the host-only \(requiredSystemExtensionInstallEntitlement) entitlement from the embedded system extension. \(extensionHostOnlyEntitlementReadinessDetail)"
+        }
+
         if let signingTeamReadinessDetail {
             return "Sign the app and embedded system extension with the same Apple Developer Team ID. \(signingTeamReadinessDetail)"
         }
@@ -788,6 +820,14 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
     var extensionTeamIdentifier: String {
         return extensionCodeSigningStatus.teamIdentifier ?? "Unknown"
+    }
+
+    var extensionHostOnlyEntitlementStatus: String {
+        guard extensionCodeSigningStatus.isValid else {
+            return "Unknown"
+        }
+
+        return extensionCodeSigningStatus.hasEnabledEntitlement(requiredSystemExtensionInstallEntitlement) ? "Present" : "Absent"
     }
 
     var diagnosticGeneratedAt: String {
@@ -880,6 +920,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         Extension Code Signing Detail: \(extensionCodeSigningStatus.detail)
         Extension Quarantine: \(extensionQuarantineStatus.title)
         Extension Quarantine Detail: \(extensionQuarantineStatus.detail)
+        Extension Host-Only Entitlement: \(extensionHostOnlyEntitlementStatus)
         Extension Team ID: \(extensionTeamIdentifier)
         \(extensionDescription)
 
@@ -1176,6 +1217,13 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return nil
         }
 
+        if let extensionHostOnlyEntitlementReadinessDetail {
+            recordReadinessBlock(state: .needsSigning,
+                                 title: "Extension Entitlement Required",
+                                 detail: extensionHostOnlyEntitlementReadinessDetail)
+            return nil
+        }
+
         if let signingTeamReadinessDetail {
             recordReadinessBlock(state: .needsSigning,
                                  title: "Team Identifier Required",
@@ -1200,6 +1248,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             || extensionMetadataReadinessDetail != nil
             || bundledVideoReadinessDetail != nil
             || !extensionCodeSigningStatus.isValid
+            || extensionHostOnlyEntitlementReadinessDetail != nil
             || signingTeamReadinessDetail != nil {
             return .needsSigning
         }
@@ -1234,6 +1283,18 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         guard appCodeSigningStatus.hasEnabledEntitlement(requiredSystemExtensionInstallEntitlement) else {
             return "The app signature does not include the \(requiredSystemExtensionInstallEntitlement) entitlement."
+        }
+
+        return nil
+    }
+
+    private var extensionHostOnlyEntitlementReadinessDetail: String? {
+        guard extensionCodeSigningStatus.isValid else {
+            return nil
+        }
+
+        guard !extensionCodeSigningStatus.hasEnabledEntitlement(requiredSystemExtensionInstallEntitlement) else {
+            return "The embedded system extension signature includes the host-only \(requiredSystemExtensionInstallEntitlement) entitlement."
         }
 
         return nil
@@ -1910,6 +1971,7 @@ private struct DetailsPanel: View {
                 }
                 DetailRow(title: "Extension Quarantine", value: manager.extensionQuarantineStatus.title)
                 DetailRow(title: "Extension Quarantine Detail", value: manager.extensionQuarantineStatus.detail, monospaced: true)
+                DetailRow(title: "Extension Host-Only Entitlement", value: manager.extensionHostOnlyEntitlementStatus)
                 DetailRow(title: "Extension Team ID", value: manager.extensionTeamIdentifier)
                 DetailRow(title: "Extension Metadata", value: manager.extensionMetadataStatus)
                 DetailRow(title: "Bundled Video", value: manager.bundledVideoReadinessStatus)
