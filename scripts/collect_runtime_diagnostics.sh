@@ -474,11 +474,22 @@ mdls_metadata_value() {
   local metadata_key="$2"
 
   /usr/bin/awk -v metadata_key="$metadata_key" '
-    index($0, metadata_key " = ") == 1 {
-      sub(/^[^=]*= /, "")
-      gsub(/^"|"$/, "")
-      print
-      exit
+    {
+      line = $0
+      sub(/^[[:space:]]+/, "", line)
+      if (index(line, metadata_key) == 1) {
+        value = substr(line, length(metadata_key) + 1)
+        if (value ~ /^[[:space:]]*=[[:space:]]*/) {
+          sub(/^[[:space:]]*=[[:space:]]*/, "", value)
+          sub(/^[[:space:]]+/, "", value)
+          sub(/[[:space:]]+$/, "", value)
+          gsub(/^"|"$/, "", value)
+          sub(/^[[:space:]]+/, "", value)
+          sub(/[[:space:]]+$/, "", value)
+          print value
+          exit
+        }
+      }
     }' <<< "$metadata_output"
 }
 
@@ -868,12 +879,16 @@ run_camera_device_self_test() {
 
 run_video_metadata_self_test() {
   local metadata_output
+  local spaced_metadata_output
 
   metadata_output=$'kMDItemPixelWidth = 1280\nkMDItemPixelHeight = 720\nkMDItemDurationSeconds = 12.5\n'
+  spaced_metadata_output=$'  kMDItemPixelWidth   =   "1280"  \n  kMDItemDurationSeconds   =   " 12.5 "  \n'
 
   printf 'Video metadata parsed width fixture: %s\n' "$(mdls_metadata_value "$metadata_output" kMDItemPixelWidth)"
   printf 'Video metadata parsed height fixture: %s\n' "$(mdls_metadata_value "$metadata_output" kMDItemPixelHeight)"
   printf 'Video metadata parsed duration fixture: %s\n' "$(mdls_metadata_value "$metadata_output" kMDItemDurationSeconds)"
+  printf 'Video metadata spaced width fixture: %s\n' "$(mdls_metadata_value "$spaced_metadata_output" kMDItemPixelWidth)"
+  printf 'Video metadata quoted duration fixture: %s\n' "$(mdls_metadata_value "$spaced_metadata_output" kMDItemDurationSeconds)"
   printf 'Video metadata preferred parser fixture: %s\n' "$(preferred_metadata_value "1280" "640")"
   printf 'Video metadata blank fallback fixture: %s\n' "$(preferred_metadata_value "" "640")"
   printf 'Video metadata null fallback fixture: %s\n' "$(preferred_metadata_value "null" "640")"
