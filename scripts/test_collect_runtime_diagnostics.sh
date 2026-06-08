@@ -21,6 +21,7 @@ bundle_version_output="$(GARETH_DIAGNOSTICS_SELF_TEST=bundle-version-match "$ROO
 mach_service_output="$(GARETH_DIAGNOSTICS_SELF_TEST=mach-service "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 application_group_output="$(GARETH_DIAGNOSTICS_SELF_TEST=application-group "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 camera_device_output="$(GARETH_DIAGNOSTICS_SELF_TEST=camera-device "$ROOT/scripts/collect_runtime_diagnostics.sh")"
+video_metadata_output="$(GARETH_DIAGNOSTICS_SELF_TEST=video-metadata "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 registration_output="$(GARETH_DIAGNOSTICS_SELF_TEST=registration "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 activation_evidence_output="$(GARETH_DIAGNOSTICS_SELF_TEST=activation-evidence "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 
@@ -70,6 +71,14 @@ require_output "$application_group_output" "Application group unresolved fixture
 require_output "$camera_device_output" "Camera device present fixture: yes"
 require_output "$camera_device_output" "Camera device missing fixture: no"
 require_output "$camera_device_output" "Camera device empty fixture: unknown"
+
+require_output "$video_metadata_output" "Video metadata parsed width fixture: 1280"
+require_output "$video_metadata_output" "Video metadata parsed height fixture: 720"
+require_output "$video_metadata_output" "Video metadata parsed duration fixture: 12.5"
+require_output "$video_metadata_output" "Video metadata ready fixture: yes"
+require_output "$video_metadata_output" "Video metadata wrong width fixture: no"
+require_output "$video_metadata_output" "Video metadata missing duration fixture: unknown"
+require_output "$video_metadata_output" "Video metadata zero duration fixture: no"
 
 require_output "$registration_output" "Registration active fixture present: yes"
 require_output "$registration_output" "Registration active fixture activated enabled: yes"

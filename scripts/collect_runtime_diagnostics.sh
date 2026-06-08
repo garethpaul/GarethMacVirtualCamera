@@ -13,6 +13,8 @@ HOST_SYSTEM_EXTENSION_ENTITLEMENT="com.apple.developer.system-extension.install"
 APP_GROUP_ENTITLEMENT="com.apple.security.application-groups"
 APP_GROUP_BASE_ID="com.garethpaul.GarethVideoCam"
 EXPECTED_CAMERA_NAME="Gareth Video Cam"
+EXPECTED_VIDEO_WIDTH="1280"
+EXPECTED_VIDEO_HEIGHT="720"
 EXTENSION_INFO_PLIST="${EXTENSION_PATH}/Contents/Info.plist"
 
 section() {
@@ -380,6 +382,71 @@ file_byte_count() {
   /usr/bin/stat -f %z "$file_path" 2>/dev/null || /usr/bin/stat -c %s "$file_path" 2>/dev/null || true
 }
 
+mdls_metadata_value() {
+  local metadata_output="$1"
+  local metadata_key="$2"
+
+  printf '%s\n' "$metadata_output" | /usr/bin/awk -v metadata_key="$metadata_key" '
+    index($0, metadata_key " = ") == 1 {
+      sub(/^[^=]*= /, "")
+      gsub(/^"|"$/, "")
+      print
+      exit
+    }'
+}
+
+metadata_number_matches_expected_value() {
+  local actual_value="$1"
+  local expected_value="$2"
+
+  /usr/bin/awk -v actual_value="$actual_value" -v expected_value="$expected_value" '
+    BEGIN {
+      if (actual_value == "" || actual_value == "(null)" || actual_value == "null") {
+        print "unknown"
+      } else if (actual_value ~ /^-?[0-9]+([.][0-9]+)?$/ && actual_value + 0 == expected_value + 0) {
+        print "yes"
+      } else {
+        print "no"
+      }
+    }'
+}
+
+metadata_positive_number_value() {
+  local actual_value="$1"
+
+  /usr/bin/awk -v actual_value="$actual_value" '
+    BEGIN {
+      if (actual_value == "" || actual_value == "(null)" || actual_value == "null") {
+        print "unknown"
+      } else if (actual_value ~ /^-?[0-9]+([.][0-9]+)?$/ && actual_value + 0 > 0) {
+        print "yes"
+      } else {
+        print "no"
+      }
+    }'
+}
+
+video_metadata_readiness_value() {
+  local pixel_width="$1"
+  local pixel_height="$2"
+  local duration_seconds="$3"
+  local width_ready
+  local height_ready
+  local duration_ready
+
+  width_ready="$(metadata_number_matches_expected_value "$pixel_width" "$EXPECTED_VIDEO_WIDTH")"
+  height_ready="$(metadata_number_matches_expected_value "$pixel_height" "$EXPECTED_VIDEO_HEIGHT")"
+  duration_ready="$(metadata_positive_number_value "$duration_seconds")"
+
+  if [ "$width_ready" = "yes" ] && [ "$height_ready" = "yes" ] && [ "$duration_ready" = "yes" ]; then
+    printf 'yes\n'
+  elif [ "$width_ready" = "no" ] || [ "$height_ready" = "no" ] || [ "$duration_ready" = "no" ]; then
+    printf 'no\n'
+  else
+    printf 'unknown\n'
+  fi
+}
+
 print_file_sha256() {
   local file_path="$1"
   local checksum
@@ -584,6 +651,20 @@ run_camera_device_self_test() {
   printf 'Camera device empty fixture: %s\n' "$(camera_device_present_value "" "$EXPECTED_CAMERA_NAME")"
 }
 
+run_video_metadata_self_test() {
+  local metadata_output
+
+  metadata_output=$'kMDItemPixelWidth = 1280\nkMDItemPixelHeight = 720\nkMDItemDurationSeconds = 12.5\n'
+
+  printf 'Video metadata parsed width fixture: %s\n' "$(mdls_metadata_value "$metadata_output" kMDItemPixelWidth)"
+  printf 'Video metadata parsed height fixture: %s\n' "$(mdls_metadata_value "$metadata_output" kMDItemPixelHeight)"
+  printf 'Video metadata parsed duration fixture: %s\n' "$(mdls_metadata_value "$metadata_output" kMDItemDurationSeconds)"
+  printf 'Video metadata ready fixture: %s\n' "$(video_metadata_readiness_value "1280" "720" "12.5")"
+  printf 'Video metadata wrong width fixture: %s\n' "$(video_metadata_readiness_value "640" "720" "12.5")"
+  printf 'Video metadata missing duration fixture: %s\n' "$(video_metadata_readiness_value "1280" "720" "")"
+  printf 'Video metadata zero duration fixture: %s\n' "$(video_metadata_readiness_value "1280" "720" "0")"
+}
+
 run_registration_self_test() {
   local active_output
   local waiting_output
@@ -633,6 +714,10 @@ case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
     ;;
   camera-device)
     run_camera_device_self_test
+    exit 0
+    ;;
+  video-metadata)
+    run_video_metadata_self_test
     exit 0
     ;;
   registration)
@@ -780,6 +865,10 @@ else
   printf 'Extension runtime metadata requires the embedded system extension bundle.\n'
 fi
 
+video_pixel_width=""
+video_pixel_height=""
+video_duration_seconds=""
+
 section "Bundled Video"
 printf 'Video path: %s\n' "$VIDEO_PATH"
 if [ -f "$VIDEO_PATH" ]; then
@@ -793,15 +882,34 @@ if [ -f "$VIDEO_PATH" ]; then
   fi
   print_file_sha256 "$VIDEO_PATH"
   /bin/ls -lh "$VIDEO_PATH" 2>/dev/null || true
-  run_if_available mdls \
-    -name kMDItemCodecs \
-    -name kMDItemPixelWidth \
-    -name kMDItemPixelHeight \
-    -name kMDItemDurationSeconds \
-    "$VIDEO_PATH"
+  printf 'Expected video pixel width: %s\n' "$EXPECTED_VIDEO_WIDTH"
+  printf 'Expected video pixel height: %s\n' "$EXPECTED_VIDEO_HEIGHT"
+  if command -v mdls >/dev/null 2>&1; then
+    video_metadata_output="$(mdls \
+      -name kMDItemCodecs \
+      -name kMDItemPixelWidth \
+      -name kMDItemPixelHeight \
+      -name kMDItemDurationSeconds \
+      "$VIDEO_PATH" 2>&1 || true)"
+    printf '%s\n' "$video_metadata_output"
+    video_pixel_width="$(mdls_metadata_value "$video_metadata_output" kMDItemPixelWidth)"
+    video_pixel_height="$(mdls_metadata_value "$video_metadata_output" kMDItemPixelHeight)"
+    video_duration_seconds="$(mdls_metadata_value "$video_metadata_output" kMDItemDurationSeconds)"
+    print_yes_no_unknown "Video pixel width ready" "$(metadata_number_matches_expected_value "$video_pixel_width" "$EXPECTED_VIDEO_WIDTH")"
+    print_yes_no_unknown "Video pixel height ready" "$(metadata_number_matches_expected_value "$video_pixel_height" "$EXPECTED_VIDEO_HEIGHT")"
+    print_yes_no_unknown "Video duration ready" "$(metadata_positive_number_value "$video_duration_seconds")"
+    print_yes_no_unknown "Video metadata ready" "$(video_metadata_readiness_value "$video_pixel_width" "$video_pixel_height" "$video_duration_seconds")"
+  else
+    printf 'mdls is not available on this host.\n'
+    print_yes_no_unknown "Video pixel width ready" "unknown"
+    print_yes_no_unknown "Video pixel height ready" "unknown"
+    print_yes_no_unknown "Video duration ready" "unknown"
+    print_yes_no_unknown "Video metadata ready" "unknown"
+  fi
 else
   printf 'Video resource exists: no\n'
   printf 'Expected bundled video resource was not found.\n'
+  print_yes_no_unknown "Video metadata ready" "no"
 fi
 
 section "Bundle Identifier Check"
@@ -1056,6 +1164,12 @@ if [ -f "$VIDEO_PATH" ]; then
   fi
 else
   print_readiness_check "Bundled video ready" "no"
+fi
+
+if [ -f "$VIDEO_PATH" ]; then
+  print_readiness_check "Bundled video metadata ready" "$(video_metadata_readiness_value "$video_pixel_width" "$video_pixel_height" "$video_duration_seconds")"
+else
+  print_readiness_check "Bundled video metadata ready" "no"
 fi
 
 print_readiness_rollup
