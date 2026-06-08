@@ -235,6 +235,19 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             case warning
             case error
 
+            var title: String {
+                switch self {
+                case .info:
+                    return "Info"
+                case .success:
+                    return "Success"
+                case .warning:
+                    return "Warning"
+                case .error:
+                    return "Error"
+                }
+            }
+
             var color: Color {
                 switch self {
                 case .info:
@@ -693,6 +706,12 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         return formatter.string(from: Date())
     }
 
+    private static func diagnosticTimestamp(from date: Date) -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.string(from: date)
+    }
+
     var bundledVideoSize: String {
         guard let videoByteCount = extensionInfo?.videoByteCount else {
             return "Unknown"
@@ -725,7 +744,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         let recentActivity = activity
             .prefix(8)
-            .map { "\($0.title): \($0.detail)" }
+            .map { "\(Self.diagnosticTimestamp(from: $0.date)) [\($0.level.title)] \($0.title): \($0.detail)" }
             .joined(separator: "\n")
         let readinessDescription = readinessChecks
             .map { "\($0.title): \($0.status.title) - \($0.detail)" }
