@@ -297,6 +297,9 @@ def main():
     require("streamGeneration" in extension_source and "isCurrentStreamPreparation" in extension_source,
             "extension should ignore stale asynchronous stream preparation completions",
             failures)
+    require("tooManyStreamingClients" in extension_source and "_streamingCounter < UInt32.max" in extension_source,
+            "extension should guard the active streaming client counter from overflow",
+            failures)
     require("advanceLoopTiming(by: assetDuration)" in extension_source and "private func advanceLoopTiming(by duration: CMTime)" in extension_source,
             "extension should advance timestamps explicitly at bundled-video loop boundaries",
             failures)

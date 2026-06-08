@@ -46,6 +46,7 @@ private enum CameraExtensionError: LocalizedError {
     case unexpectedVideoFrameRate(Float)
     case invalidActiveFormatIndex(Int)
     case invalidFrameDuration(CMTime)
+    case tooManyStreamingClients
 
     var errorDescription: String? {
         switch self {
@@ -75,6 +76,8 @@ private enum CameraExtensionError: LocalizedError {
             return "The requested active stream format index is invalid: \(activeFormatIndex)"
         case .invalidFrameDuration(let frameDuration):
             return "The requested stream frame duration is unsupported: \(frameDuration.value)/\(frameDuration.timescale)"
+        case .tooManyStreamingClients:
+            return "The camera stream has reached the maximum number of active clients."
         }
     }
 }
@@ -156,6 +159,10 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
     func startStreaming() throws {
         try _timerQueue.sync {
             if _streamingCounter > 0 {
+                guard _streamingCounter < UInt32.max else {
+                    throw CameraExtensionError.tooManyStreamingClients
+                }
+
                 _streamingCounter += 1
                 return
             }
