@@ -416,6 +416,9 @@ def main():
     require("private func recordReadinessBlock" in host_source and "lastFailureDetail = detail" in host_source,
             "host app should record install/uninstall readiness blocks as the last failure detail",
             failures)
+    require("firstActivity.level == level" in host_source and "activity.removeFirst()" in host_source,
+            "host app should collapse duplicate adjacent activity entries",
+            failures)
     require(".disabled(manager.isBusy || !manager.canSubmitSystemExtensionRequests)" in host_source,
             "host app should disable install controls when system-extension requests cannot be submitted",
             failures)

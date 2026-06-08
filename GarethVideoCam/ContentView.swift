@@ -1168,6 +1168,13 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     private func appendActivity(level: ActivityItem.Level, title: String, detail: String) {
+        if let firstActivity = activity.first,
+           firstActivity.level == level,
+           firstActivity.title == title,
+           firstActivity.detail == detail {
+            activity.removeFirst()
+        }
+
         let item = ActivityItem(level: level, title: title, detail: detail)
         activity.insert(item, at: 0)
 
