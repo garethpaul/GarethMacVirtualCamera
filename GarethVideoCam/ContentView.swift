@@ -1146,6 +1146,37 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         """
     }
 
+    var activationChecklist: String {
+        return """
+        Gareth Video Cam Signed Runtime Activation Checklist
+        Generated At: \(diagnosticGeneratedAt)
+        Current Request Readiness: \(requestReadinessStatus)
+        Current Next Action: \(requestReadinessNextAction)
+        App Path: \(applicationBundlePath)
+        Expected App Path: \(expectedApplicationPath)
+        Extension ID: \(extensionInfo?.identifier ?? expectedExtensionIdentifier)
+
+        Steps:
+        1. Build with an Apple Developer team that has the System Extension entitlement and app-group entitlement.
+        2. Run the shared Xcode scheme so it replaces /Applications/GarethVideoCam.app, then open the app from that path.
+        3. Confirm the in-app readiness summary has no blocked checks, then choose Install.
+        4. Approve the pending camera extension in System Settings if macOS requests approval.
+        5. Run ./scripts/collect_runtime_diagnostics.sh /Applications/GarethVideoCam.app 1h.
+        6. Confirm the diagnostics report the expected activation evidence.
+
+        Expected Diagnostics:
+        Runtime readiness result: ready
+        Runtime activation evidence result: active
+        Extension registration entry present: yes
+        Extension registration activated enabled: yes
+        Application group match ready: yes
+        Expected virtual camera device present: yes
+
+        Diagnostics Command:
+        ./scripts/collect_runtime_diagnostics.sh /Applications/GarethVideoCam.app 1h
+        """
+    }
+
     func install() {
         guard let extensionInfo = prepareForSystemExtensionRequest() else { return }
 
@@ -1231,6 +1262,24 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             appendActivity(level: .error,
                            title: "Diagnostics Copy Failed",
                            detail: "macOS did not accept the diagnostics text on the clipboard.")
+        }
+    }
+
+    func copyActivationChecklist() {
+        refreshExtensionInfo()
+
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        let didCopyChecklist = pasteboard.setString(activationChecklist, forType: .string)
+
+        if didCopyChecklist {
+            appendActivity(level: .success,
+                           title: "Checklist Copied",
+                           detail: "Copied the signed runtime activation checklist to the clipboard.")
+        } else {
+            appendActivity(level: .error,
+                           title: "Checklist Copy Failed",
+                           detail: "macOS did not accept the activation checklist text on the clipboard.")
         }
     }
 
@@ -2454,6 +2503,12 @@ private struct DetailsActions: View {
         }
         .buttonStyle(.bordered)
         .help("Copy the current readiness and diagnostics snapshot.")
+
+        Button(action: manager.copyActivationChecklist) {
+            Label("Copy Checklist", systemImage: "checklist")
+        }
+        .buttonStyle(.bordered)
+        .help("Copy the signed runtime activation checklist.")
 
         Button(action: manager.revealApplicationInFinder) {
             Label("Reveal App", systemImage: "folder")

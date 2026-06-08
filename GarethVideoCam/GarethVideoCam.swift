@@ -35,6 +35,11 @@ struct GarethVideoCamApp: App {
                 }
                 .keyboardShortcut("c", modifiers: [.command, .shift])
 
+                Button("Copy Activation Checklist") {
+                    systemExtensionRequestManager.copyActivationChecklist()
+                }
+                .keyboardShortcut("l", modifiers: [.command, .shift])
+
                 Button("Open System Settings") {
                     systemExtensionRequestManager.openSystemSettings()
                 }
