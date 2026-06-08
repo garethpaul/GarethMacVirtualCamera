@@ -279,6 +279,16 @@ def main():
     extension_source = (ROOT / "Extension/ExtensionProvider.swift").read_text()
     extension_main_source = (ROOT / "Extension/main.swift").read_text()
     readme_text = (ROOT / "README.md").read_text()
+    readme_overview_path = ROOT / "docs/readme-overview.svg"
+    readme_overview_text = ""
+    readme_overview_xml_valid = False
+    if readme_overview_path.exists():
+        readme_overview_text = readme_overview_path.read_text()
+        try:
+            ET.fromstring(readme_overview_text)
+            readme_overview_xml_valid = True
+        except ET.ParseError:
+            readme_overview_xml_valid = False
     gitignore_text = (ROOT / ".gitignore").read_text()
     check_project_path = ROOT / "scripts/check_project.sh"
     check_project_source = check_project_path.read_text()
@@ -307,6 +317,45 @@ def main():
             failures)
     require(".build/" in gitignore_text and "build-*.log" in gitignore_text and "*.xcresult" in gitignore_text,
             "gitignore should exclude local Xcode build products, logs, and result bundles",
+            failures)
+    require("<!-- README-OVERVIEW-IMAGE -->" in readme_text and "![Project overview](docs/readme-overview.svg)" in readme_text,
+            "README should include the project overview SVG near the top",
+            failures)
+    require(readme_overview_path.exists() and readme_overview_path.stat().st_size > 0,
+            "README overview SVG should exist and be non-empty",
+            failures)
+    require(readme_overview_xml_valid,
+            "README overview SVG should be valid XML",
+            failures)
+    required_overview_fragments = (
+        "Gareth Mac Virtual Camera project overview",
+        "SwiftUI host app plus CoreMediaIO camera extension",
+        "Host App",
+        "CMIO Extension",
+        "Virtual Camera",
+        "Gareth Video Cam",
+        "check_project.sh plus CI build",
+        "Runtime Evidence",
+        "signed host, entitlement, approval",
+        "Documented gates: build, validation, activation.",
+    )
+    require(all(fragment in readme_overview_text for fragment in required_overview_fragments),
+            "README overview SVG should describe the actual virtual camera architecture, validation, and runtime evidence path",
+            failures)
+    forbidden_overview_fragments = (
+        "Apple platform application or",
+        "Objective-C/Swift sample",
+        "Generated overview of the repository",
+        "VirtualCamera for Mac that Plays MP4 in Loop",
+        "Manifests: None detected",
+        "Integrations: None detected",
+        "Tests: scripts/test_collect_runti",
+        "me_diagnostics.sh,",
+        "authentication, database",
+        "file_parsing, mobile_privacy",
+    )
+    require(not any(fragment in readme_overview_text for fragment in forbidden_overview_fragments),
+            "README overview SVG should avoid generic generated labels and clipped test names",
             failures)
     require("Swift 6 language mode" in readme_text and project_text.count("SWIFT_VERSION = 6.0;") == 4 and "SWIFT_VERSION = 5.0;" not in project_text,
             "app and extension targets should use Swift 6 language mode",
