@@ -22,5 +22,6 @@ require_output "Runtime readiness result: blocked"
 require_output "Runtime readiness checks ready: 1/3"
 require_output "Runtime readiness checks blocked: 1"
 require_output "Runtime readiness checks unknown: 1"
+require_output "Runtime readiness next action: resolve Blocked fixture"
 
 printf 'Runtime diagnostics tests passed.\n'

@@ -165,9 +165,15 @@ print_readiness_check() {
       ;;
     no)
       readiness_blocked_count=$((readiness_blocked_count + 1))
+      if [ -z "$readiness_first_blocked_label" ]; then
+        readiness_first_blocked_label="$label"
+      fi
       ;;
     *)
       readiness_unknown_count=$((readiness_unknown_count + 1))
+      if [ -z "$readiness_first_unknown_label" ]; then
+        readiness_first_unknown_label="$label"
+      fi
       ;;
   esac
 
@@ -187,6 +193,13 @@ print_readiness_rollup() {
   printf 'Runtime readiness checks ready: %s/%s\n' "$readiness_ready_count" "$readiness_total_count"
   printf 'Runtime readiness checks blocked: %s\n' "$readiness_blocked_count"
   printf 'Runtime readiness checks unknown: %s\n' "$readiness_unknown_count"
+  if [ -n "$readiness_first_blocked_label" ]; then
+    printf 'Runtime readiness next action: resolve %s\n' "$readiness_first_blocked_label"
+  elif [ -n "$readiness_first_unknown_label" ]; then
+    printf 'Runtime readiness next action: inspect %s\n' "$readiness_first_unknown_label"
+  else
+    printf 'Runtime readiness next action: submit the system extension request\n'
+  fi
 }
 
 run_readiness_rollup_self_test() {
@@ -194,6 +207,8 @@ run_readiness_rollup_self_test() {
   readiness_blocked_count=0
   readiness_unknown_count=0
   readiness_total_count=0
+  readiness_first_blocked_label=""
+  readiness_first_unknown_label=""
 
   print_readiness_check "Ready fixture" "yes"
   print_readiness_check "Blocked fixture" "no"
@@ -421,6 +436,8 @@ readiness_ready_count=0
 readiness_blocked_count=0
 readiness_unknown_count=0
 readiness_total_count=0
+readiness_first_blocked_label=""
+readiness_first_unknown_label=""
 
 if [ "$APP_PATH" = "$EXPECTED_APP_PATH" ]; then
   print_readiness_check "Application location ready" "yes"
