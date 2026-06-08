@@ -521,6 +521,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             && appCodeSigningStatus.isValid
             && appEntitlementReadinessDetail == nil
             && extensionInfo != nil
+            && bundleVersionReadinessDetail == nil
             && extensionMetadataReadinessDetail == nil
             && bundledVideoReadinessDetail == nil
             && extensionCodeSigningStatus.isValid
@@ -551,6 +552,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         if appEntitlementReadinessDetail != nil {
             return "System extension requests require the app System Extension entitlement."
+        }
+
+        if bundleVersionReadinessDetail != nil {
+            return "System extension requests require matching app and extension bundle versions."
         }
 
         if extensionMetadataReadinessDetail != nil {
@@ -605,6 +610,21 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             entitlementStatus = appEntitlementReadinessDetail == nil ? .passing : .blocked
         } else {
             entitlementStatus = .pending
+        }
+
+        let bundleVersionStatus: ReadinessCheck.Status
+        let bundleVersionDetail: String
+        if let extensionInfo {
+            if let bundleVersionReadinessDetail {
+                bundleVersionStatus = .blocked
+                bundleVersionDetail = bundleVersionReadinessDetail
+            } else {
+                bundleVersionStatus = .passing
+                bundleVersionDetail = "App and embedded extension versions both report \(applicationVersion)."
+            }
+        } else {
+            bundleVersionStatus = .pending
+            bundleVersionDetail = "Embedded extension version is pending until the extension is loaded."
         }
 
         let extensionHostOnlyEntitlementStatus: ReadinessCheck.Status
@@ -678,6 +698,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                            title: "System Extension Entitlement",
                            detail: appEntitlementReadinessDetail ?? appSystemExtensionEntitlementStatus,
                            status: entitlementStatus),
+            ReadinessCheck(id: "bundle-version",
+                           title: "Bundle Version Match",
+                           detail: bundleVersionDetail,
+                           status: bundleVersionStatus),
             ReadinessCheck(id: "extension-signature",
                            title: "Extension Signature",
                            detail: extensionCodeSigningStatus.detail,
@@ -736,6 +760,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return appEntitlementReadinessDetail
         }
 
+        if let bundleVersionReadinessDetail {
+            return bundleVersionReadinessDetail
+        }
+
         if let extensionMetadataReadinessDetail {
             return extensionMetadataReadinessDetail
         }
@@ -774,6 +802,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         if let appEntitlementReadinessDetail {
             return "Sign the host app with the \(requiredSystemExtensionInstallEntitlement) entitlement. \(appEntitlementReadinessDetail)"
+        }
+
+        if let bundleVersionReadinessDetail {
+            return "Rebuild and reinstall the app so the host and embedded extension bundle versions match. \(bundleVersionReadinessDetail)"
         }
 
         if let extensionMetadataReadinessDetail {
@@ -828,6 +860,14 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
 
         return extensionCodeSigningStatus.hasEnabledEntitlement(requiredSystemExtensionInstallEntitlement) ? "Present" : "Absent"
+    }
+
+    var bundleVersionStatus: String {
+        guard extensionInfo != nil else {
+            return "Unknown"
+        }
+
+        return bundleVersionReadinessDetail == nil ? "Matches" : "Mismatch"
     }
 
     var diagnosticGeneratedAt: String {
@@ -893,6 +933,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         State: \(state.title)
         macOS Version: \(hostOperatingSystemVersion)
         App Version: \(applicationVersion)
+        Bundle Version Check: \(bundleVersionStatus)
         Expected App ID: \(expectedApplicationIdentifier)
         Actual App ID: \(applicationBundleIdentifier)
         App Bundle ID Check: \(applicationBundleIdentifierStatus)
@@ -1210,6 +1251,13 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return nil
         }
 
+        if let bundleVersionReadinessDetail {
+            recordReadinessBlock(state: .needsSigning,
+                                 title: "Version Match Required",
+                                 detail: bundleVersionReadinessDetail)
+            return nil
+        }
+
         guard extensionCodeSigningStatus.isValid else {
             recordReadinessBlock(state: .needsSigning,
                                  title: "Extension Signing Required",
@@ -1245,6 +1293,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         if !appCodeSigningStatus.isValid
             || appEntitlementReadinessDetail != nil
+            || bundleVersionReadinessDetail != nil
             || extensionMetadataReadinessDetail != nil
             || bundledVideoReadinessDetail != nil
             || !extensionCodeSigningStatus.isValid
@@ -1283,6 +1332,23 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         guard appCodeSigningStatus.hasEnabledEntitlement(requiredSystemExtensionInstallEntitlement) else {
             return "The app signature does not include the \(requiredSystemExtensionInstallEntitlement) entitlement."
+        }
+
+        return nil
+    }
+
+    private var bundleVersionReadinessDetail: String? {
+        guard let extensionInfo else {
+            return nil
+        }
+
+        let appVersion = applicationVersion
+        guard appVersion != "Unknown", extensionInfo.version != "Unknown" else {
+            return "Both app and embedded system extension bundle versions must be known; app is \(appVersion), extension is \(extensionInfo.version)."
+        }
+
+        guard appVersion == extensionInfo.version else {
+            return "The app version \(appVersion) does not match the embedded system extension version \(extensionInfo.version)."
         }
 
         return nil
@@ -1938,6 +2004,7 @@ private struct DetailsPanel: View {
 
                 DetailRow(title: "macOS Version", value: manager.hostOperatingSystemVersion)
                 DetailRow(title: "App Version", value: manager.applicationVersion)
+                DetailRow(title: "Bundle Version Check", value: manager.bundleVersionStatus)
                 DetailRow(title: "App Bundle ID", value: manager.applicationBundleIdentifier)
                 DetailRow(title: "App Bundle ID Check", value: manager.applicationBundleIdentifierStatus)
                 DetailRow(title: "Expected App ID", value: manager.expectedApplicationIdentifier)
