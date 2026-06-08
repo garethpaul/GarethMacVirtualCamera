@@ -272,8 +272,10 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
         }
 
         let naturalSize = try await videoTrack.load(.naturalSize)
+        let preferredTransform = try await videoTrack.load(.preferredTransform)
         let nominalFrameRate = try await videoTrack.load(.nominalFrameRate)
         try validateVideoTrack(naturalSize: naturalSize,
+                               preferredTransform: preferredTransform,
                                nominalFrameRate: nominalFrameRate)
 
         guard duration.flags.contains(.valid),
@@ -287,19 +289,28 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
                                 duration: duration)
     }
 
-    private func validateVideoTrack(naturalSize: CGSize, nominalFrameRate: Float) throws {
-        let width = Int32(naturalSize.width.rounded())
-        let height = Int32(naturalSize.height.rounded())
+    private func validateVideoTrack(naturalSize: CGSize,
+                                    preferredTransform: CGAffineTransform,
+                                    nominalFrameRate: Float) throws {
+        let displayDimensions = Self.displayDimensions(naturalSize: naturalSize,
+                                                       preferredTransform: preferredTransform)
 
-        guard width == CameraExtensionConfiguration.dimensions.width,
-              height == CameraExtensionConfiguration.dimensions.height else {
-            throw CameraExtensionError.unexpectedVideoDimensions(width, height)
+        guard displayDimensions.width == CameraExtensionConfiguration.dimensions.width,
+              displayDimensions.height == CameraExtensionConfiguration.dimensions.height else {
+            throw CameraExtensionError.unexpectedVideoDimensions(displayDimensions.width, displayDimensions.height)
         }
 
         guard nominalFrameRate > 0,
               abs(nominalFrameRate - Float(CameraExtensionConfiguration.frameRate)) < 0.01 else {
             throw CameraExtensionError.unexpectedVideoFrameRate(nominalFrameRate)
         }
+    }
+
+    private static func displayDimensions(naturalSize: CGSize,
+                                          preferredTransform: CGAffineTransform) -> CMVideoDimensions {
+        let displayRect = CGRect(origin: .zero, size: naturalSize).applying(preferredTransform)
+        return CMVideoDimensions(width: Int32(abs(displayRect.width).rounded()),
+                                 height: Int32(abs(displayRect.height).rounded()))
     }
 
     private func makeAssetReader(asset: AVAsset, videoTrack: AVAssetTrack) throws -> AssetReaderState {
