@@ -10,7 +10,7 @@
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
                title = "Run Script"
-               scriptText = "set -eu&#10;install_path=&quot;/Applications/${FULL_PRODUCT_NAME}&quot;&#10;/usr/bin/ditto &quot;${CODESIGNING_FOLDER_PATH}&quot; &quot;${install_path}&quot;&#10;">
+               scriptText = "set -eu&#10;install_path=&quot;/Applications/${FULL_PRODUCT_NAME}&quot;&#10;case &quot;${install_path}&quot; in&#10;  /Applications/*.app) ;;&#10;  *) echo &quot;Unexpected install path: ${install_path}&quot;; exit 1 ;;&#10;esac&#10;/bin/rm -rf &quot;${install_path}&quot;&#10;/usr/bin/ditto &quot;${CODESIGNING_FOLDER_PATH}&quot; &quot;${install_path}&quot;&#10;">
                <EnvironmentBuildable>
                   <BuildableReference
                      BuildableIdentifier = "primary"
@@ -63,7 +63,7 @@
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
                title = "Run Script"
-               scriptText = "set -eu&#10;install_path=&quot;/Applications/${FULL_PRODUCT_NAME}&quot;&#10;/usr/bin/ditto &quot;${CODESIGNING_FOLDER_PATH}&quot; &quot;${install_path}&quot;&#10;">
+               scriptText = "set -eu&#10;install_path=&quot;/Applications/${FULL_PRODUCT_NAME}&quot;&#10;case &quot;${install_path}&quot; in&#10;  /Applications/*.app) ;;&#10;  *) echo &quot;Unexpected install path: ${install_path}&quot;; exit 1 ;;&#10;esac&#10;/bin/rm -rf &quot;${install_path}&quot;&#10;/usr/bin/ditto &quot;${CODESIGNING_FOLDER_PATH}&quot; &quot;${install_path}&quot;&#10;">
             </ActionContent>
          </ExecutionAction>
       </PostActions>

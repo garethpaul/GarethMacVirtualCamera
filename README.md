@@ -14,7 +14,7 @@ A macOS CoreMediaIO camera extension packaged in a SwiftUI host app. The extensi
 
 Open `GarethVideoCam.xcodeproj` in Xcode, select the shared `GarethVideoCam` scheme, then build and run.
 
-The shared scheme copies the built app to `/Applications/GarethVideoCam.app` before launch. macOS only activates system extensions from apps located in `/Applications`.
+The shared scheme replaces `/Applications/GarethVideoCam.app` with the freshly built app before launch. macOS only activates system extensions from apps located in `/Applications`.
 
 ## Validate
 
@@ -46,7 +46,7 @@ Pushes and pull requests to `main` also run `.github/workflows/macos-build.yml` 
 
 ## Runtime Activation
 
-Runtime activation still requires a macOS host with a valid Apple Developer signing identity, the System Extension entitlement, and user approval in System Settings. The app must run from `/Applications/GarethVideoCam.app`; the shared Xcode scheme copies the built app there before launch for local testing.
+Runtime activation still requires a macOS host with a valid Apple Developer signing identity, the System Extension entitlement, and user approval in System Settings. The app must run from `/Applications/GarethVideoCam.app`; the shared Xcode scheme replaces the app there before launch for local testing.
 
 The app disables install and uninstall actions when it is not running from `/Applications`, when its app signature is invalid, or when the bundled system extension signature is invalid. It exposes a System Settings shortcut for approval and can copy a diagnostics snapshot with the current app path, app and extension signing status, bundled extension metadata, and recent request activity.
 

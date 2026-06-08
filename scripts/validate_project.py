@@ -248,8 +248,8 @@ def main():
             failures)
 
     scheme_text = scheme_path.read_text()
-    require("/usr/bin/ditto" in scheme_text and "/Applications/${FULL_PRODUCT_NAME}" in scheme_text,
-            "shared scheme no longer copies the app into /Applications for system-extension testing",
+    require("/usr/bin/ditto" in scheme_text and "/Applications/${FULL_PRODUCT_NAME}" in scheme_text and "/bin/rm -rf" in scheme_text and "/Applications/*.app" in scheme_text,
+            "shared scheme should replace the app in /Applications with a guarded path before system-extension testing",
             failures)
 
     workflow_path = ROOT / ".github/workflows/macos-build.yml"
