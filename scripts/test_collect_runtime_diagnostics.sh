@@ -90,6 +90,7 @@ require_output "$mach_service_output" "Mach service unresolved fixture resolved:
 require_output "$mach_service_output" "Mach service wrong fixture matches expected: no"
 require_output "$mach_service_output" "Mach service missing fixture ready: no"
 
+require_output "$application_group_output" "Application group direct fixture ready: yes"
 require_output "$application_group_output" "Application group shared fixture ready: yes"
 require_output "$application_group_output" "Application group missing fixture ready: no"
 require_output "$application_group_output" "Application group mismatched fixture ready: no"

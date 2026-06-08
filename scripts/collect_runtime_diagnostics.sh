@@ -835,11 +835,13 @@ run_mach_service_self_test() {
 }
 
 run_application_group_self_test() {
+  local direct_group="$APP_GROUP_BASE_ID"
   local shared_group="ABCDE12345.$APP_GROUP_BASE_ID"
   local other_team_group="ZYXWV98765.$APP_GROUP_BASE_ID"
   local wrong_group="ABCDE12345.com.example.Other"
   local dotted_prefix_group="com.example.$APP_GROUP_BASE_ID"
 
+  printf 'Application group direct fixture ready: %s\n' "$(application_groups_ready_value "$direct_group" "$direct_group")"
   printf 'Application group shared fixture ready: %s\n' "$(application_groups_ready_value "$shared_group" "$shared_group")"
   printf 'Application group missing fixture ready: %s\n' "$(application_groups_ready_value "" "$shared_group")"
   printf 'Application group mismatched fixture ready: %s\n' "$(application_groups_ready_value "$shared_group" "$other_team_group")"
