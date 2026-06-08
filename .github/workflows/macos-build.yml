@@ -43,6 +43,9 @@ jobs:
       - name: Test build log scanner
         run: ./scripts/test_scan_build_log.py
 
+      - name: Check runtime diagnostics script
+        run: bash -n ./scripts/collect_runtime_diagnostics.sh
+
       - name: Validate project metadata
         run: ./scripts/validate_project.py
 

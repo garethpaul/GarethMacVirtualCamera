@@ -51,3 +51,11 @@ Runtime activation still requires a macOS host with a valid Apple Developer sign
 The app disables install and uninstall actions when it is not running from `/Applications`, exposes a System Settings shortcut for approval, and can copy a diagnostics snapshot with the current app path, bundled extension metadata, and recent request activity.
 
 After approving the camera extension in System Settings, it should appear in camera pickers as `Gareth Video Cam`.
+
+To collect runtime evidence from a signed macOS host:
+
+```sh
+./scripts/collect_runtime_diagnostics.sh /Applications/GarethVideoCam.app
+```
+
+The diagnostics script reports host tool versions, app and extension code-signing status, embedded system-extension metadata, `systemextensionsctl` registration, and recent `com.garethpaul.GarethVideoCam` unified logs.

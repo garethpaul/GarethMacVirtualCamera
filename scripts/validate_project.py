@@ -72,6 +72,7 @@ def main():
     readme_text = (ROOT / "README.md").read_text()
     build_log_scanner_source = (ROOT / "scripts/scan_build_log.py").read_text()
     build_log_scanner_test_source = (ROOT / "scripts/test_scan_build_log.py").read_text()
+    runtime_diagnostics_source = (ROOT / "scripts/collect_runtime_diagnostics.sh").read_text()
     require(f"PRODUCT_BUNDLE_IDENTIFIER = {APP_BUNDLE_ID};" in project_text,
             "project is missing the host app bundle identifier",
             failures)
@@ -161,11 +162,17 @@ def main():
     require("System Settings shortcut" in readme_text and "diagnostics snapshot" in readme_text,
             "README should document the in-app approval and diagnostics actions",
             failures)
+    require("collect_runtime_diagnostics.sh" in readme_text and "systemextensionsctl" in readme_text,
+            "README should document collecting runtime diagnostics on macOS",
+            failures)
     require("ACTIONABLE_PATTERN" in build_log_scanner_source and "appintentsmetadataprocessor" in build_log_scanner_source,
             "build-log scanner should fail on warnings while ignoring Xcode AppIntents metadata noise",
             failures)
     require("test_ignores_appintents_metadata_notice" in build_log_scanner_test_source and "test_fails_on_actionable_warning" in build_log_scanner_test_source,
             "build-log scanner should have regression coverage for ignored and actionable warnings",
+            failures)
+    require("systemextensionsctl list" in runtime_diagnostics_source and "log show --last 30m" in runtime_diagnostics_source,
+            "runtime diagnostics script should collect system-extension registration and recent app logs",
             failures)
 
     scheme_path = ROOT / "GarethVideoCam.xcodeproj/xcshareddata/xcschemes/GarethVideoCam.xcscheme"
@@ -196,6 +203,9 @@ def main():
                 failures)
         require("./scripts/test_scan_build_log.py" in workflow_text,
                 "macOS build workflow should test the build-log scanner",
+                failures)
+        require("bash -n ./scripts/collect_runtime_diagnostics.sh" in workflow_text,
+                "macOS build workflow should syntax-check the runtime diagnostics script",
                 failures)
         require("xcodebuild" in workflow_text and "CODE_SIGNING_ALLOWED=NO" in workflow_text,
                 "macOS build workflow should perform an unsigned xcodebuild",
