@@ -46,6 +46,12 @@ def test_fails_on_actionable_warning():
     require("real source warning" in result.stdout, result.stdout)
 
 
+def test_fails_on_other_appintents_warning():
+    result = run_scanner("appintentsmetadataprocessor warning: unexpected metadata failure\n")
+    require(result.returncode == 1, result.stdout + result.stderr)
+    require("unexpected metadata failure" in result.stdout, result.stdout)
+
+
 def test_fails_on_actionable_error():
     result = run_scanner("SwiftCompile error: real source error\n")
     require(result.returncode == 1, result.stdout + result.stderr)
@@ -55,6 +61,7 @@ def test_fails_on_actionable_error():
 def main():
     test_ignores_appintents_metadata_notice()
     test_fails_on_actionable_warning()
+    test_fails_on_other_appintents_warning()
     test_fails_on_actionable_error()
     print("Build-log scanner tests passed.")
     return 0

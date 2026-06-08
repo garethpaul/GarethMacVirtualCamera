@@ -5,15 +5,20 @@ from pathlib import Path
 
 
 ACTIONABLE_PATTERN = re.compile(r"warning:|error:", re.IGNORECASE)
-IGNORED_PATTERNS = (
-    "appintentsmetadataprocessor",
-    "Metadata extraction skipped. No AppIntents.framework dependency found.",
+IGNORED_LINE_TOKEN_GROUPS = (
+    (
+        "appintentsmetadataprocessor",
+        "Metadata extraction skipped. No AppIntents.framework dependency found.",
+    ),
 )
 
 
 def is_ignored(line):
     normalized_line = line.lower()
-    return any(pattern.lower() in normalized_line for pattern in IGNORED_PATTERNS)
+    return any(
+        all(token.lower() in normalized_line for token in token_group)
+        for token_group in IGNORED_LINE_TOKEN_GROUPS
+    )
 
 
 def main():
