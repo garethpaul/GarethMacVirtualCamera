@@ -847,34 +847,30 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
                                                               validDetail: "The app bundle code signature is valid.")
 
         guard isRunningFromApplications else {
-            state = .needsApplicationLocation
-            appendActivity(level: .warning,
-                           title: "Move Required",
-                           detail: "Current path is \(applicationBundlePath).")
+            recordReadinessBlock(state: .needsApplicationLocation,
+                                 title: "Move Required",
+                                 detail: "Current path is \(applicationBundlePath).")
             return nil
         }
 
         if let applicationIdentifierReadinessDetail {
-            state = .needsBundleIdentifier
-            appendActivity(level: .warning,
-                           title: "App Identifier Required",
-                           detail: applicationIdentifierReadinessDetail)
+            recordReadinessBlock(state: .needsBundleIdentifier,
+                                 title: "App Identifier Required",
+                                 detail: applicationIdentifierReadinessDetail)
             return nil
         }
 
         guard appCodeSigningStatus.isValid else {
-            state = .needsSigning
-            appendActivity(level: .warning,
-                           title: "Signing Required",
-                           detail: appCodeSigningStatus.detail)
+            recordReadinessBlock(state: .needsSigning,
+                                 title: "Signing Required",
+                                 detail: appCodeSigningStatus.detail)
             return nil
         }
 
         if let appEntitlementReadinessDetail {
-            state = .needsSigning
-            appendActivity(level: .warning,
-                           title: "Entitlement Required",
-                           detail: appEntitlementReadinessDetail)
+            recordReadinessBlock(state: .needsSigning,
+                                 title: "Entitlement Required",
+                                 detail: appEntitlementReadinessDetail)
             return nil
         }
 
@@ -893,18 +889,16 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
 
         guard extensionCodeSigningStatus.isValid else {
-            state = .needsSigning
-            appendActivity(level: .warning,
-                           title: "Extension Signing Required",
-                           detail: extensionCodeSigningStatus.detail)
+            recordReadinessBlock(state: .needsSigning,
+                                 title: "Extension Signing Required",
+                                 detail: extensionCodeSigningStatus.detail)
             return nil
         }
 
         if let signingTeamReadinessDetail {
-            state = .needsSigning
-            appendActivity(level: .warning,
-                           title: "Team Identifier Required",
-                           detail: signingTeamReadinessDetail)
+            recordReadinessBlock(state: .needsSigning,
+                                 title: "Team Identifier Required",
+                                 detail: signingTeamReadinessDetail)
             return nil
         }
 
@@ -1041,6 +1035,12 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         lastFailureDetail = message
         state = .failed(message)
         appendActivity(level: .error, title: "Readiness Failed", detail: message)
+    }
+
+    private func recordReadinessBlock(state: InstallState, title: String, detail: String) {
+        self.state = state
+        lastFailureDetail = detail
+        appendActivity(level: .warning, title: title, detail: detail)
     }
 
     private func appendActivity(level: ActivityItem.Level, title: String, detail: String) {

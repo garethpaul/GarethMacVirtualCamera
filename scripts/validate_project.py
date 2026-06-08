@@ -393,6 +393,9 @@ def main():
     require("lastFailureDetail" in host_source and "Last Failure" in host_source and "No failure recorded." in host_source and "Readiness Failed" in host_source and "Request Failed" in host_source,
             "host app should preserve the last readiness or request failure in details and copied diagnostics",
             failures)
+    require("private func recordReadinessBlock" in host_source and "lastFailureDetail = detail" in host_source,
+            "host app should record install/uninstall readiness blocks as the last failure detail",
+            failures)
     require(".disabled(manager.isBusy || !manager.canSubmitSystemExtensionRequests)" in host_source,
             "host app should disable install controls when system-extension requests cannot be submitted",
             failures)
