@@ -47,29 +47,15 @@ jobs:
         run: ./scripts/test_scan_build_log.py
 
       - name: Check runtime diagnostics script
-        run: bash -n ./scripts/collect_runtime_diagnostics.sh
+        run: |
+          bash -n ./scripts/collect_runtime_diagnostics.sh
+          bash -n ./scripts/build_unsigned.sh
 
       - name: Validate project metadata
         run: ./scripts/validate_project.py
 
       - name: Build GarethVideoCam
-        run: |
-          set -o pipefail
-          runner_arch="$(uname -m)"
-          for configuration in Debug Release; do
-            xcodebuild \
-              -project GarethVideoCam.xcodeproj \
-              -target GarethVideoCam \
-              -configuration "${configuration}" \
-              ARCHS="${runner_arch}" \
-              ONLY_ACTIVE_ARCH=NO \
-              CODE_SIGNING_ALLOWED=NO \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGN_IDENTITY="" \
-              DEVELOPMENT_TEAM="" \
-              COMPILER_INDEX_STORE_ENABLE=NO \
-              build 2>&1 | tee "build-${configuration}.log"
-          done
+        run: ./scripts/build_unsigned.sh
 
       - name: Scan build log for source warnings
         run: |

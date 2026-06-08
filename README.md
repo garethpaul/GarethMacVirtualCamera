@@ -29,23 +29,9 @@ The validator also checks the bundled `Extension/video.mp4` for parseable dimens
 For a CI-equivalent unsigned compile on macOS with Xcode installed:
 
 ```sh
-runner_arch="$(uname -m)"
-for configuration in Debug Release; do
-  xcodebuild \
-    -project GarethVideoCam.xcodeproj \
-    -target GarethVideoCam \
-    -configuration "${configuration}" \
-    ARCHS="${runner_arch}" \
-    ONLY_ACTIVE_ARCH=NO \
-    CODE_SIGNING_ALLOWED=NO \
-    CODE_SIGNING_REQUIRED=NO \
-    CODE_SIGN_IDENTITY="" \
-    DEVELOPMENT_TEAM="" \
-    COMPILER_INDEX_STORE_ENABLE=NO \
-    build 2>&1 | tee "build-${configuration}.log"
-
-  ./scripts/scan_build_log.py "build-${configuration}.log"
-done
+./scripts/build_unsigned.sh
+./scripts/scan_build_log.py build-Debug.log
+./scripts/scan_build_log.py build-Release.log
 ```
 
 Pushes and pull requests to `main` also run `.github/workflows/macos-build.yml` on GitHub's `macos-26` runner. That workflow validates metadata, performs unsigned Debug and Release target builds, captures the Xcode logs, and fails on source warnings. Xcode 26.5 currently emits an AppIntents metadata processor notice for targets without AppIntents; CI filters only that known tool notice.
