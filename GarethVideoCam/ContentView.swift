@@ -33,12 +33,12 @@ struct ContentView: View {
                 return
             }
 
-            systemExtensionRequestManager.refreshExtensionInfo()
+            systemExtensionRequestManager.refreshAfterAppBecameActive()
         }
         .onChange(of: scenePhase) { _, newScenePhase in
             guard newScenePhase == .active, didCompleteInitialAppearance else { return }
 
-            systemExtensionRequestManager.refreshExtensionInfo()
+            systemExtensionRequestManager.refreshAfterAppBecameActive()
         }
     }
 }
@@ -1442,6 +1442,26 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         let detail = requestReadinessDetail ?? "System extension requests can be submitted."
         appendActivity(level: canSubmitSystemExtensionRequests ? .success : .warning,
                        title: "Status Refreshed",
+                       detail: detail)
+    }
+
+    func refreshAfterAppBecameActive() {
+        let previousState = state
+        let previousReadinessDetail = requestReadinessDetail
+        let previousCanSubmitRequests = canSubmitSystemExtensionRequests
+
+        guard refreshExtensionInfo() else { return }
+
+        let currentReadinessDetail = requestReadinessDetail
+        let didChangeVisibleStatus = previousState != state
+            || previousReadinessDetail != currentReadinessDetail
+            || previousCanSubmitRequests != canSubmitSystemExtensionRequests
+
+        guard didChangeVisibleStatus else { return }
+
+        let detail = currentReadinessDetail ?? "System extension requests can be submitted."
+        appendActivity(level: canSubmitSystemExtensionRequests ? .success : .warning,
+                       title: "Status Updated",
                        detail: detail)
     }
 

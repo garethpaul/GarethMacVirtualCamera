@@ -724,10 +724,13 @@ def main():
     require("refreshStatus()" in host_source and "Status Refreshed" in host_source and "Button(action: manager.refreshStatus)" in host_source and "Refresh Status" in host_source,
             "host app should let users refresh extension and signing readiness in-place with activity feedback",
             failures)
+    require("func refreshAfterAppBecameActive()" in host_source and "previousState = state" in host_source and "didChangeVisibleStatus" in host_source and "Status Updated" in host_source,
+            "host app should record automatic foreground refreshes only when visible readiness changes",
+            failures)
     require("didCompleteInitialAppearance" in host_source and "guard didCompleteInitialAppearance else" in host_source,
             "host app should avoid duplicating the manager startup refresh on first view appearance",
             failures)
-    require("@Environment(\\.scenePhase)" in host_source and ".onChange(of: scenePhase)" in host_source and "newScenePhase == .active" in host_source,
+    require("@Environment(\\.scenePhase)" in host_source and ".onChange(of: scenePhase)" in host_source and "newScenePhase == .active" in host_source and "systemExtensionRequestManager.refreshAfterAppBecameActive()" in host_source,
             "host app should refresh readiness when it becomes active after external approval changes",
             failures)
     require("#Preview" in host_source and "PreviewProvider" not in host_source,

@@ -12,3 +12,5 @@
 - Covered missing extension usage strings, wrong app camera usage strings, and unsigned build failure propagation in fixture tests.
 - Covered bundled-video metadata fallback behavior in runtime diagnostics self-tests.
 - Covered executable declaration, executable permission, extension display metadata, direct app-group, and missing build-log edge cases in validation fixtures.
+- Limited CI workflow token permissions to read-only repository contents.
+- Added activity feedback for automatic foreground refreshes when visible readiness state changes after returning to the app.
