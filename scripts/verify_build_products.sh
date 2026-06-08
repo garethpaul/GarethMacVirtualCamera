@@ -47,6 +47,18 @@ read_bundle_executable() {
   read_info_plist_string "$bundle_path" CFBundleExecutable
 }
 
+read_bundle_short_version() {
+  local bundle_path="$1"
+
+  read_info_plist_string "$bundle_path" CFBundleShortVersionString
+}
+
+read_bundle_build_version() {
+  local bundle_path="$1"
+
+  read_info_plist_string "$bundle_path" CFBundleVersion
+}
+
 read_extension_mach_service_name() {
   local bundle_path="$1"
   local info_plist="$bundle_path/Contents/Info.plist"
@@ -100,6 +112,31 @@ verify_extension_cmio_metadata() {
   fi
 }
 
+verify_aligned_bundle_versions() {
+  local configuration="$1"
+  local app_path="$2"
+  local extension_path="$3"
+  local app_short_version
+  local app_build_version
+  local extension_short_version
+  local extension_build_version
+
+  app_short_version="$(read_bundle_short_version "$app_path")"
+  app_build_version="$(read_bundle_build_version "$app_path")"
+  extension_short_version="$(read_bundle_short_version "$extension_path")"
+  extension_build_version="$(read_bundle_build_version "$extension_path")"
+
+  if [ -z "$app_short_version" ] || [ -z "$extension_short_version" ] || [ "$app_short_version" != "$extension_short_version" ]; then
+    printf 'Mismatched %s bundle short versions: app=%s extension=%s\n' "$configuration" "${app_short_version:-unknown}" "${extension_short_version:-unknown}" >&2
+    exit 1
+  fi
+
+  if [ -z "$app_build_version" ] || [ -z "$extension_build_version" ] || [ "$app_build_version" != "$extension_build_version" ]; then
+    printf 'Mismatched %s bundle build versions: app=%s extension=%s\n' "$configuration" "${app_build_version:-unknown}" "${extension_build_version:-unknown}" >&2
+    exit 1
+  fi
+}
+
 for configuration in "${configurations[@]}"; do
   app_path="$PRODUCTS_PATH/$configuration/$APP_NAME"
   extension_path="$app_path/Contents/Library/SystemExtensions/$EXTENSION_NAME"
@@ -129,6 +166,7 @@ for configuration in "${configurations[@]}"; do
     exit 1
   fi
 
+  verify_aligned_bundle_versions "$configuration" "$app_path" "$extension_path"
   verify_bundle_executable "$configuration" "extension" "$extension_path"
   verify_extension_cmio_metadata "$configuration" "$extension_path"
 
@@ -137,5 +175,5 @@ for configuration in "${configurations[@]}"; do
     exit 1
   fi
 
-  printf 'Verified %s app product, embedded system extension, executables, CMIO metadata, and bundled video.\n' "$configuration"
+  printf 'Verified %s app product, embedded system extension, versions, executables, CMIO metadata, and bundled video.\n' "$configuration"
 done
