@@ -331,6 +331,9 @@ def main():
     require("collect_runtime_diagnostics.sh in Resources" in project_text and "validate_project.py in Resources" in project_text and "Runtime Diagnostics" in project_text,
             "project should bundle runtime diagnostics helpers in the host app resources",
             failures)
+    require("Preview Assets.xcassets in Resources" not in project_text and "DEVELOPMENT_ASSET_PATHS" in project_text,
+            "project should keep preview assets available for previews without bundling them in app resources",
+            failures)
     marketing_versions = set(re.findall(r"MARKETING_VERSION = ([^;]+);", project_text))
     build_versions = set(re.findall(r"CURRENT_PROJECT_VERSION = ([^;]+);", project_text))
     require(len(marketing_versions) == 1,

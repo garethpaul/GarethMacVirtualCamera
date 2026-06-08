@@ -10,7 +10,6 @@
 		8C3B7E5128A3E43200E7BAFB /* GarethVideoCam.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B7E5028A3E43200E7BAFB /* GarethVideoCam.swift */; };
 		8C3B7E5328A3E43200E7BAFB /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B7E5228A3E43200E7BAFB /* ContentView.swift */; };
 		8C3B7E5528A3E43300E7BAFB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8C3B7E5428A3E43300E7BAFB /* Assets.xcassets */; };
-		8C3B7E5828A3E43300E7BAFB /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8C3B7E5728A3E43300E7BAFB /* Preview Assets.xcassets */; };
 		8C3B7E6628A3E48200E7BAFB /* ExtensionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B7E6528A3E48200E7BAFB /* ExtensionProvider.swift */; };
 		8C3B7E6828A3E48200E7BAFB /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B7E6728A3E48200E7BAFB /* main.swift */; };
 		8C3B7E6D28A3E48200E7BAFB /* com.garethpaul.GarethVideoCam.Extension.systemextension in Embed System Extensions */ = {isa = PBXBuildFile; fileRef = 8C3B7E6328A3E48200E7BAFB /* com.garethpaul.GarethVideoCam.Extension.systemextension */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -220,7 +219,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				C3D100102E00000000C8EDB0 /* collect_runtime_diagnostics.sh in Resources */,
-				8C3B7E5828A3E43300E7BAFB /* Preview Assets.xcassets in Resources */,
 				C3D100112E00000000C8EDB0 /* validate_project.py in Resources */,
 				8C3B7E5528A3E43300E7BAFB /* Assets.xcassets in Resources */,
 			);
