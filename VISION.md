@@ -39,7 +39,6 @@ Canonical security policy and reporting:
 
 - [`SECURITY.md`](SECURITY.md)
 
-
 Virtual camera extensions interact with a sensitive media surface. The app
 should keep activation explicit, signed, and user-approved.
 

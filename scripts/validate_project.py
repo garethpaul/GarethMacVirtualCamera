@@ -279,6 +279,8 @@ def main():
     extension_source = (ROOT / "Extension/ExtensionProvider.swift").read_text()
     extension_main_source = (ROOT / "Extension/main.swift").read_text()
     readme_text = (ROOT / "README.md").read_text()
+    vision_text = (ROOT / "VISION.md").read_text()
+    security_text = (ROOT / "SECURITY.md").read_text()
     readme_overview_path = ROOT / "docs/readme-overview.svg"
     readme_overview_text = ""
     readme_overview_xml_valid = False
@@ -356,6 +358,37 @@ def main():
     )
     require(not any(fragment in readme_overview_text for fragment in forbidden_overview_fragments),
             "README overview SVG should avoid generic generated labels and clipped test names",
+            failures)
+    require("Canonical security policy and reporting:" in vision_text and "[`SECURITY.md`](SECURITY.md)" in vision_text,
+            "VISION should link the canonical security policy",
+            failures)
+    required_security_fragments = (
+        "Gareth Mac Virtual Camera is a macOS SwiftUI host app with an embedded CoreMediaIO system extension.",
+        "Extension/video.mp4",
+        "Gareth Video Cam",
+        "system-extension activation, deactivation, approval, and registration handling",
+        "host and extension code signing, Team ID matching, and entitlement validation",
+        "shared app-group configuration between the host app and embedded extension",
+        "bundled-video parsing, metadata validation, and pixel-buffer stream-format checks",
+        "runtime diagnostics that collect signing, entitlement, process, camera inventory, and unified-log evidence",
+        "shell scripts and CI workflows that build, verify, or scan project artifacts",
+        "Do not add hidden camera capture, external streaming, upload behavior, entitlement shortcuts",
+        "./scripts/check_project.sh",
+        ".github/workflows/macos-build.yml",
+    )
+    require(all(fragment in security_text for fragment in required_security_fragments),
+            "SECURITY should describe the actual virtual camera threat model and validation surfaces",
+            failures)
+    forbidden_security_fragments = (
+        "Project summary: VirtualCamera for Mac that Plays MP4 in Loop",
+        "Apple platform application or Swift sample",
+        "Review found authentication",
+        "Review found external API integrations",
+        "Review found network clients",
+        "Review found database",
+    )
+    require(not any(fragment in security_text for fragment in forbidden_security_fragments),
+            "SECURITY should avoid generic generated claims that do not match this project",
             failures)
     require("Swift 6 language mode" in readme_text and project_text.count("SWIFT_VERSION = 6.0;") == 4 and "SWIFT_VERSION = 5.0;" not in project_text,
             "app and extension targets should use Swift 6 language mode",
