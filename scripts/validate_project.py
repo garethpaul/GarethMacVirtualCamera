@@ -456,8 +456,8 @@ def main():
     require("didCopyDiagnostics" in host_source and "Diagnostics Copy Failed" in host_source,
             "host app should report clipboard failures when copying diagnostics",
             failures)
-    require("applicationVersion" in host_source and "App Version" in host_source and "CFBundleShortVersionString" in host_source,
-            "host app should show and copy app version diagnostics",
+    require("applicationVersion" in host_source and "displayVersion(shortVersion:" in host_source and "Extension Version" in host_source and "App Version" in host_source and "CFBundleShortVersionString" in host_source and "CFBundleVersion" in host_source,
+            "host app should show and copy app and extension short/build version diagnostics",
             failures)
     require("System Extension Entitlement" in host_source and "App System Extension Entitlement:" in host_source,
             "host app should show and copy app System Extension entitlement diagnostics",

@@ -411,6 +411,10 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         let shortVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
         let buildVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
 
+        return Self.displayVersion(shortVersion: shortVersion, buildVersion: buildVersion)
+    }
+
+    private static func displayVersion(shortVersion: String?, buildVersion: String?) -> String {
         switch (shortVersion, buildVersion) {
         case let (shortVersion?, buildVersion?):
             return "\(shortVersion) (\(buildVersion))"
@@ -856,9 +860,10 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
                 continue
             }
 
-            let version = extensionBundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
-                ?? extensionBundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String
-                ?? "Unknown"
+            let shortVersion = extensionBundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+            let buildVersion = extensionBundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String
+            let version = Self.displayVersion(shortVersion: shortVersion,
+                                              buildVersion: buildVersion)
             let videoURL = extensionURL
                 .appendingPathComponent("Contents")
                 .appendingPathComponent("Resources")
