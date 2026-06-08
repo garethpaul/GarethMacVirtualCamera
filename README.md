@@ -30,8 +30,7 @@ For a CI-equivalent unsigned compile on macOS with Xcode installed:
 
 ```sh
 ./scripts/build_unsigned.sh
-./scripts/scan_build_log.py build-Debug.log
-./scripts/scan_build_log.py build-Release.log
+./scripts/scan_build_log.py build-Debug.log build-Release.log
 ```
 
 Pushes and pull requests to `main` also run `.github/workflows/macos-build.yml` on GitHub's `macos-26` runner. That workflow validates metadata, performs unsigned Debug and Release target builds, captures the Xcode logs, and fails on source warnings. Xcode 26.5 currently emits an AppIntents metadata processor notice for targets without AppIntents; CI filters only that known tool notice.

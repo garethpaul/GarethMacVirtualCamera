@@ -9,21 +9,25 @@ ROOT = Path(__file__).resolve().parents[1]
 SCANNER = ROOT / "scripts" / "scan_build_log.py"
 
 
-def run_scanner(contents):
-    with tempfile.NamedTemporaryFile("w", encoding="utf-8", delete=False) as build_log:
-        build_log.write(contents)
-        build_log_path = Path(build_log.name)
+def run_scanner(*contents_by_file):
+    build_log_paths = []
 
     try:
+        for contents in contents_by_file:
+            with tempfile.NamedTemporaryFile("w", encoding="utf-8", delete=False) as build_log:
+                build_log.write(contents)
+                build_log_paths.append(Path(build_log.name))
+
         return subprocess.run(
-            [sys.executable, str(SCANNER), str(build_log_path)],
+            [sys.executable, str(SCANNER), *(str(build_log_path) for build_log_path in build_log_paths)],
             cwd=ROOT,
             text=True,
             capture_output=True,
             check=False,
         )
     finally:
-        build_log_path.unlink(missing_ok=True)
+        for build_log_path in build_log_paths:
+            build_log_path.unlink(missing_ok=True)
 
 
 def require(condition, message):
@@ -59,11 +63,22 @@ def test_fails_on_actionable_error():
     require("real source error" in result.stdout, result.stdout)
 
 
+def test_scans_multiple_build_logs():
+    result = run_scanner(
+        "note: harmless debug build output\n",
+        "note: harmless\nSwiftCompile warning: release source warning\n",
+    )
+    require(result.returncode == 1, result.stdout + result.stderr)
+    require("release source warning" in result.stdout, result.stdout)
+    require(":2: SwiftCompile warning: release source warning" in result.stdout, result.stdout)
+
+
 def main():
     test_ignores_appintents_metadata_notice()
     test_fails_on_actionable_warning()
     test_fails_on_other_appintents_warning()
     test_fails_on_actionable_error()
+    test_scans_multiple_build_logs()
     print("Build-log scanner tests passed.")
     return 0
 

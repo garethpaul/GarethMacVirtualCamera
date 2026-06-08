@@ -58,9 +58,7 @@ jobs:
         run: ./scripts/build_unsigned.sh
 
       - name: Scan build log for source warnings
-        run: |
-          ./scripts/scan_build_log.py build-Debug.log
-          ./scripts/scan_build_log.py build-Release.log
+        run: ./scripts/scan_build_log.py build-Debug.log build-Release.log
 
       - name: Upload Xcode build logs
         if: always()

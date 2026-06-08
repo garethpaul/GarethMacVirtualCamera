@@ -538,7 +538,7 @@ def main():
     require("didOpenSettings" in host_source and "System Settings Unavailable" in host_source,
             "host app should report System Settings launch failures",
             failures)
-    require("CI-equivalent unsigned compile" in readme_text and "./scripts/build_unsigned.sh" in readme_text and "./scripts/scan_build_log.py build-Debug.log" in readme_text and "./scripts/scan_build_log.py build-Release.log" in readme_text,
+    require("CI-equivalent unsigned compile" in readme_text and "./scripts/build_unsigned.sh" in readme_text and "./scripts/scan_build_log.py build-Debug.log build-Release.log" in readme_text,
             "README should document the CI-equivalent unsigned Debug and Release target builds with log scanning",
             failures)
     require("parseable dimensions, frame rate, and positive video duration" in readme_text,
@@ -556,10 +556,13 @@ def main():
     require("ACTIONABLE_PATTERN" in build_log_scanner_source and "IGNORED_LINE_TOKEN_GROUPS" in build_log_scanner_source and "all(token.lower() in normalized_line" in build_log_scanner_source,
             "build-log scanner should fail on warnings while narrowly ignoring known Xcode AppIntents metadata noise",
             failures)
+    require("BUILD_LOG [BUILD_LOG ...]" in build_log_scanner_source and "for build_log_path in (Path(argument) for argument in sys.argv[1:])" in build_log_scanner_source and "actionable_lines_in(build_log_path)" in build_log_scanner_source,
+            "build-log scanner should accept and scan multiple build logs",
+            failures)
     require("enumerate(build_log, start=1)" in build_log_scanner_source and "{build_log_path}:{line_number}:" in build_log_scanner_source,
             "build-log scanner should print the build-log path and line number for actionable findings",
             failures)
-    require("test_ignores_appintents_metadata_notice" in build_log_scanner_test_source and "test_fails_on_actionable_warning" in build_log_scanner_test_source and "test_fails_on_other_appintents_warning" in build_log_scanner_test_source and ":2: SwiftCompile warning: real source warning" in build_log_scanner_test_source,
+    require("test_ignores_appintents_metadata_notice" in build_log_scanner_test_source and "test_fails_on_actionable_warning" in build_log_scanner_test_source and "test_fails_on_other_appintents_warning" in build_log_scanner_test_source and "test_scans_multiple_build_logs" in build_log_scanner_test_source and ":2: SwiftCompile warning: real source warning" in build_log_scanner_test_source,
             "build-log scanner should have regression coverage for ignored and actionable warnings",
             failures)
     require("xcodebuild" in build_unsigned_source and "-target \"$TARGET_NAME\"" in build_unsigned_source and "CODE_SIGNING_ALLOWED=NO" in build_unsigned_source and "CODE_SIGNING_REQUIRED=NO" in build_unsigned_source and "BUILD_ARCH" in build_unsigned_source and "RUNNER_ARCH" not in build_unsigned_source and "configurations=(Debug Release)" in build_unsigned_source and "build-${configuration}.log" in build_unsigned_source,
@@ -622,7 +625,7 @@ def main():
         require("build-Debug.log" in workflow_text and "build-Release.log" in workflow_text,
                 "macOS build workflow should capture separate Debug and Release logs",
                 failures)
-        require("./scripts/scan_build_log.py build-Debug.log" in workflow_text and "./scripts/scan_build_log.py build-Release.log" in workflow_text,
+        require("./scripts/scan_build_log.py build-Debug.log build-Release.log" in workflow_text,
                 "macOS build workflow should scan captured Debug and Release xcodebuild output",
                 failures)
         require("actions/upload-artifact@v7.0.1" in workflow_text and "xcode-build-logs" in workflow_text and "path: build-*.log" in workflow_text and "if-no-files-found: ignore" in workflow_text,

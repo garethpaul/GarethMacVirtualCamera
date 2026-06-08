@@ -21,25 +21,32 @@ def is_ignored(line):
     )
 
 
-def main():
-    if len(sys.argv) != 2:
-        print("Usage: scan_build_log.py BUILD_LOG", file=sys.stderr)
-        return 2
-
-    build_log_path = Path(sys.argv[1])
-    if not build_log_path.exists():
-        print(f"Build log not found: {build_log_path}", file=sys.stderr)
-        return 2
-
+def actionable_lines_in(build_log_path):
     actionable_lines = []
     with build_log_path.open("r", encoding="utf-8", errors="replace") as build_log:
         for line_number, line in enumerate(build_log, start=1):
             if ACTIONABLE_PATTERN.search(line) and not is_ignored(line):
-                actionable_lines.append((line_number, line.rstrip()))
+                actionable_lines.append((build_log_path, line_number, line.rstrip()))
+
+    return actionable_lines
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: scan_build_log.py BUILD_LOG [BUILD_LOG ...]", file=sys.stderr)
+        return 2
+
+    actionable_lines = []
+    for build_log_path in (Path(argument) for argument in sys.argv[1:]):
+        if not build_log_path.exists():
+            print(f"Build log not found: {build_log_path}", file=sys.stderr)
+            return 2
+
+        actionable_lines.extend(actionable_lines_in(build_log_path))
 
     if actionable_lines:
         print("Actionable build warnings/errors found:")
-        for line_number, line in actionable_lines:
+        for build_log_path, line_number, line in actionable_lines:
             print(f"{build_log_path}:{line_number}: {line}")
         return 1
 
