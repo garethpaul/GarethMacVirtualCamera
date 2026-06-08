@@ -740,13 +740,13 @@ def main():
     require("didOpenSettings" in host_source and "System Settings Unavailable" in host_source,
             "host app should report System Settings launch failures",
             failures)
-    require("./scripts/check_project.sh" in readme_text and "project metadata validation, build-log scanner tests, runtime diagnostics tests, build-product verifier tests, shell syntax checks, and whitespace checks" in readme_text and "bundle identifiers, aligned bundle versions, declared executables, display metadata, privacy usage strings, resolved CoreMediaIO extension metadata, and bundled-video resource metadata" in readme_text and "exact host and extension entitlement keys, shared app-group values, Xcode entitlement file bindings" in readme_text,
+    require("./scripts/check_project.sh" in readme_text and "project metadata validation, build-log scanner tests, runtime diagnostics tests, build-product verifier tests, shell syntax checks, and whitespace checks" in readme_text and "bundle identifiers, aligned bundle versions, declared executables, display metadata, privacy usage strings, bundled runtime diagnostics self-tests, resolved CoreMediaIO extension metadata, and bundled-video resource metadata" in readme_text and "exact host and extension entitlement keys, shared app-group values, Xcode entitlement file bindings" in readme_text,
             "README should document the local pre-push project check",
             failures)
     require("CI-equivalent unsigned compile" in readme_text and "./scripts/build_unsigned.sh" in readme_text and "./scripts/scan_build_log.py build-Debug.log build-Release.log" in readme_text and ".build/Xcode" in readme_text and "BUILD_OUTPUT_PATH" in readme_text,
             "README should document the CI-equivalent unsigned Debug and Release target builds with log scanning",
             failures)
-    require("verifies the built app products contain the embedded system extension, aligned bundle versions, declared executables, display metadata, privacy usage strings, resolved CoreMediaIO extension metadata, and bundled-video metadata" in readme_text,
+    require("verifies the built app products contain the embedded system extension, aligned bundle versions, declared executables, display metadata, privacy usage strings, bundled runtime diagnostics self-tests, resolved CoreMediaIO extension metadata, and bundled-video metadata" in readme_text,
             "README should document CI build-product verification",
             failures)
     require("parseable dimensions, frame rate, and positive video duration" in readme_text,
