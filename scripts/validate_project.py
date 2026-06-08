@@ -513,6 +513,9 @@ def main():
         require("actions/checkout@v6" in workflow_text,
                 "macOS build workflow should use a Node 24-capable checkout action",
                 failures)
+        require("FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true" in workflow_text,
+                "macOS build workflow should opt JavaScript actions into Node 24",
+                failures)
         require("Xcode_26.5" in workflow_text,
                 "macOS build workflow should explicitly select Xcode 26.5",
                 failures)
