@@ -1,5 +1,8 @@
 ## Gareth Mac Virtual Camera Vision
 
+This document explains the current state and direction of the project.
+Project overview and developer docs: [`README.md`](README.md)
+
 Gareth Mac Virtual Camera is a macOS CoreMediaIO camera extension packaged in a
 SwiftUI host app. It publishes a bundled MP4 as a virtual camera named `Gareth
 Video Cam`.
