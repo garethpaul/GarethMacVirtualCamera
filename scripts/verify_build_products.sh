@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_OUTPUT_PATH="${BUILD_OUTPUT_PATH:-.build/Xcode}"
 PRODUCTS_PATH="${PRODUCTS_PATH:-$BUILD_OUTPUT_PATH/Products}"
 APP_NAME="${APP_NAME:-GarethVideoCam.app}"
@@ -9,6 +10,9 @@ APP_ID="${APP_ID:-com.garethpaul.GarethVideoCam}"
 EXTENSION_ID="${EXTENSION_ID:-com.garethpaul.GarethVideoCam.Extension}"
 APP_DISPLAY_NAME="${APP_DISPLAY_NAME:-Gareth Video Cam}"
 EXTENSION_DISPLAY_NAME="${EXTENSION_DISPLAY_NAME:-Gareth Video Cam Extension}"
+EXPECTED_VIDEO_WIDTH="${EXPECTED_VIDEO_WIDTH:-1280}"
+EXPECTED_VIDEO_HEIGHT="${EXPECTED_VIDEO_HEIGHT:-720}"
+EXPECTED_VIDEO_FRAME_RATE="${EXPECTED_VIDEO_FRAME_RATE:-24}"
 
 if [ "$#" -gt 0 ]; then
   configurations=("$@")
@@ -173,6 +177,60 @@ verify_extension_cmio_metadata() {
   fi
 }
 
+verify_bundled_video_metadata() {
+  local configuration="$1"
+  local video_path="$2"
+
+  python3 - "$ROOT/scripts/validate_project.py" "$video_path" "$EXPECTED_VIDEO_WIDTH" "$EXPECTED_VIDEO_HEIGHT" "$EXPECTED_VIDEO_FRAME_RATE" "$configuration" <<'PY'
+import importlib.util
+import sys
+from pathlib import Path
+
+sys.dont_write_bytecode = True
+
+validator_path = Path(sys.argv[1])
+video_path = Path(sys.argv[2])
+expected_width = int(sys.argv[3])
+expected_height = int(sys.argv[4])
+expected_frame_rate = int(sys.argv[5])
+configuration = sys.argv[6]
+
+spec = importlib.util.spec_from_file_location("validate_project", validator_path)
+validator = importlib.util.module_from_spec(spec)
+assert spec.loader is not None
+spec.loader.exec_module(validator)
+
+metadata = validator.mp4_video_metadata(video_path)
+dimensions = metadata.get("dimensions")
+frame_rate = metadata.get("frame_rate")
+duration_seconds = metadata.get("duration_seconds")
+
+if dimensions is None:
+    print(f"Missing {configuration} bundled video dimensions: {video_path}", file=sys.stderr)
+    raise SystemExit(1)
+
+if dimensions != (expected_width, expected_height):
+    print(
+        f"Unexpected {configuration} bundled video dimensions: "
+        f"{dimensions[0]}x{dimensions[1]}",
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
+
+if frame_rate != expected_frame_rate:
+    print(
+        f"Unexpected {configuration} bundled video frame rate: "
+        f"{frame_rate or 'unknown'}",
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
+
+if duration_seconds is None or duration_seconds <= 0:
+    print(f"Missing {configuration} bundled video duration: {video_path}", file=sys.stderr)
+    raise SystemExit(1)
+PY
+}
+
 verify_aligned_bundle_versions() {
   local configuration="$1"
   local app_path="$2"
@@ -241,6 +299,7 @@ for configuration in "${configurations[@]}"; do
     printf 'Missing or empty %s bundled video resource: %s\n' "$configuration" "$video_path" >&2
     exit 1
   fi
+  verify_bundled_video_metadata "$configuration" "$video_path"
 
-  printf 'Verified %s app product, embedded system extension, versions, executables, display metadata, privacy usage strings, resolved CMIO metadata, and bundled video.\n' "$configuration"
+  printf 'Verified %s app product, embedded system extension, versions, executables, display metadata, privacy usage strings, resolved CMIO metadata, and bundled video metadata.\n' "$configuration"
 done

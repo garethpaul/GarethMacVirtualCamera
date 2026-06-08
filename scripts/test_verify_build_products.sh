@@ -108,7 +108,7 @@ write_product_fixture() {
   write_executable_fixture "$app_path" "GarethVideoCam"
   write_executable_fixture "$extension_path" "$EXTENSION_ID"
   mkdir -p "$(dirname "$video_path")"
-  printf 'video fixture\n' > "$video_path"
+  cp "$ROOT/Extension/video.mp4" "$video_path"
 }
 
 GOOD_PRODUCTS="$TMP_DIR/good/Products"
@@ -144,6 +144,21 @@ fi
 if ! grep -q "Missing or empty Debug bundled video resource" "$TMP_DIR/missing-video.err"; then
   printf 'Verifier failure did not explain the missing bundled video resource.\n' >&2
   cat "$TMP_DIR/missing-video.err" >&2
+  exit 1
+fi
+
+BAD_VIDEO_METADATA_PRODUCTS="$TMP_DIR/bad-video-metadata/Products"
+write_product_fixture "$BAD_VIDEO_METADATA_PRODUCTS" Debug
+printf 'video fixture\n' > "$BAD_VIDEO_METADATA_PRODUCTS/Debug/GarethVideoCam.app/Contents/Library/SystemExtensions/$EXTENSION_NAME/Contents/Resources/video.mp4"
+
+if PRODUCTS_PATH="$BAD_VIDEO_METADATA_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/bad-video-metadata.out" 2>"$TMP_DIR/bad-video-metadata.err"; then
+  printf 'Expected verifier to reject an unparsable bundled video resource.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug bundled video dimensions" "$TMP_DIR/bad-video-metadata.err"; then
+  printf 'Verifier failure did not explain the unparsable bundled video metadata.\n' >&2
+  cat "$TMP_DIR/bad-video-metadata.err" >&2
   exit 1
 fi
 
