@@ -843,6 +843,11 @@ private struct DetailsPanel: View {
                 }
 
                 HStack(spacing: 10) {
+                    Button(action: manager.refreshExtensionInfo) {
+                        Label("Refresh Status", systemImage: "arrow.clockwise")
+                    }
+                    .buttonStyle(.bordered)
+
                     Button(action: manager.openSystemSettings) {
                         Label("System Settings", systemImage: "gearshape")
                     }
