@@ -101,6 +101,12 @@ def main():
         require("runs-on: macos-26" in workflow_text,
                 "macOS build workflow should run on the macOS 26 runner",
                 failures)
+        require("actions/checkout@v6" in workflow_text,
+                "macOS build workflow should use a Node 24-capable checkout action",
+                failures)
+        require("Xcode_26.5" in workflow_text,
+                "macOS build workflow should explicitly select Xcode 26.5",
+                failures)
         require("xcodebuild" in workflow_text and "CODE_SIGNING_ALLOWED=NO" in workflow_text,
                 "macOS build workflow should perform an unsigned xcodebuild",
                 failures)

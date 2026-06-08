@@ -375,7 +375,7 @@ final class ExtensionStreamSource: NSObject, CMIOExtensionStreamSource {
     var activeFormatIndex: Int = 0 {
         didSet {
             if activeFormatIndex != 0 {
-                logger.error("Invalid active format index: \(activeFormatIndex, privacy: .public)")
+                logger.error("Invalid active format index: \(self.activeFormatIndex, privacy: .public)")
             }
         }
     }

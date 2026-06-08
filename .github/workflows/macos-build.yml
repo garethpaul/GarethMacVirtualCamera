@@ -21,7 +21,19 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
+      - name: Select Xcode 26.5
+        run: |
+          if [ -d /Applications/Xcode_26.5.0.app ]; then
+            sudo xcode-select -s /Applications/Xcode_26.5.0.app/Contents/Developer
+          elif [ -d /Applications/Xcode_26.5.app ]; then
+            sudo xcode-select -s /Applications/Xcode_26.5.app/Contents/Developer
+          else
+            echo "Xcode 26.5 is not installed on this runner."
+            ls -1 /Applications | grep Xcode || true
+            exit 1
+          fi
 
       - name: Show toolchain
         run: |
