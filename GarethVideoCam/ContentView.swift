@@ -731,6 +731,49 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         return nil
     }
 
+    var requestReadinessNextAction: String {
+        if let applicationLocationReadinessDetail {
+            return "Move the app to \(expectedApplicationBundlePath). \(applicationLocationReadinessDetail)"
+        }
+
+        if let applicationIdentifierReadinessDetail {
+            return "Use a build signed with the expected host bundle identifier. \(applicationIdentifierReadinessDetail)"
+        }
+
+        if !appCodeSigningStatus.isValid {
+            return "Sign the host app with a valid Apple Developer identity. \(appCodeSigningStatus.detail)"
+        }
+
+        if let appEntitlementReadinessDetail {
+            return "Sign the host app with the \(requiredSystemExtensionInstallEntitlement) entitlement. \(appEntitlementReadinessDetail)"
+        }
+
+        if let extensionMetadataReadinessDetail {
+            return "Rebuild the embedded system extension so its executable and CMIO metadata are complete. \(extensionMetadataReadinessDetail)"
+        }
+
+        if let bundledVideoReadinessDetail {
+            return "Rebuild the embedded system extension with a non-empty bundled video resource. \(bundledVideoReadinessDetail)"
+        }
+
+        if !extensionCodeSigningStatus.isValid {
+            return "Sign the embedded system extension with a valid Apple Developer identity. \(extensionCodeSigningStatus.detail)"
+        }
+
+        if let signingTeamReadinessDetail {
+            return "Sign the app and embedded system extension with the same Apple Developer Team ID. \(signingTeamReadinessDetail)"
+        }
+
+        switch state {
+        case .needsApproval:
+            return "Open System Settings and approve the pending camera extension request."
+        case .requiresRestart:
+            return "Restart macOS to finish the pending \(pendingRequestKind?.diagnosticTitle.lowercased() ?? "request")."
+        default:
+            return "Submit the system extension request."
+        }
+    }
+
     var appTeamIdentifier: String {
         return appCodeSigningStatus.teamIdentifier ?? "Unknown"
     }
@@ -821,6 +864,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         App Quarantine Detail: \(appQuarantineStatus.detail)
         Request Readiness: \(requestReadinessStatus)
         Request Readiness Detail: \(requestReadinessDetail ?? "System extension requests can be submitted.")
+        Request Readiness Next Action: \(requestReadinessNextAction)
         Pending Request: \(pendingRequestStatus)
         State Guidance: \(stateGuidanceDetail ?? "None")
         Last Failure: \(lastFailureDetail ?? "No failure recorded.")
@@ -1668,6 +1712,12 @@ private struct ActionPanel: View {
                         .foregroundStyle(.orange)
                 }
 
+                Label(manager.requestReadinessNextAction, systemImage: "arrow.right.circle.fill")
+                    .font(.callout)
+                    .foregroundStyle(manager.canSubmitSystemExtensionRequests ? .blue : .orange)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .textSelection(.enabled)
+
                 if let stateGuidanceDetail = manager.stateGuidanceDetail {
                     Label(stateGuidanceDetail, systemImage: manager.state.systemImage)
                         .font(.callout)
@@ -1844,6 +1894,7 @@ private struct DetailsPanel: View {
                 if let requestReadinessDetail = manager.requestReadinessDetail {
                     DetailRow(title: "Readiness Detail", value: requestReadinessDetail)
                 }
+                DetailRow(title: "Readiness Next Action", value: manager.requestReadinessNextAction)
                 if let lastFailureDetail = manager.lastFailureDetail {
                     DetailRow(title: "Last Failure", value: lastFailureDetail)
                 }
