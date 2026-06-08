@@ -61,7 +61,7 @@ Signed runtime activation checklist:
 3. Confirm the in-app readiness summary has no blocked checks, then choose Install.
 4. Approve the pending camera extension in System Settings if macOS requests approval.
 5. Use the Runtime Evidence section's Copy Command action, then run the copied command on the signed macOS host.
-6. Confirm the diagnostics report `Runtime readiness result: ready`, `Runtime activation evidence result: active`, `Extension registration entry present: yes`, `Extension registration activated enabled: yes`, `Bundled video metadata ready: yes`, `Application group match ready: yes`, and `Expected virtual camera device present: yes`.
+6. Confirm the diagnostics report `Runtime readiness result: ready`, `Runtime activation evidence result: active`, `Extension registration entry present: yes`, `Extension registration activated enabled: yes`, `Extension executable ready: yes`, `Extension CMIO Mach service ready: yes`, `Bundled video metadata ready: yes`, `Application group match ready: yes`, and `Expected virtual camera device present: yes`.
 
 The Runtime Evidence section reports whether the copied command is using the bundled app resource or a repository fallback.
 
