@@ -447,6 +447,9 @@ def main():
     require(".frame(minWidth: 720, minHeight: 560)" in app_entry_source and ".windowResizability(.contentMinSize)" in app_entry_source,
             "host app should allow a compact but bounded resizable window",
             failures)
+    require('CommandMenu("Camera")' in app_entry_source and 'Button("Install Camera Extension")' in app_entry_source and "systemExtensionRequestManager.install()" in app_entry_source and 'Button("Uninstall Camera Extension")' in app_entry_source and "systemExtensionRequestManager.uninstall()" in app_entry_source and 'Button("Refresh Status")' in app_entry_source and "systemExtensionRequestManager.refreshStatus()" in app_entry_source and 'Button("Copy Diagnostics")' in app_entry_source and "systemExtensionRequestManager.copyDiagnostics()" in app_entry_source and 'Button("Open System Settings")' in app_entry_source,
+            "host app should expose native macOS menu commands for common camera actions",
+            failures)
     require("activateFileViewerSelecting" in host_source and "Reveal App" in host_source,
             "host app should let users reveal the running app bundle in Finder",
             failures)
