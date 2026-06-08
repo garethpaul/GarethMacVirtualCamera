@@ -621,8 +621,8 @@ def main():
     require(verify_build_products_test_path.stat().st_mode & 0o111,
             "build-product verifier test script should be executable",
             failures)
-    require("GARETH_DIAGNOSTICS_SELF_TEST=readiness-rollup" in runtime_diagnostics_test_source and "Runtime readiness result: blocked" in runtime_diagnostics_test_source and "Runtime readiness checks ready: 1/3" in runtime_diagnostics_test_source and "Runtime readiness next action: resolve Blocked fixture" in runtime_diagnostics_test_source and "Runtime diagnostics tests passed." in runtime_diagnostics_test_source,
-            "runtime diagnostics test should cover the counted readiness rollup",
+    require("GARETH_DIAGNOSTICS_SELF_TEST=readiness-rollup" in runtime_diagnostics_test_source and "GARETH_DIAGNOSTICS_SELF_TEST=readiness-rollup-unknown" in runtime_diagnostics_test_source and "GARETH_DIAGNOSTICS_SELF_TEST=readiness-rollup-ready" in runtime_diagnostics_test_source and "Runtime readiness result: blocked" in runtime_diagnostics_test_source and "Runtime readiness result: incomplete" in runtime_diagnostics_test_source and "Runtime readiness result: ready" in runtime_diagnostics_test_source and "Runtime readiness checks ready: 1/3" in runtime_diagnostics_test_source and "Runtime readiness checks ready: 1/2" in runtime_diagnostics_test_source and "Runtime readiness checks ready: 1/1" in runtime_diagnostics_test_source and "Runtime readiness next action: resolve Blocked fixture" in runtime_diagnostics_test_source and "Runtime readiness next action: inspect Unknown fixture" in runtime_diagnostics_test_source and "Runtime readiness next action: submit the system extension request" in runtime_diagnostics_test_source and "Runtime diagnostics tests passed." in runtime_diagnostics_test_source,
+            "runtime diagnostics test should cover blocked, unknown, and ready counted readiness rollups",
             failures)
     require(runtime_diagnostics_test_path.stat().st_mode & 0o111,
             "runtime diagnostics test script should be executable",

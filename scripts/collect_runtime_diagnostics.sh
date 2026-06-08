@@ -202,13 +202,17 @@ print_readiness_rollup() {
   fi
 }
 
-run_readiness_rollup_self_test() {
+reset_readiness_rollup_counters() {
   readiness_ready_count=0
   readiness_blocked_count=0
   readiness_unknown_count=0
   readiness_total_count=0
   readiness_first_blocked_label=""
   readiness_first_unknown_label=""
+}
+
+run_readiness_rollup_blocked_self_test() {
+  reset_readiness_rollup_counters
 
   print_readiness_check "Ready fixture" "yes"
   print_readiness_check "Blocked fixture" "no"
@@ -216,10 +220,35 @@ run_readiness_rollup_self_test() {
   print_readiness_rollup
 }
 
-if [ "${GARETH_DIAGNOSTICS_SELF_TEST:-}" = "readiness-rollup" ]; then
-  run_readiness_rollup_self_test
-  exit 0
-fi
+run_readiness_rollup_unknown_self_test() {
+  reset_readiness_rollup_counters
+
+  print_readiness_check "Ready fixture" "yes"
+  print_readiness_check "Unknown fixture" "unknown"
+  print_readiness_rollup
+}
+
+run_readiness_rollup_ready_self_test() {
+  reset_readiness_rollup_counters
+
+  print_readiness_check "Ready fixture" "yes"
+  print_readiness_rollup
+}
+
+case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
+  readiness-rollup|readiness-rollup-blocked)
+    run_readiness_rollup_blocked_self_test
+    exit 0
+    ;;
+  readiness-rollup-unknown)
+    run_readiness_rollup_unknown_self_test
+    exit 0
+    ;;
+  readiness-rollup-ready)
+    run_readiness_rollup_ready_self_test
+    exit 0
+    ;;
+esac
 
 print_quarantine_status() {
   local label="$1"
