@@ -47,6 +47,27 @@ read_bundle_executable() {
   read_info_plist_string "$bundle_path" CFBundleExecutable
 }
 
+read_extension_mach_service_name() {
+  local bundle_path="$1"
+  local info_plist="$bundle_path/Contents/Info.plist"
+
+  if [ ! -f "$info_plist" ]; then
+    return
+  fi
+
+  python3 - "$info_plist" 2>/dev/null <<'PY' || true
+import plistlib
+import sys
+
+with open(sys.argv[1], "rb") as info_file:
+    cmio_extension = plistlib.load(info_file).get("CMIOExtension", {})
+
+mach_service_name = cmio_extension.get("CMIOExtensionMachServiceName", "")
+if mach_service_name:
+    print(mach_service_name)
+PY
+}
+
 verify_bundle_executable() {
   local configuration="$1"
   local bundle_label="$2"
@@ -63,6 +84,18 @@ verify_bundle_executable() {
   executable_path="$bundle_path/Contents/MacOS/$executable_name"
   if [ ! -f "$executable_path" ] || [ ! -x "$executable_path" ]; then
     printf 'Missing or non-executable %s %s executable: %s\n' "$configuration" "$bundle_label" "$executable_path" >&2
+    exit 1
+  fi
+}
+
+verify_extension_cmio_metadata() {
+  local configuration="$1"
+  local bundle_path="$2"
+  local mach_service_name
+
+  mach_service_name="$(read_extension_mach_service_name "$bundle_path")"
+  if [ -z "$mach_service_name" ]; then
+    printf 'Missing %s extension CMIOExtensionMachServiceName.\n' "$configuration" >&2
     exit 1
   fi
 }
@@ -97,11 +130,12 @@ for configuration in "${configurations[@]}"; do
   fi
 
   verify_bundle_executable "$configuration" "extension" "$extension_path"
+  verify_extension_cmio_metadata "$configuration" "$extension_path"
 
   if [ ! -s "$video_path" ]; then
     printf 'Missing or empty %s bundled video resource: %s\n' "$configuration" "$video_path" >&2
     exit 1
   fi
 
-  printf 'Verified %s app product, embedded system extension, executables, and bundled video.\n' "$configuration"
+  printf 'Verified %s app product, embedded system extension, executables, CMIO metadata, and bundled video.\n' "$configuration"
 done

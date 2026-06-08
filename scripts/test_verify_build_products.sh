@@ -13,17 +13,25 @@ write_info_plist() {
   local bundle_path="$1"
   local bundle_identifier="$2"
   local executable_name="$3"
+  local mach_service_name="$4"
 
   mkdir -p "$bundle_path/Contents"
-  python3 - "$bundle_path/Contents/Info.plist" "$bundle_identifier" "$executable_name" <<'PY'
+  python3 - "$bundle_path/Contents/Info.plist" "$bundle_identifier" "$executable_name" "$mach_service_name" <<'PY'
 import plistlib
 import sys
 
+info = {
+    "CFBundleExecutable": sys.argv[3],
+    "CFBundleIdentifier": sys.argv[2],
+}
+
+if sys.argv[4]:
+    info["CMIOExtension"] = {
+        "CMIOExtensionMachServiceName": sys.argv[4],
+    }
+
 with open(sys.argv[1], "wb") as info_file:
-    plistlib.dump({
-        "CFBundleExecutable": sys.argv[3],
-        "CFBundleIdentifier": sys.argv[2],
-    }, info_file)
+    plistlib.dump(info, info_file)
 PY
 }
 
@@ -41,12 +49,13 @@ write_product_fixture() {
   local products_path="$1"
   local configuration="$2"
   local extension_identifier="${3:-$EXTENSION_ID}"
+  local extension_mach_service_name="${4-$EXTENSION_ID}"
   local app_path="$products_path/$configuration/GarethVideoCam.app"
   local extension_path="$app_path/Contents/Library/SystemExtensions/$EXTENSION_NAME"
   local video_path="$extension_path/Contents/Resources/video.mp4"
 
-  write_info_plist "$app_path" "$APP_ID" "GarethVideoCam"
-  write_info_plist "$extension_path" "$extension_identifier" "$EXTENSION_ID"
+  write_info_plist "$app_path" "$APP_ID" "GarethVideoCam" ""
+  write_info_plist "$extension_path" "$extension_identifier" "$EXTENSION_ID" "$extension_mach_service_name"
   write_executable_fixture "$app_path" "GarethVideoCam"
   write_executable_fixture "$extension_path" "$EXTENSION_ID"
   mkdir -p "$(dirname "$video_path")"
@@ -101,6 +110,20 @@ fi
 if ! grep -q "Missing or non-executable Debug extension executable" "$TMP_DIR/missing-executable.err"; then
   printf 'Verifier failure did not explain the missing extension executable.\n' >&2
   cat "$TMP_DIR/missing-executable.err" >&2
+  exit 1
+fi
+
+MISSING_CMIO_PRODUCTS="$TMP_DIR/missing-cmio/Products"
+write_product_fixture "$MISSING_CMIO_PRODUCTS" Debug "$EXTENSION_ID" ""
+
+if PRODUCTS_PATH="$MISSING_CMIO_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/missing-cmio.out" 2>"$TMP_DIR/missing-cmio.err"; then
+  printf 'Expected verifier to reject missing CMIO extension metadata.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug extension CMIOExtensionMachServiceName" "$TMP_DIR/missing-cmio.err"; then
+  printf 'Verifier failure did not explain the missing CMIO extension metadata.\n' >&2
+  cat "$TMP_DIR/missing-cmio.err" >&2
   exit 1
 fi
 
