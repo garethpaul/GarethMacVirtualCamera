@@ -110,6 +110,16 @@ verify_extension_cmio_metadata() {
     printf 'Missing %s extension CMIOExtensionMachServiceName.\n' "$configuration" >&2
     exit 1
   fi
+
+  if [[ "$mach_service_name" == *'$('* || "$mach_service_name" == *'${'* ]]; then
+    printf 'Unresolved %s extension CMIOExtensionMachServiceName: %s\n' "$configuration" "$mach_service_name" >&2
+    exit 1
+  fi
+
+  if [ "$mach_service_name" != "$EXTENSION_ID" ] && [[ "$mach_service_name" != *".$EXTENSION_ID" ]]; then
+    printf 'Unexpected %s extension CMIOExtensionMachServiceName: %s\n' "$configuration" "$mach_service_name" >&2
+    exit 1
+  fi
 }
 
 verify_aligned_bundle_versions() {
@@ -175,5 +185,5 @@ for configuration in "${configurations[@]}"; do
     exit 1
   fi
 
-  printf 'Verified %s app product, embedded system extension, versions, executables, CMIO metadata, and bundled video.\n' "$configuration"
+  printf 'Verified %s app product, embedded system extension, versions, executables, resolved CMIO metadata, and bundled video.\n' "$configuration"
 done

@@ -135,6 +135,34 @@ if ! grep -q "Missing Debug extension CMIOExtensionMachServiceName" "$TMP_DIR/mi
   exit 1
 fi
 
+UNRESOLVED_CMIO_PRODUCTS="$TMP_DIR/unresolved-cmio/Products"
+write_product_fixture "$UNRESOLVED_CMIO_PRODUCTS" Debug "$EXTENSION_ID" '$(TeamIdentifierPrefix)$(PRODUCT_BUNDLE_IDENTIFIER)'
+
+if PRODUCTS_PATH="$UNRESOLVED_CMIO_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/unresolved-cmio.out" 2>"$TMP_DIR/unresolved-cmio.err"; then
+  printf 'Expected verifier to reject unresolved CMIO extension metadata.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Unresolved Debug extension CMIOExtensionMachServiceName" "$TMP_DIR/unresolved-cmio.err"; then
+  printf 'Verifier failure did not explain unresolved CMIO extension metadata.\n' >&2
+  cat "$TMP_DIR/unresolved-cmio.err" >&2
+  exit 1
+fi
+
+WRONG_CMIO_PRODUCTS="$TMP_DIR/wrong-cmio/Products"
+write_product_fixture "$WRONG_CMIO_PRODUCTS" Debug "$EXTENSION_ID" "com.example.WrongMachService"
+
+if PRODUCTS_PATH="$WRONG_CMIO_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/wrong-cmio.out" 2>"$TMP_DIR/wrong-cmio.err"; then
+  printf 'Expected verifier to reject an unexpected CMIO Mach service name.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Unexpected Debug extension CMIOExtensionMachServiceName" "$TMP_DIR/wrong-cmio.err"; then
+  printf 'Verifier failure did not explain the unexpected CMIO extension metadata.\n' >&2
+  cat "$TMP_DIR/wrong-cmio.err" >&2
+  exit 1
+fi
+
 SHORT_VERSION_MISMATCH_PRODUCTS="$TMP_DIR/short-version-mismatch/Products"
 write_product_fixture "$SHORT_VERSION_MISMATCH_PRODUCTS" Debug "$EXTENSION_ID" "$EXTENSION_ID" "1.0" "2.0"
 
