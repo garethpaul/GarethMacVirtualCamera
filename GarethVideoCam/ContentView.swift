@@ -59,6 +59,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     enum InstallState: Equatable {
         case idle
         case ready
+        case needsApplicationLocation
         case locatingExtension
         case activating
         case needsApproval
@@ -73,6 +74,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
                 return "Idle"
             case .ready:
                 return "Ready"
+            case .needsApplicationLocation:
+                return "Move to Applications"
             case .locatingExtension:
                 return "Locating Extension"
             case .activating:
@@ -94,6 +97,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             switch self {
             case .idle, .ready:
                 return "circle.dashed"
+            case .needsApplicationLocation:
+                return "exclamationmark.triangle.fill"
             case .locatingExtension, .activating, .deactivating:
                 return "arrow.triangle.2.circlepath"
             case .needsApproval:
@@ -113,6 +118,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
                 return .secondary
             case .ready:
                 return .blue
+            case .needsApplicationLocation:
+                return .orange
             case .locatingExtension, .activating, .deactivating:
                 return .indigo
             case .needsApproval, .requiresRestart:
@@ -198,11 +205,20 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     var applicationLocationStatus: String {
-        let path = Bundle.main.bundleURL.path
-        return path.hasPrefix("/Applications/") ? "In Applications" : "Outside Applications"
+        return canSubmitSystemExtensionRequests ? "In Applications" : "Outside Applications"
+    }
+
+    var applicationBundlePath: String {
+        return Bundle.main.bundleURL.path
+    }
+
+    var canSubmitSystemExtensionRequests: Bool {
+        return applicationBundlePath.hasPrefix("/Applications/")
     }
 
     func install() {
+        guard prepareForSystemExtensionRequest() else { return }
+
         state = .locatingExtension
         do {
             let extensionInfo = try loadBundledExtensionInfo()
@@ -222,6 +238,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     func uninstall() {
+        guard prepareForSystemExtensionRequest() else { return }
+
         state = .locatingExtension
         do {
             let extensionInfo = try loadBundledExtensionInfo()
@@ -243,8 +261,11 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     func refreshExtensionInfo() {
         do {
             extensionInfo = try loadBundledExtensionInfo()
-            if state == .idle {
-                state = .ready
+            switch state {
+            case .idle, .ready, .needsApplicationLocation:
+                state = canSubmitSystemExtensionRequests ? .ready : .needsApplicationLocation
+            default:
+                break
             }
         } catch {
             handleFailure(error)
@@ -280,6 +301,18 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         return ExtensionInfo(identifier: identifier,
                              version: version,
                              bundlePath: extensionURL.path)
+    }
+
+    private func prepareForSystemExtensionRequest() -> Bool {
+        guard canSubmitSystemExtensionRequests else {
+            state = .needsApplicationLocation
+            appendActivity(level: .warning,
+                           title: "Move Required",
+                           detail: "Current path is \(applicationBundlePath).")
+            return false
+        }
+
+        return true
     }
 
     private func handleFailure(_ error: Error) {
@@ -479,29 +512,40 @@ private struct ActionPanel: View {
 
     var body: some View {
         SectionSurface {
-            HStack(alignment: .center, spacing: 12) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Camera Extension")
-                        .font(.title3.weight(.semibold))
-                    Text(manager.extensionInfo?.identifier ?? "No bundled extension")
-                        .font(.callout.monospaced())
-                        .foregroundStyle(.secondary)
-                        .textSelection(.enabled)
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .center, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Camera Extension")
+                            .font(.title3.weight(.semibold))
+                        Text(manager.extensionInfo?.identifier ?? "No bundled extension")
+                            .font(.callout.monospaced())
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .textSelection(.enabled)
+                    }
+                    .layoutPriority(1)
+
+                    Spacer(minLength: 16)
+
+                    Button(action: manager.install) {
+                        Label("Install", systemImage: "arrow.down.circle.fill")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(manager.isBusy || !manager.canSubmitSystemExtensionRequests)
+
+                    Button(action: manager.uninstall) {
+                        Label("Uninstall", systemImage: "trash")
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(manager.isBusy || !manager.canSubmitSystemExtensionRequests)
                 }
 
-                Spacer(minLength: 16)
-
-                Button(action: manager.install) {
-                    Label("Install", systemImage: "arrow.down.circle.fill")
+                if !manager.canSubmitSystemExtensionRequests {
+                    Label("System extension requests require /Applications.", systemImage: "exclamationmark.triangle.fill")
+                        .font(.callout)
+                        .foregroundStyle(.orange)
                 }
-                .buttonStyle(.borderedProminent)
-                .disabled(manager.isBusy)
-
-                Button(action: manager.uninstall) {
-                    Label("Uninstall", systemImage: "trash")
-                }
-                .buttonStyle(.bordered)
-                .disabled(manager.isBusy)
             }
         }
     }
@@ -518,6 +562,7 @@ private struct DetailsPanel: View {
 
                 DetailRow(title: "Extension Version", value: manager.extensionInfo?.version ?? "Unknown")
                 DetailRow(title: "Application Location", value: manager.applicationLocationStatus)
+                DetailRow(title: "Application Path", value: manager.applicationBundlePath, monospaced: true)
 
                 if let bundlePath = manager.extensionInfo?.bundlePath {
                     DetailRow(title: "Bundle Path", value: bundlePath, monospaced: true)
@@ -603,7 +648,8 @@ private struct DetailRow: View {
             Text(value)
                 .font(monospaced ? .callout.monospaced() : .callout)
                 .textSelection(.enabled)
-            Spacer()
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }
