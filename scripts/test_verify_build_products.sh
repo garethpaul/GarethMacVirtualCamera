@@ -188,11 +188,14 @@ if stale_self_test not in stale_outputs:
 outputs = dict(passing_outputs)
 outputs[stale_self_test] = stale_outputs[stale_self_test]
 
+def shell_single_quote(value):
+    return "'" + value.replace("'", "'\"'\"'") + "'"
+
 case_lines = []
 for self_test, lines in outputs.items():
     case_lines.append(f"  {self_test})")
     for line in lines:
-        case_lines.append(f"    printf '{line}\\n'")
+        case_lines.append(f"    printf '%s\\n' {shell_single_quote(line)}")
     case_lines.append("    ;;")
 
 script_path.write_text("""#!/usr/bin/env bash

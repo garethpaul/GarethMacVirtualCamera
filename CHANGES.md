@@ -36,3 +36,4 @@
 - Added extension executable and CMIO Mach service readiness to copied runtime evidence expectations.
 - Verified bundled runtime diagnostics camera-device, registration, and activation-evidence self-tests inside built app products.
 - Consolidated bundled runtime diagnostics self-test verification in the build-product verifier.
+- Shell-escaped generated stale diagnostics fixture output in build-product verifier tests.
