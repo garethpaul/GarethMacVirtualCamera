@@ -518,8 +518,8 @@ def main():
     require("timing.duration = CameraExtensionConfiguration.frameDuration" in extension_source and "if !timing.duration.flags.contains(.valid)" not in extension_source,
             "extension should retime every emitted sample to the advertised fixed frame duration",
             failures)
-    require("case needsApplicationLocation" in host_source and "case needsBundleIdentifier" in host_source and "canSubmitSystemExtensionRequests" in host_source,
-            "host app should model the /Applications and host bundle identifier requirements before submitting system-extension requests",
+    require("case needsApplicationLocation" in host_source and "case needsBundleIdentifier" in host_source and "case needsApplicationExecutable" in host_source and "canSubmitSystemExtensionRequests" in host_source,
+            "host app should model the /Applications, host bundle identifier, and host executable requirements before submitting system-extension requests",
             failures)
     require("@MainActor\nfinal class SystemExtensionRequestManager" in host_source and "@preconcurrency OSSystemExtensionRequestDelegate" in host_source,
             "host system-extension request manager should keep UI state mutations isolated to the main actor",
@@ -563,7 +563,7 @@ def main():
     require("HeaderView(manager: manager)" in host_source and 'Text(manager.requestReadinessDetail ?? "System extension requests can be submitted.")' in host_source,
             "host app header should surface the current request readiness detail",
             failures)
-    require("struct ReadinessCheck" in host_source and "readinessChecks" in host_source and "readinessProgressSummary" in host_source and "summaryParts" in host_source and "joined(separator: \", \")" in host_source and "requestReadinessNextAction" in host_source and "ReadinessPanel(manager: manager)" in host_source and "ReadinessRow" in host_source and "Team ID Match" in host_source and "Bundle Version Match" in host_source and "Extension Host Entitlement" in host_source and "Application Group" in host_source and "Extension Metadata" in host_source and "Bundled Video" in host_source and "Readiness Summary:" in host_source and "Readiness Checks:" in host_source,
+    require("struct ReadinessCheck" in host_source and "readinessChecks" in host_source and "readinessProgressSummary" in host_source and "summaryParts" in host_source and "joined(separator: \", \")" in host_source and "requestReadinessNextAction" in host_source and "ReadinessPanel(manager: manager)" in host_source and "ReadinessRow" in host_source and "Team ID Match" in host_source and "Bundle Version Match" in host_source and "App Executable" in host_source and "Extension Executable" in host_source and "Extension Host Entitlement" in host_source and "Application Group" in host_source and "Extension Metadata" in host_source and "Bundled Video" in host_source and "Readiness Summary:" in host_source and "Readiness Checks:" in host_source,
             "host app should show and copy a compact readiness summary with ready, blocked, and pending counts, next action, and checklist for activation gates",
             failures)
     require("case evidence" in host_source and "RuntimeEvidencePanel(manager: manager)" in host_source and "private struct RuntimeEvidencePanel" in host_source and "struct RuntimeEvidenceCheck" in host_source and "runtimeEvidenceChecks" in host_source and "runtimeEvidenceExpectedDiagnostics" in host_source and "Runtime Evidence" in host_source and "Current Readiness" in host_source and "Next Action" in host_source and "Command Source" in host_source and "Diagnostics Command" in host_source and "ForEach(Array(manager.runtimeEvidenceChecks.enumerated()), id: \\.element.id)" in host_source,
@@ -577,6 +577,9 @@ def main():
             failures)
     require("applicationIdentifierReadinessDetail" in host_source and "applicationBundleIdentifierStatus" in host_source and "App Bundle ID Check" in host_source and "App Identifier Required" in host_source,
             "host app should block requests when the host bundle identifier does not match the expected identifier",
+            failures)
+    require("applicationExecutableReadinessDetail" in host_source and "App Executable Required" in host_source and "App Executable" in host_source and "App Executable Path:" in host_source and "App Executable Check:" in host_source,
+            "host app should block requests when the host app executable is missing or not executable",
             failures)
     require("lastFailureDetail" in host_source and "Last Failure" in host_source and "No failure recorded." in host_source and "Readiness Failed" in host_source and "Request Failed" in host_source,
             "host app should preserve the last readiness or request failure in details and copied diagnostics",
@@ -626,14 +629,14 @@ def main():
     require("MP4Atom" in host_source and "atoms(in data:" in host_source and "atomType(in data:" in host_source and "readUInt16" in host_source and "readUInt32" in host_source and "readUInt64" in host_source and "parseMdhd" in host_source and "parseHdlr" in host_source and "parseStts" in host_source and "findSttsEntries" in host_source and "parseStsdDimensions" in host_source and "avc1" in host_source and "hvc1" in host_source and "hev1" in host_source and "mp4v" in host_source,
             "host app should parse bundled MP4 video dimensions, frame rate, and duration for readiness",
             failures)
-    require("extensionInfo != nil" in host_source and "extensionMetadataReadinessDetail == nil" in host_source and "bundledVideoReadinessDetail == nil" in host_source and "isExtensionMetadataFailureDetail" in host_source and "isBundledVideoFailureDetail" in host_source and "containsUnresolvedBuildSetting" in host_source and "isExpectedMachServiceName" in host_source and "Team ID-prefixed value ending in" in host_source and "bundledVideoMetadataSummary" in host_source,
-            "host app should make extension metadata, resolved CMIO Mach service, and bundled-video readiness explicit system-extension request gates",
+    require("extensionInfo != nil" in host_source and "extensionExecutableReadinessDetail == nil" in host_source and "extensionMetadataReadinessDetail == nil" in host_source and "bundledVideoReadinessDetail == nil" in host_source and "isExtensionExecutableFailureDetail" in host_source and "isExtensionMetadataFailureDetail" in host_source and "isBundledVideoFailureDetail" in host_source and "containsUnresolvedBuildSetting" in host_source and "isExpectedMachServiceName" in host_source and "Team ID-prefixed value ending in" in host_source and "bundledVideoMetadataSummary" in host_source,
+            "host app should make extension executable, resolved CMIO Mach service, and bundled-video readiness explicit system-extension request gates",
             failures)
     require("NSRegularExpression.escapedPattern(for: extensionIdentifier)" in host_source and "^[A-Za-z0-9]+\\\\." in host_source,
             "host app should only accept direct or single Team-ID-prefixed CMIO Mach service identifiers",
             failures)
-    require("Extension Executable:" in host_source and "Extension Executable Path:" in host_source and "Extension CMIO Mach Service:" in host_source and "Extension CMIO Mach Service Resolved:" in host_source and "Extension CMIO Mach Service Identifier Match:" in host_source and "Extension Bundle Path" in host_source and "Extension Executable" in host_source and "Extension Executable Path" in host_source and "Extension CMIO Mach Service" in host_source and "Extension CMIO Mach Service Resolved" in host_source and "Extension CMIO Mach Service Identifier Match" in host_source and "Bundled Video Path" in host_source and "Bundled Video Size" in host_source and "Bundled Video Dimensions" in host_source and "Bundled Video Frame Rate" in host_source and "Bundled Video Duration" in host_source,
-            "host app should show and copy extension metadata, CMIO Mach service readiness, and bundled-video diagnostics",
+    require("App Executable Path:" in host_source and "App Executable Check:" in host_source and "Extension Executable:" in host_source and "Extension Executable Path:" in host_source and "Extension Executable Check:" in host_source and "Extension CMIO Mach Service:" in host_source and "Extension CMIO Mach Service Resolved:" in host_source and "Extension CMIO Mach Service Identifier Match:" in host_source and "Extension Bundle Path" in host_source and "Extension Executable" in host_source and "Extension Executable Path" in host_source and "Extension CMIO Mach Service" in host_source and "Extension CMIO Mach Service Resolved" in host_source and "Extension CMIO Mach Service Identifier Match" in host_source and "Bundled Video Path" in host_source and "Bundled Video Size" in host_source and "Bundled Video Dimensions" in host_source and "Bundled Video Frame Rate" in host_source and "Bundled Video Duration" in host_source,
+            "host app should show and copy app executable, extension executable, CMIO Mach service readiness, and bundled-video diagnostics",
             failures)
     require("nsError.domain" in host_source and "unknown code \\(errorCode)" in host_source,
             "host app should preserve system-extension failure domain and code diagnostics",
@@ -677,8 +680,8 @@ def main():
     require("System Extension Entitlement" in host_source and "App System Extension Entitlement:" in host_source and "Extension Host-Only Entitlement" in host_source and "extensionHostOnlyEntitlementStatus" in host_source and "App Application Groups" in host_source and "Extension Application Groups" in host_source and "applicationGroupStatus" in host_source,
             "host app should show and copy app and extension entitlement diagnostics",
             failures)
-    require("expectedApplicationBundleIdentifier" in host_source and "applicationBundleIdentifier" in host_source and "Expected App ID" in host_source and "Actual App ID" in host_source and "App Bundle ID Check" in host_source and "Expected Extension ID" in host_source and "Expected App Path:" in host_source,
-            "host app should show and copy expected and actual bundle identifier and app path diagnostics",
+    require("expectedApplicationBundleIdentifier" in host_source and "applicationBundleIdentifier" in host_source and "Expected App ID" in host_source and "Actual App ID" in host_source and "App Bundle ID Check" in host_source and "Expected Extension ID" in host_source and "Expected App Path:" in host_source and "App Executable Path:" in host_source,
+            "host app should show and copy expected and actual bundle identifier, app path, and app executable diagnostics",
             failures)
     require("func copyDiagnostics() {\n        refreshExtensionInfo()" in host_source,
             "host app should refresh readiness before copying diagnostics",
@@ -695,7 +698,7 @@ def main():
     require("#Preview" in host_source and "PreviewProvider" not in host_source,
             "host app should use the modern SwiftUI preview syntax",
             failures)
-    require("case .idle, .ready, .needsApplicationLocation, .needsBundleIdentifier, .needsBundleVersion, .needsExtensionMetadata, .needsBundledVideo, .needsSigning, .deactivated, .failed:" in host_source,
+    require("case .idle, .ready, .needsApplicationLocation, .needsBundleIdentifier, .needsApplicationExecutable, .needsBundleVersion, .needsExtensionMetadata, .needsBundledVideo, .needsSigning, .deactivated, .failed:" in host_source,
             "host app should let a successful refresh recover from stale readiness failures",
             failures)
     require("private struct DetailsActions" in host_source and "ViewThatFits(in: .horizontal)" in host_source,

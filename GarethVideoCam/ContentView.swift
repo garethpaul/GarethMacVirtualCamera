@@ -92,6 +92,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         case ready
         case needsApplicationLocation
         case needsBundleIdentifier
+        case needsApplicationExecutable
         case needsBundleVersion
         case needsExtensionMetadata
         case needsBundledVideo
@@ -115,6 +116,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                 return "Move to Applications"
             case .needsBundleIdentifier:
                 return "Bundle ID Required"
+            case .needsApplicationExecutable:
+                return "App Executable"
             case .needsBundleVersion:
                 return "Version Mismatch"
             case .needsExtensionMetadata:
@@ -150,6 +153,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                 return "exclamationmark.triangle.fill"
             case .needsBundleIdentifier:
                 return "tag.fill"
+            case .needsApplicationExecutable:
+                return "play.rectangle.fill"
             case .needsBundleVersion:
                 return "exclamationmark.triangle.fill"
             case .needsExtensionMetadata:
@@ -182,6 +187,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             case .needsApplicationLocation:
                 return .orange
             case .needsBundleIdentifier:
+                return .orange
+            case .needsApplicationExecutable:
                 return .orange
             case .needsBundleVersion:
                 return .orange
@@ -532,6 +539,14 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         return Bundle.main.bundleURL.path
     }
 
+    var applicationExecutablePath: String {
+        return Bundle.main.executableURL?.path ?? "Unknown"
+    }
+
+    var applicationExecutableStatus: String {
+        return applicationExecutableReadinessDetail == nil ? "Valid" : "Invalid"
+    }
+
     var applicationVersion: String {
         return Self.displayVersion(shortVersion: applicationShortVersionValue,
                                    buildVersion: applicationBuildVersionValue)
@@ -620,10 +635,12 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     var canSubmitSystemExtensionRequests: Bool {
         return applicationLocationReadinessDetail == nil
             && applicationIdentifierReadinessDetail == nil
+            && applicationExecutableReadinessDetail == nil
             && appCodeSigningStatus.isValid
             && appEntitlementReadinessDetail == nil
             && extensionInfo != nil
             && bundleVersionReadinessDetail == nil
+            && extensionExecutableReadinessDetail == nil
             && extensionMetadataReadinessDetail == nil
             && bundledVideoReadinessDetail == nil
             && extensionCodeSigningStatus.isValid
@@ -649,6 +666,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return "System extension requests require the expected app bundle identifier."
         }
 
+        if applicationExecutableReadinessDetail != nil {
+            return "System extension requests require a runnable host app executable."
+        }
+
         if !appCodeSigningStatus.isValid {
             return "System extension requests require a valid app signature."
         }
@@ -659,6 +680,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         if bundleVersionReadinessDetail != nil {
             return "System extension requests require matching app and extension bundle versions."
+        }
+
+        if extensionExecutableReadinessDetail != nil {
+            return "System extension requests require a runnable embedded extension executable."
         }
 
         if extensionMetadataReadinessDetail != nil {
@@ -712,6 +737,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     var readinessChecks: [ReadinessCheck] {
         let appSignatureStatus: ReadinessCheck.Status = appCodeSigningStatus.isValid ? .passing : .blocked
         let extensionSignatureStatus: ReadinessCheck.Status = extensionCodeSigningStatus.isValid ? .passing : .blocked
+        let appExecutableStatus: ReadinessCheck.Status = applicationExecutableReadinessDetail == nil ? .passing : .blocked
         let entitlementStatus: ReadinessCheck.Status
         if appCodeSigningStatus.isValid {
             entitlementStatus = appEntitlementReadinessDetail == nil ? .passing : .blocked
@@ -732,6 +758,19 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         } else {
             bundleVersionStatus = .pending
             bundleVersionDetail = "Embedded extension version is pending until the extension is loaded."
+        }
+
+        let extensionExecutableStatus: ReadinessCheck.Status
+        let extensionExecutableDetail: String
+        if let extensionExecutableReadinessDetail {
+            extensionExecutableStatus = .blocked
+            extensionExecutableDetail = extensionExecutableReadinessDetail
+        } else if let extensionInfo {
+            extensionExecutableStatus = .passing
+            extensionExecutableDetail = "Executable \(extensionInfo.executableName) is runnable at \(extensionInfo.executablePath)."
+        } else {
+            extensionExecutableStatus = .pending
+            extensionExecutableDetail = "Embedded extension executable is pending until the extension is loaded."
         }
 
         let extensionHostOnlyEntitlementStatus: ReadinessCheck.Status
@@ -782,7 +821,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             extensionMetadataDetail = extensionMetadataReadinessDetail
         } else if let extensionInfo {
             extensionMetadataStatus = .passing
-            extensionMetadataDetail = "Executable \(extensionInfo.executableName), CMIO Mach service \(extensionInfo.machServiceName)."
+            extensionMetadataDetail = "CMIO Mach service \(extensionInfo.machServiceName) is resolved and matches the extension identifier."
         } else {
             extensionMetadataStatus = .pending
             extensionMetadataDetail = "Embedded extension metadata is pending until the extension is loaded."
@@ -810,6 +849,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                            title: "Host Bundle ID",
                            detail: applicationIdentifierReadinessDetail ?? applicationBundleIdentifier,
                            status: applicationIdentifierReadinessDetail == nil ? .passing : .blocked),
+            ReadinessCheck(id: "app-executable",
+                           title: "App Executable",
+                           detail: applicationExecutableReadinessDetail ?? applicationExecutablePath,
+                           status: appExecutableStatus),
             ReadinessCheck(id: "app-signature",
                            title: "App Signature",
                            detail: appCodeSigningStatus.detail,
@@ -826,6 +869,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                            title: "Extension Signature",
                            detail: extensionCodeSigningStatus.detail,
                            status: extensionSignatureStatus),
+            ReadinessCheck(id: "extension-executable",
+                           title: "Extension Executable",
+                           detail: extensionExecutableDetail,
+                           status: extensionExecutableStatus),
             ReadinessCheck(id: "extension-host-entitlement",
                            title: "Extension Host Entitlement",
                            detail: extensionHostOnlyEntitlementDetail,
@@ -876,6 +923,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return applicationIdentifierReadinessDetail
         }
 
+        if let applicationExecutableReadinessDetail {
+            return applicationExecutableReadinessDetail
+        }
+
         if !appCodeSigningStatus.isValid {
             return appCodeSigningStatus.detail
         }
@@ -886,6 +937,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         if let bundleVersionReadinessDetail {
             return bundleVersionReadinessDetail
+        }
+
+        if let extensionExecutableReadinessDetail {
+            return extensionExecutableReadinessDetail
         }
 
         if let extensionMetadataReadinessDetail {
@@ -924,6 +979,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return "Use a build signed with the expected host bundle identifier. \(applicationIdentifierReadinessDetail)"
         }
 
+        if let applicationExecutableReadinessDetail {
+            return "Rebuild and reinstall the app so its declared executable exists and is runnable. \(applicationExecutableReadinessDetail)"
+        }
+
         if !appCodeSigningStatus.isValid {
             return "Sign the host app with a valid Apple Developer identity. \(appCodeSigningStatus.detail)"
         }
@@ -936,8 +995,12 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return "Rebuild and reinstall the app so the host and embedded extension bundle versions match. \(bundleVersionReadinessDetail)"
         }
 
+        if let extensionExecutableReadinessDetail {
+            return "Rebuild the embedded system extension so its declared executable exists and is runnable. \(extensionExecutableReadinessDetail)"
+        }
+
         if let extensionMetadataReadinessDetail {
-            return "Rebuild the embedded system extension so its executable and CMIO metadata are complete. \(extensionMetadataReadinessDetail)"
+            return "Rebuild the embedded system extension so its CMIO metadata is complete. \(extensionMetadataReadinessDetail)"
         }
 
         if let bundledVideoReadinessDetail {
@@ -1115,6 +1178,14 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         return extensionMetadataReadinessDetail == nil ? "Complete" : "Invalid"
     }
 
+    var extensionExecutableStatus: String {
+        if extensionExecutableReadinessDetail != nil {
+            return "Invalid"
+        }
+
+        return extensionInfo == nil ? "Missing" : "Valid"
+    }
+
     var extensionMachServiceResolvedStatus: String {
         guard let extensionInfo else {
             return "Unknown"
@@ -1191,6 +1262,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         Expected App Path: \(expectedApplicationPath)
         App Location: \(applicationLocationStatus)
         App Path: \(applicationBundlePath)
+        App Executable Path: \(applicationExecutablePath)
+        App Executable Check: \(applicationExecutableStatus)
         App Quarantine: \(appQuarantineStatus.title)
         App Quarantine Detail: \(appQuarantineStatus.detail)
         Request Readiness: \(requestReadinessStatus)
@@ -1219,6 +1292,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         Application Group Check: \(applicationGroupStatus)
         Shared Application Group: \(sharedApplicationGroupDescription)
         Extension Team ID: \(extensionTeamIdentifier)
+        Extension Executable Check: \(extensionExecutableStatus)
         Extension CMIO Mach Service Resolved: \(extensionMachServiceResolvedStatus)
         Extension CMIO Mach Service Identifier Match: \(extensionMachServiceIdentifierMatchStatus)
         \(extensionDescription)
@@ -1347,7 +1421,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             extensionQuarantineStatus = Self.quarantineStatus(for: URL(fileURLWithPath: loadedExtensionInfo.bundlePath))
 
             switch state {
-            case .idle, .ready, .needsApplicationLocation, .needsBundleIdentifier, .needsBundleVersion, .needsExtensionMetadata, .needsBundledVideo, .needsSigning, .deactivated, .failed:
+            case .idle, .ready, .needsApplicationLocation, .needsBundleIdentifier, .needsApplicationExecutable, .needsBundleVersion, .needsExtensionMetadata, .needsBundledVideo, .needsSigning, .deactivated, .failed:
                 state = readinessState
             default:
                 break
@@ -1850,6 +1924,13 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return nil
         }
 
+        if let applicationExecutableReadinessDetail {
+            recordReadinessBlock(state: .needsApplicationExecutable,
+                                 title: "App Executable Required",
+                                 detail: applicationExecutableReadinessDetail)
+            return nil
+        }
+
         guard appCodeSigningStatus.isValid else {
             recordReadinessBlock(state: .needsSigning,
                                  title: "Signing Required",
@@ -1884,6 +1965,13 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             recordReadinessBlock(state: .needsBundleVersion,
                                  title: "Version Match Required",
                                  detail: bundleVersionReadinessDetail)
+            return nil
+        }
+
+        if let extensionExecutableReadinessDetail {
+            recordReadinessBlock(state: .needsExtensionMetadata,
+                                 title: "Extension Executable Required",
+                                 detail: extensionExecutableReadinessDetail)
             return nil
         }
 
@@ -1941,8 +2029,16 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return .needsBundleIdentifier
         }
 
+        if applicationExecutableReadinessDetail != nil {
+            return .needsApplicationExecutable
+        }
+
         if bundleVersionReadinessDetail != nil {
             return .needsBundleVersion
+        }
+
+        if extensionExecutableReadinessDetail != nil {
+            return .needsExtensionMetadata
         }
 
         if extensionMetadataReadinessDetail != nil {
@@ -1985,6 +2081,25 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         return "The app bundle identifier \(applicationBundleIdentifier) does not match the expected identifier \(expectedApplicationBundleIdentifier)."
     }
 
+    private var applicationExecutableReadinessDetail: String? {
+        guard let executableURL = Bundle.main.executableURL else {
+            return "The host app does not declare a runnable executable."
+        }
+
+        let executablePath = executableURL.path
+        var isDirectory = ObjCBool(false)
+        guard FileManager.default.fileExists(atPath: executablePath, isDirectory: &isDirectory),
+              !isDirectory.boolValue else {
+            return "The host app executable is missing at \(executablePath)."
+        }
+
+        guard FileManager.default.isExecutableFile(atPath: executablePath) else {
+            return "The host app executable is not executable at \(executablePath)."
+        }
+
+        return nil
+    }
+
     private var appEntitlementReadinessDetail: String? {
         guard appCodeSigningStatus.isValid else {
             return nil
@@ -2020,6 +2135,37 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         guard mismatches.isEmpty else {
             return "The app and embedded system extension bundle versions differ: \(mismatches.joined(separator: ", "))."
+        }
+
+        return nil
+    }
+
+    private var extensionExecutableReadinessDetail: String? {
+        if let extensionInfo {
+            guard !extensionInfo.executableName.isEmpty else {
+                return "The bundled system extension does not declare CFBundleExecutable."
+            }
+
+            guard !extensionInfo.executablePath.isEmpty else {
+                return "The bundled system extension executable path could not be resolved."
+            }
+
+            var isDirectory = ObjCBool(false)
+            guard FileManager.default.fileExists(atPath: extensionInfo.executablePath, isDirectory: &isDirectory),
+                  !isDirectory.boolValue else {
+                return "The bundled system extension executable is missing at \(extensionInfo.executablePath)."
+            }
+
+            guard FileManager.default.isExecutableFile(atPath: extensionInfo.executablePath) else {
+                return "The bundled system extension executable is not executable at \(extensionInfo.executablePath)."
+            }
+
+            return nil
+        }
+
+        let extensionSigningDetail = extensionCodeSigningStatus.detail
+        if Self.isExtensionExecutableFailureDetail(extensionSigningDetail) {
+            return extensionSigningDetail
         }
 
         return nil
@@ -2363,10 +2509,14 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             || detail.localizedCaseInsensitiveContains("video metadata")
     }
 
-    private static func isExtensionMetadataFailureDetail(_ detail: String) -> Bool {
+    private static func isExtensionExecutableFailureDetail(_ detail: String) -> Bool {
         return detail.localizedCaseInsensitiveContains("CFBundleExecutable")
-            || detail.localizedCaseInsensitiveContains("CMIOExtensionMachServiceName")
             || detail.localizedCaseInsensitiveContains("extension executable")
+    }
+
+    private static func isExtensionMetadataFailureDetail(_ detail: String) -> Bool {
+        return detail.localizedCaseInsensitiveContains("CMIOExtensionMachServiceName")
+            || detail.localizedCaseInsensitiveContains("extension metadata")
     }
 
     private static func containsUnresolvedBuildSetting(_ value: String) -> Bool {
@@ -2387,7 +2537,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         let message = error.localizedDescription
         lastFailureDetail = message
 
-        if Self.isExtensionMetadataFailureDetail(message) {
+        if Self.isExtensionExecutableFailureDetail(message) {
+            state = .needsExtensionMetadata
+            appendActivity(level: .warning, title: "Extension Executable Required", detail: message)
+        } else if Self.isExtensionMetadataFailureDetail(message) {
             state = .needsExtensionMetadata
             appendActivity(level: .warning, title: "Extension Metadata Required", detail: message)
         } else if Self.isBundledVideoFailureDetail(message) {
@@ -2926,6 +3079,8 @@ private struct DetailsPanel: View {
                 DetailRow(title: "Extension Bundle Build Version", value: manager.extensionInfo?.buildVersion ?? "Unknown")
                 DetailRow(title: "Application Location", value: manager.applicationLocationStatus)
                 DetailRow(title: "Expected App Path", value: manager.expectedApplicationPath, monospaced: true)
+                DetailRow(title: "App Executable Check", value: manager.applicationExecutableStatus)
+                DetailRow(title: "App Executable Path", value: manager.applicationExecutablePath, monospaced: true)
                 DetailRow(title: "App Quarantine", value: manager.appQuarantineStatus.title)
                 DetailRow(title: "App Quarantine Detail", value: manager.appQuarantineStatus.detail, monospaced: true)
                 DetailRow(title: "Request Readiness", value: manager.requestReadinessStatus)
@@ -2959,6 +3114,7 @@ private struct DetailsPanel: View {
                 DetailRow(title: "Application Group Check", value: manager.applicationGroupStatus)
                 DetailRow(title: "Shared Application Group", value: manager.sharedApplicationGroupDescription, monospaced: true)
                 DetailRow(title: "Extension Team ID", value: manager.extensionTeamIdentifier)
+                DetailRow(title: "Extension Executable Check", value: manager.extensionExecutableStatus)
                 DetailRow(title: "Extension Metadata", value: manager.extensionMetadataStatus)
                 DetailRow(title: "Extension CMIO Mach Service Resolved", value: manager.extensionMachServiceResolvedStatus)
                 DetailRow(title: "Extension CMIO Mach Service Identifier Match", value: manager.extensionMachServiceIdentifierMatchStatus)
