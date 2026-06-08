@@ -70,7 +70,8 @@ private enum DashboardSection: String, CaseIterable, Hashable {
     }
 }
 
-class SystemExtensionRequestManager: NSObject, ObservableObject {
+@MainActor
+final class SystemExtensionRequestManager: NSObject, ObservableObject {
     private let expectedApplicationBundleIdentifier = "com.garethpaul.GarethVideoCam"
     private let expectedExtensionBundleIdentifier = "com.garethpaul.GarethVideoCam.Extension"
     private let expectedApplicationBundlePath = "/Applications/GarethVideoCam.app"
@@ -1292,7 +1293,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 }
 
-extension SystemExtensionRequestManager: OSSystemExtensionRequestDelegate {
+extension SystemExtensionRequestManager: @preconcurrency OSSystemExtensionRequestDelegate {
     public func request(_ request: OSSystemExtensionRequest, actionForReplacingExtension existing: OSSystemExtensionProperties, withExtension ext: OSSystemExtensionProperties) -> OSSystemExtensionRequest.ReplacementAction {
         appendActivity(level: .info,
                        title: "Replacing Extension",

@@ -387,6 +387,9 @@ def main():
     require("case needsApplicationLocation" in host_source and "case needsBundleIdentifier" in host_source and "canSubmitSystemExtensionRequests" in host_source,
             "host app should model the /Applications and host bundle identifier requirements before submitting system-extension requests",
             failures)
+    require("@MainActor\nfinal class SystemExtensionRequestManager" in host_source and "@preconcurrency OSSystemExtensionRequestDelegate" in host_source,
+            "host system-extension request manager should keep UI state mutations isolated to the main actor",
+            failures)
     require('expectedApplicationBundlePath = "/Applications/GarethVideoCam.app"' in host_source and "applicationLocationReadinessDetail" in host_source and "isRunningFromExpectedApplicationPath" in host_source and "Expected App Path" in host_source,
             "host app should require and display the exact expected /Applications app path",
             failures)
