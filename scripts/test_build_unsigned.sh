@@ -82,6 +82,28 @@ require_file_contains "$CALL_LOG" $'COMPILER_INDEX_STORE_ENABLE=NO'
 require_file_contains "$WORK_DIR/build-Debug.log" "xcodebuild fixture for Debug"
 require_file_contains "$WORK_DIR/build-Release.log" "xcodebuild fixture for Release"
 
+DEFAULT_WORK_DIR="$TMP_DIR/default-work"
+DEFAULT_CALL_LOG="$TMP_DIR/xcodebuild-default-calls.log"
+mkdir -p "$DEFAULT_WORK_DIR"
+
+(
+  cd "$DEFAULT_WORK_DIR"
+  PATH="$FAKE_BIN:$PATH" \
+    XCODEBUILD_CALL_LOG="$DEFAULT_CALL_LOG" \
+    "$ROOT/scripts/build_unsigned.sh" >/dev/null
+)
+
+if [ "$(wc -l <"$DEFAULT_CALL_LOG")" -ne 2 ]; then
+  printf 'Expected default unsigned build to invoke Debug and Release configurations.\n' >&2
+  cat "$DEFAULT_CALL_LOG" >&2
+  exit 1
+fi
+
+require_file_contains "$DEFAULT_CALL_LOG" $'-configuration\tDebug'
+require_file_contains "$DEFAULT_CALL_LOG" $'-configuration\tRelease'
+require_file_contains "$DEFAULT_WORK_DIR/build-Debug.log" "xcodebuild fixture for Debug"
+require_file_contains "$DEFAULT_WORK_DIR/build-Release.log" "xcodebuild fixture for Release"
+
 FAIL_WORK_DIR="$TMP_DIR/failure-work"
 FAIL_CALL_LOG="$TMP_DIR/xcodebuild-failure-calls.log"
 mkdir -p "$FAIL_WORK_DIR"

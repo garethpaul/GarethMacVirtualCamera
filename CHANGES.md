@@ -23,3 +23,4 @@
 - Covered build-log scanner usage failures when no build log path is provided.
 - Documented Camera menu shortcuts for repeated signed-host evidence collection.
 - Covered missing host and extension camera usage descriptions in build-product verifier fixtures.
+- Covered unsigned build script default Debug and Release configuration behavior.
