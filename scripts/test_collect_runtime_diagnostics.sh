@@ -79,6 +79,8 @@ require_output "$video_metadata_output" "Video metadata parsed height fixture: 7
 require_output "$video_metadata_output" "Video metadata parsed duration fixture: 12.5"
 require_output "$video_metadata_output" "Video metadata ready fixture: yes"
 require_output "$video_metadata_output" "Video metadata wrong width fixture: no"
+require_output "$video_metadata_output" "Video metadata wrong frame rate fixture: no"
+require_output "$video_metadata_output" "Video metadata missing frame rate fixture: unknown"
 require_output "$video_metadata_output" "Video metadata missing duration fixture: unknown"
 require_output "$video_metadata_output" "Video metadata zero duration fixture: no"
 

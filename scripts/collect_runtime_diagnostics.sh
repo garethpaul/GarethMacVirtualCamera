@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+VALIDATE_PROJECT_SCRIPT="${ROOT}/scripts/validate_project.py"
 APP_PATH="${1:-/Applications/GarethVideoCam.app}"
 LOG_WINDOW="${2:-30m}"
 EXPECTED_APP_PATH="/Applications/GarethVideoCam.app"
@@ -15,6 +18,7 @@ APP_GROUP_BASE_ID="com.garethpaul.GarethVideoCam"
 EXPECTED_CAMERA_NAME="Gareth Video Cam"
 EXPECTED_VIDEO_WIDTH="1280"
 EXPECTED_VIDEO_HEIGHT="720"
+EXPECTED_VIDEO_FRAME_RATE="24"
 EXTENSION_INFO_PLIST="${EXTENSION_PATH}/Contents/Info.plist"
 
 section() {
@@ -29,6 +33,14 @@ run_if_available() {
     "$command_name" "$@" || true
   else
     printf '%s is not available on this host.\n' "$command_name"
+  fi
+}
+
+python3_command() {
+  if [ -x /usr/bin/python3 ]; then
+    printf '/usr/bin/python3\n'
+  elif command -v python3 >/dev/null 2>&1; then
+    command -v python3
   fi
 }
 
@@ -216,11 +228,7 @@ read_application_groups() {
     return 1
   fi
 
-  if [ -x /usr/bin/python3 ]; then
-    python_bin="/usr/bin/python3"
-  elif command -v python3 >/dev/null 2>&1; then
-    python_bin="$(command -v python3)"
-  fi
+  python_bin="$(python3_command)"
 
   if [ -n "$python_bin" ]; then
     "$python_bin" - "$entitlements_file" "$APP_GROUP_ENTITLEMENT" <<'PY' || true
@@ -413,6 +421,67 @@ mdls_metadata_value() {
     }'
 }
 
+mp4_parser_metadata_output() {
+  local video_path="$1"
+  local python_bin
+
+  python_bin="$(python3_command)"
+  if [ -z "$python_bin" ]; then
+    printf 'python3 is not available for bundled-video MP4 metadata parsing.\n'
+    return 1
+  fi
+
+  if [ ! -f "$VALIDATE_PROJECT_SCRIPT" ]; then
+    printf 'MP4 parser source is not available at %s.\n' "$VALIDATE_PROJECT_SCRIPT"
+    return 1
+  fi
+
+  "$python_bin" - "$VALIDATE_PROJECT_SCRIPT" "$video_path" <<'PY'
+import importlib.util
+import sys
+from pathlib import Path
+
+parser_path = Path(sys.argv[1])
+video_path = Path(sys.argv[2])
+spec = importlib.util.spec_from_file_location("gareth_validate_project", parser_path)
+module = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = module
+spec.loader.exec_module(module)
+
+try:
+    metadata = module.mp4_video_metadata(video_path)
+except Exception as error:
+    print(f"MP4 parser error = {error}")
+    sys.exit(1)
+
+dimensions = metadata.get("dimensions")
+if dimensions is None:
+    width = ""
+    height = ""
+else:
+    width, height = dimensions
+
+print(f"MP4 parser pixel width = {width}")
+print(f"MP4 parser pixel height = {height}")
+print(f"MP4 parser frame rate = {metadata.get('frame_rate') or ''}")
+print(f"MP4 parser duration seconds = {metadata.get('duration_seconds') or ''}")
+PY
+}
+
+preferred_metadata_value() {
+  local preferred_value="$1"
+  local fallback_value="$2"
+
+  case "$preferred_value" in
+    ""|"(null)"|"null")
+      printf '%s\n' "$fallback_value"
+      ;;
+    *)
+      printf '%s\n' "$preferred_value"
+      ;;
+  esac
+}
+
 metadata_number_matches_expected_value() {
   local actual_value="$1"
   local expected_value="$2"
@@ -447,18 +516,27 @@ metadata_positive_number_value() {
 video_metadata_readiness_value() {
   local pixel_width="$1"
   local pixel_height="$2"
-  local duration_seconds="$3"
+  local frame_rate="$3"
+  local duration_seconds="$4"
   local width_ready
   local height_ready
+  local frame_rate_ready
   local duration_ready
 
   width_ready="$(metadata_number_matches_expected_value "$pixel_width" "$EXPECTED_VIDEO_WIDTH")"
   height_ready="$(metadata_number_matches_expected_value "$pixel_height" "$EXPECTED_VIDEO_HEIGHT")"
+  frame_rate_ready="$(metadata_number_matches_expected_value "$frame_rate" "$EXPECTED_VIDEO_FRAME_RATE")"
   duration_ready="$(metadata_positive_number_value "$duration_seconds")"
 
-  if [ "$width_ready" = "yes" ] && [ "$height_ready" = "yes" ] && [ "$duration_ready" = "yes" ]; then
+  if [ "$width_ready" = "yes" ] \
+    && [ "$height_ready" = "yes" ] \
+    && [ "$frame_rate_ready" = "yes" ] \
+    && [ "$duration_ready" = "yes" ]; then
     printf 'yes\n'
-  elif [ "$width_ready" = "no" ] || [ "$height_ready" = "no" ] || [ "$duration_ready" = "no" ]; then
+  elif [ "$width_ready" = "no" ] \
+    || [ "$height_ready" = "no" ] \
+    || [ "$frame_rate_ready" = "no" ] \
+    || [ "$duration_ready" = "no" ]; then
     printf 'no\n'
   else
     printf 'unknown\n'
@@ -680,10 +758,12 @@ run_video_metadata_self_test() {
   printf 'Video metadata parsed width fixture: %s\n' "$(mdls_metadata_value "$metadata_output" kMDItemPixelWidth)"
   printf 'Video metadata parsed height fixture: %s\n' "$(mdls_metadata_value "$metadata_output" kMDItemPixelHeight)"
   printf 'Video metadata parsed duration fixture: %s\n' "$(mdls_metadata_value "$metadata_output" kMDItemDurationSeconds)"
-  printf 'Video metadata ready fixture: %s\n' "$(video_metadata_readiness_value "1280" "720" "12.5")"
-  printf 'Video metadata wrong width fixture: %s\n' "$(video_metadata_readiness_value "640" "720" "12.5")"
-  printf 'Video metadata missing duration fixture: %s\n' "$(video_metadata_readiness_value "1280" "720" "")"
-  printf 'Video metadata zero duration fixture: %s\n' "$(video_metadata_readiness_value "1280" "720" "0")"
+  printf 'Video metadata ready fixture: %s\n' "$(video_metadata_readiness_value "1280" "720" "24" "12.5")"
+  printf 'Video metadata wrong width fixture: %s\n' "$(video_metadata_readiness_value "640" "720" "24" "12.5")"
+  printf 'Video metadata wrong frame rate fixture: %s\n' "$(video_metadata_readiness_value "1280" "720" "30" "12.5")"
+  printf 'Video metadata missing frame rate fixture: %s\n' "$(video_metadata_readiness_value "1280" "720" "" "12.5")"
+  printf 'Video metadata missing duration fixture: %s\n' "$(video_metadata_readiness_value "1280" "720" "24" "")"
+  printf 'Video metadata zero duration fixture: %s\n' "$(video_metadata_readiness_value "1280" "720" "24" "0")"
 }
 
 run_registration_self_test() {
@@ -888,6 +968,7 @@ fi
 
 video_pixel_width=""
 video_pixel_height=""
+video_frame_rate=""
 video_duration_seconds=""
 
 section "Bundled Video"
@@ -905,6 +986,7 @@ if [ -f "$VIDEO_PATH" ]; then
   /bin/ls -lh "$VIDEO_PATH" 2>/dev/null || true
   printf 'Expected video pixel width: %s\n' "$EXPECTED_VIDEO_WIDTH"
   printf 'Expected video pixel height: %s\n' "$EXPECTED_VIDEO_HEIGHT"
+  printf 'Expected video frame rate: %s\n' "$EXPECTED_VIDEO_FRAME_RATE"
   if command -v mdls >/dev/null 2>&1; then
     video_metadata_output="$(mdls \
       -name kMDItemCodecs \
@@ -916,17 +998,24 @@ if [ -f "$VIDEO_PATH" ]; then
     video_pixel_width="$(mdls_metadata_value "$video_metadata_output" kMDItemPixelWidth)"
     video_pixel_height="$(mdls_metadata_value "$video_metadata_output" kMDItemPixelHeight)"
     video_duration_seconds="$(mdls_metadata_value "$video_metadata_output" kMDItemDurationSeconds)"
-    print_yes_no_unknown "Video pixel width ready" "$(metadata_number_matches_expected_value "$video_pixel_width" "$EXPECTED_VIDEO_WIDTH")"
-    print_yes_no_unknown "Video pixel height ready" "$(metadata_number_matches_expected_value "$video_pixel_height" "$EXPECTED_VIDEO_HEIGHT")"
-    print_yes_no_unknown "Video duration ready" "$(metadata_positive_number_value "$video_duration_seconds")"
-    print_yes_no_unknown "Video metadata ready" "$(video_metadata_readiness_value "$video_pixel_width" "$video_pixel_height" "$video_duration_seconds")"
   else
     printf 'mdls is not available on this host.\n'
-    print_yes_no_unknown "Video pixel width ready" "unknown"
-    print_yes_no_unknown "Video pixel height ready" "unknown"
-    print_yes_no_unknown "Video duration ready" "unknown"
-    print_yes_no_unknown "Video metadata ready" "unknown"
   fi
+  video_parser_output="$(mp4_parser_metadata_output "$VIDEO_PATH" 2>&1 || true)"
+  printf '%s\n' "$video_parser_output"
+  parsed_video_pixel_width="$(mdls_metadata_value "$video_parser_output" "MP4 parser pixel width")"
+  parsed_video_pixel_height="$(mdls_metadata_value "$video_parser_output" "MP4 parser pixel height")"
+  parsed_video_frame_rate="$(mdls_metadata_value "$video_parser_output" "MP4 parser frame rate")"
+  parsed_video_duration_seconds="$(mdls_metadata_value "$video_parser_output" "MP4 parser duration seconds")"
+  video_pixel_width="$(preferred_metadata_value "$parsed_video_pixel_width" "$video_pixel_width")"
+  video_pixel_height="$(preferred_metadata_value "$parsed_video_pixel_height" "$video_pixel_height")"
+  video_frame_rate="$(preferred_metadata_value "$parsed_video_frame_rate" "$video_frame_rate")"
+  video_duration_seconds="$(preferred_metadata_value "$parsed_video_duration_seconds" "$video_duration_seconds")"
+  print_yes_no_unknown "Video pixel width ready" "$(metadata_number_matches_expected_value "$video_pixel_width" "$EXPECTED_VIDEO_WIDTH")"
+  print_yes_no_unknown "Video pixel height ready" "$(metadata_number_matches_expected_value "$video_pixel_height" "$EXPECTED_VIDEO_HEIGHT")"
+  print_yes_no_unknown "Video frame rate ready" "$(metadata_number_matches_expected_value "$video_frame_rate" "$EXPECTED_VIDEO_FRAME_RATE")"
+  print_yes_no_unknown "Video duration ready" "$(metadata_positive_number_value "$video_duration_seconds")"
+  print_yes_no_unknown "Video metadata ready" "$(video_metadata_readiness_value "$video_pixel_width" "$video_pixel_height" "$video_frame_rate" "$video_duration_seconds")"
 else
   printf 'Video resource exists: no\n'
   printf 'Expected bundled video resource was not found.\n'
@@ -1188,7 +1277,7 @@ else
 fi
 
 if [ -f "$VIDEO_PATH" ]; then
-  print_readiness_check "Bundled video metadata ready" "$(video_metadata_readiness_value "$video_pixel_width" "$video_pixel_height" "$video_duration_seconds")"
+  print_readiness_check "Bundled video metadata ready" "$(video_metadata_readiness_value "$video_pixel_width" "$video_pixel_height" "$video_frame_rate" "$video_duration_seconds")"
 else
   print_readiness_check "Bundled video metadata ready" "no"
 fi
