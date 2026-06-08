@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import plistlib
+import json
 import re
+import struct
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -18,6 +20,28 @@ def load_plist(relative_path):
         return plistlib.load(file)
 
 
+def load_json(relative_path):
+    with (ROOT / relative_path).open("r", encoding="utf-8") as file:
+        return json.load(file)
+
+
+def png_dimensions(path):
+    with path.open("rb") as file:
+        header = file.read(24)
+
+    if header[:8] != b"\x89PNG\r\n\x1a\n":
+        return None
+
+    width, height = struct.unpack(">II", header[16:24])
+    return width, height
+
+
+def expected_icon_pixel_size(image):
+    point_size = int(image.get("size", "0x0").split("x", maxsplit=1)[0])
+    scale = int(image.get("scale", "1x").removesuffix("x"))
+    return point_size * scale
+
+
 def require(condition, message, failures):
     if not condition:
         failures.append(message)
@@ -29,6 +53,8 @@ def main():
     app_entitlements = load_plist("GarethVideoCam/Entitlements.entitlements")
     extension_entitlements = load_plist("Extension/Extension.entitlements")
     extension_info = load_plist("Extension/Info.plist")
+    app_icon = load_json("GarethVideoCam/Assets.xcassets/AppIcon.appiconset/Contents.json")
+    accent_color = load_json("GarethVideoCam/Assets.xcassets/AccentColor.colorset/Contents.json")
 
     require(app_entitlements.get("com.apple.developer.system-extension.install") is True,
             "host app is missing the System Extension entitlement",
@@ -63,6 +89,28 @@ def main():
             failures)
     require(not (ROOT / "GarethVideoCam/video.mp4").exists(),
             "duplicate host-app video.mp4 should not be checked in",
+            failures)
+
+    icon_filenames = [image.get("filename") for image in app_icon.get("images", [])]
+    require(len([filename for filename in icon_filenames if filename]) == 10,
+            "app icon catalog should include concrete PNG files for all macOS icon slots",
+            failures)
+    for icon_filename in icon_filenames:
+        if icon_filename:
+            icon_entry = next(image for image in app_icon.get("images", []) if image.get("filename") == icon_filename)
+            icon_path = ROOT / "GarethVideoCam/Assets.xcassets/AppIcon.appiconset" / icon_filename
+            require(icon_path.exists() and icon_path.stat().st_size > 0,
+                    f"app icon file is missing or empty: {icon_filename}",
+                    failures)
+            if icon_path.exists():
+                expected_size = expected_icon_pixel_size(icon_entry)
+                require(png_dimensions(icon_path) == (expected_size, expected_size),
+                        f"app icon file has incorrect pixel dimensions: {icon_filename}",
+                        failures)
+
+    accent_colors = accent_color.get("colors", [])
+    require(any("color" in color for color in accent_colors),
+            "accent color catalog should define an explicit color",
             failures)
 
     project_text = (ROOT / "GarethVideoCam.xcodeproj/project.pbxproj").read_text()
