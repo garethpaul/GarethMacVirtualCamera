@@ -428,13 +428,20 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
 
     private func currentHostTimeInNanoseconds() -> UInt64 {
         let hostTime = CMClockGetTime(CMClockGetHostTimeClock())
-        let seconds = CMTimeGetSeconds(hostTime)
-
-        guard seconds.isFinite, seconds > 0 else {
+        guard hostTime.flags.contains(.valid),
+              !hostTime.flags.contains(.indefinite),
+              CMTimeCompare(hostTime, .zero) > 0 else {
             return 0
         }
 
-        return UInt64(seconds * Double(NSEC_PER_SEC))
+        let nanoseconds = CMTimeConvertScale(hostTime,
+                                             timescale: CMTimeScale(NSEC_PER_SEC),
+                                             method: .roundTowardZero)
+        guard nanoseconds.value > 0 else {
+            return 0
+        }
+
+        return UInt64(nanoseconds.value)
     }
 
     private func resetTiming() {
