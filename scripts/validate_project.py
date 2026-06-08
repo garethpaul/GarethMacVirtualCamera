@@ -809,6 +809,9 @@ def main():
     require("GARETH_DIAGNOSTICS_SELF_TEST=executable-readiness" in runtime_diagnostics_test_source and "Executable missing name fixture: no" in runtime_diagnostics_test_source and "Executable missing file fixture: no" in runtime_diagnostics_test_source and "Executable non-executable fixture: no" in runtime_diagnostics_test_source and "Executable ready fixture: yes" in runtime_diagnostics_test_source,
             "runtime diagnostics test should cover executable readiness comparisons",
             failures)
+    require("Registration reversed fixture activated enabled: yes" in runtime_diagnostics_test_source and "[enabled activated]" in runtime_diagnostics_source and "bracket = substr($0, RSTART + 1, RLENGTH - 2)" in runtime_diagnostics_source,
+            "runtime diagnostics registration checks should accept activated/enabled status tokens in either order",
+            failures)
     require("GARETH_DIAGNOSTICS_SELF_TEST=video-metadata" in runtime_diagnostics_test_source and "Video metadata ready fixture: yes" in runtime_diagnostics_test_source and "Video metadata wrong width fixture: no" in runtime_diagnostics_test_source and "Video metadata wrong frame rate fixture: no" in runtime_diagnostics_test_source and "Video metadata missing frame rate fixture: unknown" in runtime_diagnostics_test_source and "Video metadata missing duration fixture: unknown" in runtime_diagnostics_test_source and "Video metadata zero duration fixture: no" in runtime_diagnostics_test_source and "GARETH_DIAGNOSTICS_SELF_TEST=video-parser" in runtime_diagnostics_test_source and "Video parser pixel width fixture: 1280" in runtime_diagnostics_test_source and "Video parser frame rate fixture: 24" in runtime_diagnostics_test_source and "Video parser metadata ready fixture: yes" in runtime_diagnostics_test_source,
             "runtime diagnostics test should cover bundled-video metadata readiness comparisons",
             failures)

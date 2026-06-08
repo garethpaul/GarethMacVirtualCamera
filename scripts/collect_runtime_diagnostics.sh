@@ -411,7 +411,15 @@ extension_registration_activated_enabled_value() {
   entries="$(extension_registration_entries "$registration_output" "$extension_identifier")"
   if [ -z "$entries" ]; then
     printf 'no\n'
-  elif printf '%s\n' "$entries" | /usr/bin/grep -E '\[[^]]*activated[^]]*enabled[^]]*\]' >/dev/null; then
+  elif printf '%s\n' "$entries" | /usr/bin/awk '
+    match($0, /\[[^]]+\]/) {
+      bracket = substr($0, RSTART + 1, RLENGTH - 2)
+      if (index(bracket, "activated") && index(bracket, "enabled")) {
+        found = 1
+      }
+    }
+    END { exit found ? 0 : 1 }
+  '; then
     printf 'yes\n'
   else
     printf 'no\n'
@@ -840,15 +848,18 @@ run_video_parser_self_test() {
 
 run_registration_self_test() {
   local active_output
+  local reversed_output
   local waiting_output
   local missing_output
 
   active_output=$'2 extension(s)\n--- com.apple.system_extension.cmio\n* * ABCDE12345 com.garethpaul.GarethVideoCam.Extension (1.18/7) Gareth Video Cam Extension [activated enabled]\n'
+  reversed_output=$'1 extension(s)\n--- com.apple.system_extension.cmio\n* * ABCDE12345 com.garethpaul.GarethVideoCam.Extension (1.18/7) Gareth Video Cam Extension [enabled activated]\n'
   waiting_output=$'1 extension(s)\n--- com.apple.system_extension.cmio\n* * ABCDE12345 com.garethpaul.GarethVideoCam.Extension (1.18/7) Gareth Video Cam Extension [activated waiting for user]\n'
   missing_output=$'0 extension(s)\n'
 
   printf 'Registration active fixture present: %s\n' "$(extension_registration_present_value "$active_output" "$EXTENSION_ID")"
   printf 'Registration active fixture activated enabled: %s\n' "$(extension_registration_activated_enabled_value "$active_output" "$EXTENSION_ID")"
+  printf 'Registration reversed fixture activated enabled: %s\n' "$(extension_registration_activated_enabled_value "$reversed_output" "$EXTENSION_ID")"
   printf 'Registration waiting fixture activated enabled: %s\n' "$(extension_registration_activated_enabled_value "$waiting_output" "$EXTENSION_ID")"
   printf 'Registration missing fixture present: %s\n' "$(extension_registration_present_value "$missing_output" "$EXTENSION_ID")"
   printf 'Registration empty fixture present: %s\n' "$(extension_registration_present_value "" "$EXTENSION_ID")"
