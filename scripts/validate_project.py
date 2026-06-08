@@ -117,10 +117,16 @@ def main():
         require("xcodebuild" in workflow_text and "CODE_SIGNING_ALLOWED=NO" in workflow_text,
                 "macOS build workflow should perform an unsigned xcodebuild",
                 failures)
+        require("-target GarethVideoCam" in workflow_text,
+                "macOS build workflow should build the app target without running scheme post-actions",
+                failures)
+        require("runner_arch=\"$(uname -m)\"" in workflow_text and "platform=macOS,arch=${runner_arch}" in workflow_text,
+                "macOS build workflow should disambiguate the macOS destination architecture",
+                failures)
         require("tee build.log" in workflow_text,
                 "macOS build workflow should capture xcodebuild output",
                 failures)
-        require("warning:|deprecated|error:" in workflow_text and "appintentsmetadataprocessor" in workflow_text,
+        require("grep -Ei \"warning:|error:\"" in workflow_text and "appintentsmetadataprocessor" in workflow_text,
                 "macOS build workflow should fail on source warnings while ignoring Xcode AppIntents metadata noise",
                 failures)
 

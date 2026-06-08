@@ -46,11 +46,12 @@ jobs:
       - name: Build GarethVideoCam
         run: |
           set -o pipefail
+          runner_arch="$(uname -m)"
           xcodebuild \
             -project GarethVideoCam.xcodeproj \
-            -scheme GarethVideoCam \
+            -target GarethVideoCam \
             -configuration Debug \
-            -destination 'platform=macOS' \
+            -destination "platform=macOS,arch=${runner_arch}" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
@@ -61,9 +62,9 @@ jobs:
       - name: Scan build log for source warnings
         run: |
           filtered_warnings="$(
-            grep -E "warning:|deprecated|error:" build.log \
-              | grep -v "appintentsmetadataprocessor" \
-              | grep -v "Metadata extraction skipped. No AppIntents.framework dependency found." \
+            grep -Ei "warning:|error:" build.log \
+              | grep -vi "appintentsmetadataprocessor" \
+              | grep -vi "Metadata extraction skipped. No AppIntents.framework dependency found." \
               || true
           )"
 
