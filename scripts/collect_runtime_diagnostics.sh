@@ -63,6 +63,27 @@ read_team_identifier() {
   esac
 }
 
+file_byte_count() {
+  local file_path="$1"
+
+  /usr/bin/stat -f %z "$file_path" 2>/dev/null || /usr/bin/stat -c %s "$file_path" 2>/dev/null || true
+}
+
+print_file_sha256() {
+  local file_path="$1"
+  local checksum
+
+  if [ -x /usr/bin/shasum ]; then
+    checksum="$(/usr/bin/shasum -a 256 "$file_path" | /usr/bin/awk '{ print $1 }')"
+    printf 'Video SHA-256: %s\n' "${checksum:-unknown}"
+  elif command -v sha256sum >/dev/null 2>&1; then
+    checksum="$(sha256sum "$file_path" | /usr/bin/awk '{ print $1 }')"
+    printf 'Video SHA-256: %s\n' "${checksum:-unknown}"
+  else
+    printf 'Video SHA-256: checksum tool unavailable\n'
+  fi
+}
+
 section "Host"
 printf 'Log window: %s\n' "$LOG_WINDOW"
 run_if_available sw_vers
@@ -96,6 +117,15 @@ fi
 section "Bundled Video"
 printf 'Video path: %s\n' "$VIDEO_PATH"
 if [ -f "$VIDEO_PATH" ]; then
+  video_byte_count="$(file_byte_count "$VIDEO_PATH")"
+  printf 'Video resource exists: yes\n'
+  printf 'Video byte size: %s\n' "${video_byte_count:-unknown}"
+  if [ "$video_byte_count" = "0" ]; then
+    printf 'Video resource is empty: yes\n'
+  else
+    printf 'Video resource is empty: no\n'
+  fi
+  print_file_sha256 "$VIDEO_PATH"
   /bin/ls -lh "$VIDEO_PATH" 2>/dev/null || true
   run_if_available mdls \
     -name kMDItemCodecs \
@@ -104,6 +134,7 @@ if [ -f "$VIDEO_PATH" ]; then
     -name kMDItemDurationSeconds \
     "$VIDEO_PATH"
 else
+  printf 'Video resource exists: no\n'
   printf 'Expected bundled video resource was not found.\n'
 fi
 
