@@ -1146,6 +1146,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         """
     }
 
+    var runtimeDiagnosticsCommand: String {
+        return "./scripts/collect_runtime_diagnostics.sh \(expectedApplicationPath) 1h"
+    }
+
     var activationChecklist: String {
         return """
         Gareth Video Cam Signed Runtime Activation Checklist
@@ -1173,7 +1177,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         Expected virtual camera device present: yes
 
         Diagnostics Command:
-        ./scripts/collect_runtime_diagnostics.sh /Applications/GarethVideoCam.app 1h
+        \(runtimeDiagnosticsCommand)
         """
     }
 
@@ -1280,6 +1284,22 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             appendActivity(level: .error,
                            title: "Checklist Copy Failed",
                            detail: "macOS did not accept the activation checklist text on the clipboard.")
+        }
+    }
+
+    func copyRuntimeDiagnosticsCommand() {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        let didCopyCommand = pasteboard.setString(runtimeDiagnosticsCommand, forType: .string)
+
+        if didCopyCommand {
+            appendActivity(level: .success,
+                           title: "Diagnostics Command Copied",
+                           detail: runtimeDiagnosticsCommand)
+        } else {
+            appendActivity(level: .error,
+                           title: "Diagnostics Command Copy Failed",
+                           detail: "macOS did not accept the runtime diagnostics command on the clipboard.")
         }
     }
 
@@ -2509,6 +2529,12 @@ private struct DetailsActions: View {
         }
         .buttonStyle(.bordered)
         .help("Copy the signed runtime activation checklist.")
+
+        Button(action: manager.copyRuntimeDiagnosticsCommand) {
+            Label("Copy Command", systemImage: "terminal")
+        }
+        .buttonStyle(.bordered)
+        .help("Copy the runtime diagnostics command.")
 
         Button(action: manager.revealApplicationInFinder) {
             Label("Reveal App", systemImage: "folder")
