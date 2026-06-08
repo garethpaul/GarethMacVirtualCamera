@@ -1088,16 +1088,33 @@ private struct DetailRow: View {
     var monospaced = false
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(title)
-                .foregroundStyle(.secondary)
-                .frame(width: 160, alignment: .leading)
-            Text(value)
-                .font(monospaced ? .callout.monospaced() : .callout)
-                .textSelection(.enabled)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                titleLabel
+                    .frame(width: 160, alignment: .leading)
+                valueText
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                titleLabel
+                valueText
+            }
         }
+    }
+
+    @ViewBuilder
+    private var titleLabel: some View {
+        Text(title)
+            .foregroundStyle(.secondary)
+    }
+
+    @ViewBuilder
+    private var valueText: some View {
+        Text(value)
+            .font(monospaced ? .callout.monospaced() : .callout)
+            .textSelection(.enabled)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
