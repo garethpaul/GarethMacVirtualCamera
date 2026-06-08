@@ -1108,13 +1108,17 @@ private struct ActivityRow: View {
                 .frame(width: 18)
 
             VStack(alignment: .leading, spacing: 3) {
-                HStack {
-                    Text(item.title)
-                        .font(.callout.weight(.semibold))
-                    Spacer()
-                    Text(Self.timestampFormatter.string(from: item.date))
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(.secondary)
+                ViewThatFits(in: .horizontal) {
+                    HStack {
+                        activityTitle
+                        Spacer()
+                        activityTimestamp
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        activityTitle
+                        activityTimestamp
+                    }
                 }
                 Text(item.detail)
                     .font(.callout)
@@ -1122,6 +1126,19 @@ private struct ActivityRow: View {
                     .textSelection(.enabled)
             }
         }
+    }
+
+    @ViewBuilder
+    private var activityTitle: some View {
+        Text(item.title)
+            .font(.callout.weight(.semibold))
+    }
+
+    @ViewBuilder
+    private var activityTimestamp: some View {
+        Text(Self.timestampFormatter.string(from: item.date))
+            .font(.caption.monospacedDigit())
+            .foregroundStyle(.secondary)
     }
 }
 

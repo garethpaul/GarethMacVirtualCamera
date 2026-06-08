@@ -256,6 +256,9 @@ def main():
     require("private var titleLabel" in host_source and "private var valueText" in host_source,
             "host app should keep diagnostic detail rows responsive at narrower window widths",
             failures)
+    require("private var activityTitle" in host_source and "private var activityTimestamp" in host_source,
+            "host app should keep activity rows responsive at narrower window widths",
+            failures)
     require(".frame(minWidth: 720, minHeight: 560)" in app_entry_source and ".windowResizability(.contentMinSize)" in app_entry_source,
             "host app should allow a compact but bounded resizable window",
             failures)
