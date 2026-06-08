@@ -955,6 +955,12 @@ def main():
         require("permissions:\n  contents: read" in workflow_text,
                 "macOS build workflow should limit repository token permissions to read-only contents",
                 failures)
+        require("concurrency:" in workflow_text and "group: macos-build-${{ github.ref }}" in workflow_text and "cancel-in-progress: true" in workflow_text,
+                "macOS build workflow should cancel superseded branch builds",
+                failures)
+        require("timeout-minutes: 20" in workflow_text,
+                "macOS build workflow should bound job runtime",
+                failures)
         require("Xcode_26.5" in workflow_text,
                 "macOS build workflow should explicitly select Xcode 26.5",
                 failures)
