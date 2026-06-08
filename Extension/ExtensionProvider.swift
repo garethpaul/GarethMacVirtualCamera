@@ -337,13 +337,14 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
             return
         }
 
-        guard let asset, let videoTrack else {
+        guard let asset, let assetDuration, let videoTrack else {
             logger.error("Unable to loop the bundled video because no loaded asset is available")
             stopStreamingSession()
             return
         }
 
         do {
+            advanceLoopTiming(by: assetDuration)
             installAssetReaderState(try makeAssetReader(asset: asset, videoTrack: videoTrack))
         } catch {
             logger.error("Unable to loop the bundled video")
@@ -436,6 +437,11 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
     private func resetTiming() {
         lastPresentationTime = nil
         timestampOffset = .zero
+    }
+
+    private func advanceLoopTiming(by duration: CMTime) {
+        timestampOffset = CMTimeAdd(timestampOffset, duration)
+        lastPresentationTime = nil
     }
 
     private func stopStreamingSession() {
