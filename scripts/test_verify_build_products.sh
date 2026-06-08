@@ -352,6 +352,21 @@ if ! grep -q "Missing or non-executable Debug extension executable" "$TMP_DIR/mi
   exit 1
 fi
 
+NON_EXECUTABLE_EXTENSION_PRODUCTS="$TMP_DIR/non-executable-extension/Products"
+write_product_fixture "$NON_EXECUTABLE_EXTENSION_PRODUCTS" Debug
+chmod 0644 "$NON_EXECUTABLE_EXTENSION_PRODUCTS/Debug/GarethVideoCam.app/Contents/Library/SystemExtensions/$EXTENSION_NAME/Contents/MacOS/$EXTENSION_ID"
+
+if PRODUCTS_PATH="$NON_EXECUTABLE_EXTENSION_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/non-executable-extension.out" 2>"$TMP_DIR/non-executable-extension.err"; then
+  printf 'Expected verifier to reject a non-executable extension binary.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing or non-executable Debug extension executable" "$TMP_DIR/non-executable-extension.err"; then
+  printf 'Verifier failure did not explain the non-executable extension binary.\n' >&2
+  cat "$TMP_DIR/non-executable-extension.err" >&2
+  exit 1
+fi
+
 MISSING_APP_EXECUTABLE_PRODUCTS="$TMP_DIR/missing-app-executable/Products"
 write_product_fixture "$MISSING_APP_EXECUTABLE_PRODUCTS" Debug
 rm "$MISSING_APP_EXECUTABLE_PRODUCTS/Debug/GarethVideoCam.app/Contents/MacOS/GarethVideoCam"
@@ -364,6 +379,21 @@ fi
 if ! grep -q "Missing or non-executable Debug app executable" "$TMP_DIR/missing-app-executable.err"; then
   printf 'Verifier failure did not explain the missing app executable.\n' >&2
   cat "$TMP_DIR/missing-app-executable.err" >&2
+  exit 1
+fi
+
+MISSING_APP_EXECUTABLE_KEY_PRODUCTS="$TMP_DIR/missing-app-executable-key/Products"
+write_product_fixture "$MISSING_APP_EXECUTABLE_KEY_PRODUCTS" Debug
+remove_info_plist_key "$MISSING_APP_EXECUTABLE_KEY_PRODUCTS/Debug/GarethVideoCam.app" "CFBundleExecutable"
+
+if PRODUCTS_PATH="$MISSING_APP_EXECUTABLE_KEY_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/missing-app-executable-key.out" 2>"$TMP_DIR/missing-app-executable-key.err"; then
+  printf 'Expected verifier to reject a missing app executable declaration.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug app CFBundleExecutable" "$TMP_DIR/missing-app-executable-key.err"; then
+  printf 'Verifier failure did not explain the missing app executable declaration.\n' >&2
+  cat "$TMP_DIR/missing-app-executable-key.err" >&2
   exit 1
 fi
 
