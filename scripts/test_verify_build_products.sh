@@ -70,6 +70,41 @@ write_executable_fixture() {
   chmod +x "$executable_path"
 }
 
+write_stale_team_id_diagnostics_fixture() {
+  local products_path="$1"
+  local configuration="$2"
+  local script_path="$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh"
+
+  python3 - "$script_path" <<'PY'
+from pathlib import Path
+import sys
+
+script_path = Path(sys.argv[1])
+script_path.write_text("""#!/usr/bin/env bash
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VALIDATE_PROJECT_SCRIPT="${SCRIPT_DIR}/validate_project.py"
+case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
+  resource-discovery)
+    printf 'Diagnostics parser source: adjacent script resource\n'
+    printf 'Diagnostics parser available: yes\n'
+    ;;
+  executable-readiness)
+    printf 'Executable ready fixture: yes\n'
+    printf 'Executable non-executable fixture: no\n'
+    ;;
+  team-id)
+    printf 'Team ID match fixture: no\n'
+    printf 'Team ID mismatch fixture: no\n'
+    ;;
+  video-parser)
+    printf 'Video parser metadata ready fixture: yes\n'
+    ;;
+esac
+""")
+PY
+}
+
 remove_info_plist_key() {
   local bundle_path="$1"
   local key="$2"
@@ -178,6 +213,21 @@ fi
 if ! grep -q "Missing Debug app runtime diagnostics parser" "$TMP_DIR/missing-diagnostics-parser.err"; then
   printf 'Verifier failure did not explain the missing runtime diagnostics parser.\n' >&2
   cat "$TMP_DIR/missing-diagnostics-parser.err" >&2
+  exit 1
+fi
+
+STALE_TEAM_ID_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-team-id-diagnostics/Products"
+write_product_fixture "$STALE_TEAM_ID_DIAGNOSTICS_PRODUCTS" Debug
+write_stale_team_id_diagnostics_fixture "$STALE_TEAM_ID_DIAGNOSTICS_PRODUCTS" Debug
+
+if PRODUCTS_PATH="$STALE_TEAM_ID_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stale-team-id-diagnostics.out" 2>"$TMP_DIR/stale-team-id-diagnostics.err"; then
+  printf 'Expected verifier to reject stale bundled runtime diagnostics Team ID self-test output.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Unexpected Debug app bundled runtime diagnostics Team ID self-test output" "$TMP_DIR/stale-team-id-diagnostics.err"; then
+  printf 'Verifier failure did not explain the stale bundled runtime diagnostics Team ID self-test output.\n' >&2
+  cat "$TMP_DIR/stale-team-id-diagnostics.err" >&2
   exit 1
 fi
 

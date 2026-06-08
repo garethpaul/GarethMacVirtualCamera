@@ -162,6 +162,7 @@ verify_app_diagnostics_resources() {
   local parser_path="$app_path/Contents/Resources/validate_project.py"
   local resource_self_test_output
   local executable_self_test_output
+  local team_identifier_self_test_output
   local parser_self_test_output
 
   if [ ! -f "$script_path" ]; then
@@ -207,6 +208,19 @@ verify_app_diagnostics_resources() {
     || ! printf '%s\n' "$executable_self_test_output" | /usr/bin/grep -F "Executable non-executable fixture: no" >/dev/null; then
     printf 'Unexpected %s app bundled runtime diagnostics executable-readiness self-test output.\n' "$configuration" >&2
     printf '%s\n' "$executable_self_test_output" >&2
+    exit 1
+  fi
+
+  if ! team_identifier_self_test_output="$(GARETH_DIAGNOSTICS_SELF_TEST=team-id /bin/bash "$script_path" "$app_path" 1m 2>&1)"; then
+    printf 'Failed %s app bundled runtime diagnostics Team ID self-test.\n' "$configuration" >&2
+    printf '%s\n' "$team_identifier_self_test_output" >&2
+    exit 1
+  fi
+
+  if ! printf '%s\n' "$team_identifier_self_test_output" | /usr/bin/grep -F "Team ID match fixture: yes" >/dev/null \
+    || ! printf '%s\n' "$team_identifier_self_test_output" | /usr/bin/grep -F "Team ID mismatch fixture: no" >/dev/null; then
+    printf 'Unexpected %s app bundled runtime diagnostics Team ID self-test output.\n' "$configuration" >&2
+    printf '%s\n' "$team_identifier_self_test_output" >&2
     exit 1
   fi
 
