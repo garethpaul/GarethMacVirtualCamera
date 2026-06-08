@@ -242,6 +242,7 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
                 guard let self else { return }
 
                 guard self.isCurrentStreamPreparation(generation: generation, videoURL: videoURL) else {
+                    logger.debug("Ignoring stale stream preparation completion")
                     return
                 }
 
@@ -258,6 +259,7 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
                 guard let self else { return }
 
                 guard self.isCurrentStreamPreparation(generation: generation, videoURL: videoURL) else {
+                    logger.debug("Ignoring stale stream preparation failure")
                     return
                 }
 

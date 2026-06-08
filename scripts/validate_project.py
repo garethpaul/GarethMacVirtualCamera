@@ -297,6 +297,9 @@ def main():
     require("streamGeneration" in extension_source and "isCurrentStreamPreparation" in extension_source,
             "extension should ignore stale asynchronous stream preparation completions",
             failures)
+    require("Ignoring stale stream preparation completion" in extension_source and "Ignoring stale stream preparation failure" in extension_source,
+            "extension should log ignored stale asynchronous stream preparation results",
+            failures)
     require("tooManyStreamingClients" in extension_source and "_streamingCounter < UInt32.max" in extension_source,
             "extension should guard the active streaming client counter from overflow",
             failures)
