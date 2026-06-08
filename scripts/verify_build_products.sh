@@ -100,6 +100,20 @@ verify_bundle_executable() {
   fi
 }
 
+verify_info_plist_string() {
+  local configuration="$1"
+  local bundle_label="$2"
+  local bundle_path="$3"
+  local key="$4"
+  local value
+
+  value="$(read_info_plist_string "$bundle_path" "$key")"
+  if [ -z "$value" ]; then
+    printf 'Missing %s %s %s.\n' "$configuration" "$bundle_label" "$key" >&2
+    exit 1
+  fi
+}
+
 verify_extension_cmio_metadata() {
   local configuration="$1"
   local bundle_path="$2"
@@ -164,6 +178,8 @@ for configuration in "${configurations[@]}"; do
   fi
 
   verify_bundle_executable "$configuration" "app" "$app_path"
+  verify_info_plist_string "$configuration" "app" "$app_path" "NSCameraUsageDescription"
+  verify_info_plist_string "$configuration" "app" "$app_path" "NSSystemExtensionUsageDescription"
 
   if [ ! -d "$extension_path" ]; then
     printf 'Missing %s embedded system extension: %s\n' "$configuration" "$extension_path" >&2
@@ -178,6 +194,8 @@ for configuration in "${configurations[@]}"; do
 
   verify_aligned_bundle_versions "$configuration" "$app_path" "$extension_path"
   verify_bundle_executable "$configuration" "extension" "$extension_path"
+  verify_info_plist_string "$configuration" "extension" "$extension_path" "NSCameraUsageDescription"
+  verify_info_plist_string "$configuration" "extension" "$extension_path" "NSSystemExtensionUsageDescription"
   verify_extension_cmio_metadata "$configuration" "$extension_path"
 
   if [ ! -s "$video_path" ]; then
@@ -185,5 +203,5 @@ for configuration in "${configurations[@]}"; do
     exit 1
   fi
 
-  printf 'Verified %s app product, embedded system extension, versions, executables, resolved CMIO metadata, and bundled video.\n' "$configuration"
+  printf 'Verified %s app product, embedded system extension, versions, executables, privacy usage strings, resolved CMIO metadata, and bundled video.\n' "$configuration"
 done

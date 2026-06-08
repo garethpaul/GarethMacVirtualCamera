@@ -27,6 +27,8 @@ info = {
     "CFBundleIdentifier": sys.argv[2],
     "CFBundleShortVersionString": sys.argv[5],
     "CFBundleVersion": sys.argv[6],
+    "NSCameraUsageDescription": "Camera usage fixture",
+    "NSSystemExtensionUsageDescription": "System extension usage fixture",
 }
 
 if sys.argv[4]:
@@ -47,6 +49,24 @@ write_executable_fixture() {
   mkdir -p "$(dirname "$executable_path")"
   printf '#!/usr/bin/env sh\nexit 0\n' > "$executable_path"
   chmod +x "$executable_path"
+}
+
+remove_info_plist_key() {
+  local bundle_path="$1"
+  local key="$2"
+
+  python3 - "$bundle_path/Contents/Info.plist" "$key" <<'PY'
+import plistlib
+import sys
+
+with open(sys.argv[1], "rb") as info_file:
+    info = plistlib.load(info_file)
+
+info.pop(sys.argv[2], None)
+
+with open(sys.argv[1], "wb") as info_file:
+    plistlib.dump(info, info_file)
+PY
 }
 
 write_product_fixture() {
@@ -118,6 +138,21 @@ fi
 if ! grep -q "Missing or non-executable Debug extension executable" "$TMP_DIR/missing-executable.err"; then
   printf 'Verifier failure did not explain the missing extension executable.\n' >&2
   cat "$TMP_DIR/missing-executable.err" >&2
+  exit 1
+fi
+
+MISSING_USAGE_PRODUCTS="$TMP_DIR/missing-usage/Products"
+write_product_fixture "$MISSING_USAGE_PRODUCTS" Debug
+remove_info_plist_key "$MISSING_USAGE_PRODUCTS/Debug/GarethVideoCam.app" "NSSystemExtensionUsageDescription"
+
+if PRODUCTS_PATH="$MISSING_USAGE_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/missing-usage.out" 2>"$TMP_DIR/missing-usage.err"; then
+  printf 'Expected verifier to reject a missing app usage description.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug app NSSystemExtensionUsageDescription" "$TMP_DIR/missing-usage.err"; then
+  printf 'Verifier failure did not explain the missing app usage description.\n' >&2
+  cat "$TMP_DIR/missing-usage.err" >&2
   exit 1
 fi
 
