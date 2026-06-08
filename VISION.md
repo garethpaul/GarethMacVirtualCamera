@@ -42,7 +42,7 @@ Do not add hidden camera capture, external streaming, or entitlement shortcuts.
 Signing, app-group, and system-extension checks are part of the product safety
 model.
 
-## What We Will Not Merge For Now
+## What We Will Not Merge (For Now)
 
 - Runtime activation shortcuts that bypass signing or user approval
 - Hidden capture, upload, or streaming behavior
