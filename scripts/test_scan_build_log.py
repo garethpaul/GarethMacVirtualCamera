@@ -89,6 +89,19 @@ def test_fails_on_missing_build_log():
     require(f"Build log not found: {missing_build_log}" in result.stderr, result.stderr)
 
 
+def test_requires_build_log_argument():
+    result = subprocess.run(
+        [sys.executable, str(SCANNER)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    require(result.returncode == 2, result.stdout + result.stderr)
+    require("Usage: scan_build_log.py BUILD_LOG [BUILD_LOG ...]" in result.stderr, result.stderr)
+
+
 def main():
     test_ignores_appintents_metadata_notice()
     test_fails_on_actionable_warning()
@@ -96,6 +109,7 @@ def main():
     test_fails_on_actionable_error()
     test_scans_multiple_build_logs()
     test_fails_on_missing_build_log()
+    test_requires_build_log_argument()
     print("Build-log scanner tests passed.")
     return 0
 

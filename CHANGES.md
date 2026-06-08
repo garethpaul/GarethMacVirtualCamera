@@ -20,3 +20,4 @@
 - Guarded CI concurrency cancellation and job timeout settings in project validation.
 - Covered wrong host and extension System Extension usage descriptions in build-product verifier fixtures.
 - Added native keyboard shortcuts for copying the runtime diagnostics command and expected runtime evidence.
+- Covered build-log scanner usage failures when no build log path is provided.
