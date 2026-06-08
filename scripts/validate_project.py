@@ -219,6 +219,9 @@ def main():
     require("Button(action: manager.refreshExtensionInfo)" in host_source and "Refresh Status" in host_source,
             "host app should let users refresh extension and signing readiness in-place",
             failures)
+    require("private struct DetailsActions" in host_source and "ViewThatFits(in: .horizontal)" in host_source,
+            "host app should keep details actions responsive at narrower window widths",
+            failures)
     require("activateFileViewerSelecting" in host_source and "Reveal App" in host_source,
             "host app should let users reveal the running app bundle in Finder",
             failures)

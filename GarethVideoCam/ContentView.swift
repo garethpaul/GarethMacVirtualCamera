@@ -848,30 +848,49 @@ private struct DetailsPanel: View {
                     DetailRow(title: "Bundle Path", value: bundlePath, monospaced: true)
                 }
 
-                HStack(spacing: 10) {
-                    Button(action: manager.refreshExtensionInfo) {
-                        Label("Refresh Status", systemImage: "arrow.clockwise")
-                    }
-                    .buttonStyle(.bordered)
-
-                    Button(action: manager.openSystemSettings) {
-                        Label("System Settings", systemImage: "gearshape")
-                    }
-                    .buttonStyle(.bordered)
-
-                    Button(action: manager.copyDiagnostics) {
-                        Label("Copy Diagnostics", systemImage: "doc.on.doc")
-                    }
-                    .buttonStyle(.bordered)
-
-                    Button(action: manager.revealApplicationInFinder) {
-                        Label("Reveal App", systemImage: "folder")
-                    }
-                    .buttonStyle(.bordered)
-                }
-                .padding(.top, 4)
+                DetailsActions(manager: manager)
             }
         }
+    }
+}
+
+private struct DetailsActions: View {
+    @ObservedObject var manager: SystemExtensionRequestManager
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 10) {
+                actionButtons
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                actionButtons
+            }
+        }
+        .padding(.top, 4)
+    }
+
+    @ViewBuilder
+    private var actionButtons: some View {
+        Button(action: manager.refreshExtensionInfo) {
+            Label("Refresh Status", systemImage: "arrow.clockwise")
+        }
+        .buttonStyle(.bordered)
+
+        Button(action: manager.openSystemSettings) {
+            Label("System Settings", systemImage: "gearshape")
+        }
+        .buttonStyle(.bordered)
+
+        Button(action: manager.copyDiagnostics) {
+            Label("Copy Diagnostics", systemImage: "doc.on.doc")
+        }
+        .buttonStyle(.bordered)
+
+        Button(action: manager.revealApplicationInFinder) {
+            Label("Reveal App", systemImage: "folder")
+        }
+        .buttonStyle(.bordered)
     }
 }
 
