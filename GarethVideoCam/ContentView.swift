@@ -9,6 +9,8 @@ import Security
 import SwiftUI
 import SystemExtensions
 
+private let quarantineAttributeName = "com.apple.quarantine"
+
 struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @ObservedObject var systemExtensionRequestManager: SystemExtensionRequestManager
@@ -76,7 +78,6 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     private let expectedExtensionBundleIdentifier = "com.garethpaul.GarethVideoCam.Extension"
     private let expectedApplicationBundlePath = "/Applications/GarethVideoCam.app"
     private let requiredSystemExtensionInstallEntitlement = "com.apple.developer.system-extension.install"
-    private static let quarantineAttributeName = "com.apple.quarantine"
 
     enum InstallState: Equatable {
         case idle
@@ -339,7 +340,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         var detail: String {
             switch self {
             case .present(let value):
-                return "\(SystemExtensionRequestManager.quarantineAttributeName)=\(value)"
+                return "\(quarantineAttributeName)=\(value)"
             case .absent:
                 return "No quarantine extended attribute was found."
             case .unknown(let detail):
