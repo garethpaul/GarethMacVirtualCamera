@@ -25,8 +25,10 @@ private enum CameraExtensionConfiguration {
     static let pixelFormat = kCVPixelFormatType_420YpCbCr8BiPlanarFullRange
     static let frameDuration = CMTime(value: 1, timescale: frameRate)
 
-    static let deviceID = UUID(uuidString: "c5633637-4cf7-4c1c-928e-513fea1cc2d3")!
-    static let streamID = UUID(uuidString: "b62ba48a-2856-427c-a1f1-90fe58c6f99c")!
+    static let deviceID = UUID(uuid: (0xc5, 0x63, 0x36, 0x37, 0x4c, 0xf7, 0x4c, 0x1c,
+                                      0x92, 0x8e, 0x51, 0x3f, 0xea, 0x1c, 0xc2, 0xd3))
+    static let streamID = UUID(uuid: (0xb6, 0x2b, 0xa4, 0x8a, 0x28, 0x56, 0x42, 0x7c,
+                                      0xa1, 0xf1, 0x90, 0xfe, 0x58, 0xc6, 0xf9, 0x9c))
 }
 
 private let logger = Logger(subsystem: "com.garethpaul.GarethVideoCam",

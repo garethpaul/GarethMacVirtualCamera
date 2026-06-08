@@ -411,6 +411,9 @@ def main():
     require("validFrameDurations: [CameraExtensionConfiguration.frameDuration]" in extension_source,
             "extension stream should advertise the fixed frame duration it enforces",
             failures)
+    require('UUID(uuidString:' not in extension_source and "static let deviceID = UUID(uuid:" in extension_source and "static let streamID = UUID(uuid:" in extension_source,
+            "extension should use stable byte-literal UUIDs instead of force-unwrapped UUID string parsing",
+            failures)
     require("timing.duration = CameraExtensionConfiguration.frameDuration" in extension_source and "if !timing.duration.flags.contains(.valid)" not in extension_source,
             "extension should retime every emitted sample to the advertised fixed frame duration",
             failures)
