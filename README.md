@@ -48,7 +48,7 @@ Pushes and pull requests to `main` also run `.github/workflows/macos-build.yml` 
 
 Runtime activation still requires a macOS host with a valid Apple Developer signing identity, the System Extension entitlement, and user approval in System Settings. The app must run from `/Applications/GarethVideoCam.app`; the shared Xcode scheme copies the built app there before launch for local testing.
 
-The app disables install and uninstall actions when it is not running from `/Applications` or when its code signature is invalid, exposes a System Settings shortcut for approval, and can copy a diagnostics snapshot with the current app path, signing status, bundled extension metadata, and recent request activity.
+The app disables install and uninstall actions when it is not running from `/Applications`, when its app signature is invalid, or when the bundled system extension signature is invalid. It exposes a System Settings shortcut for approval and can copy a diagnostics snapshot with the current app path, app and extension signing status, bundled extension metadata, and recent request activity.
 
 After approving the camera extension in System Settings, it should appear in camera pickers as `Gareth Video Cam`.
 

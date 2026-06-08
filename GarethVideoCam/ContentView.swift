@@ -282,7 +282,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     @Published var state: InstallState = .idle
     @Published var extensionInfo: ExtensionInfo?
     @Published var activity: [ActivityItem] = []
-    @Published var codeSigningStatus: CodeSigningStatus = .invalid("Code-signing status has not been checked yet.")
+    @Published var appCodeSigningStatus: CodeSigningStatus = .invalid("App code-signing status has not been checked yet.")
+    @Published var extensionCodeSigningStatus: CodeSigningStatus = .invalid("System extension code-signing status has not been checked yet.")
 
     private var pendingRequestKind: RequestKind?
 
@@ -316,7 +317,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     var canSubmitSystemExtensionRequests: Bool {
-        return isRunningFromApplications && codeSigningStatus.isValid
+        return isRunningFromApplications && appCodeSigningStatus.isValid && extensionCodeSigningStatus.isValid
     }
 
     var isRunningFromApplications: Bool {
@@ -328,8 +329,12 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             return "System extension requests require /Applications."
         }
 
-        if !codeSigningStatus.isValid {
+        if !appCodeSigningStatus.isValid {
             return "System extension requests require a valid app signature."
+        }
+
+        if !extensionCodeSigningStatus.isValid {
+            return "System extension requests require a valid system extension signature."
         }
 
         return nil
@@ -357,8 +362,10 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         State: \(state.title)
         App Location: \(applicationLocationStatus)
         App Path: \(applicationBundlePath)
-        Code Signing: \(codeSigningStatus.title)
-        Code Signing Detail: \(codeSigningStatus.detail)
+        App Code Signing: \(appCodeSigningStatus.title)
+        App Code Signing Detail: \(appCodeSigningStatus.detail)
+        Extension Code Signing: \(extensionCodeSigningStatus.title)
+        Extension Code Signing Detail: \(extensionCodeSigningStatus.detail)
         \(extensionDescription)
 
         Recent Activity:
@@ -367,54 +374,43 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     func install() {
-        guard prepareForSystemExtensionRequest() else { return }
+        guard let extensionInfo = prepareForSystemExtensionRequest() else { return }
 
-        state = .locatingExtension
-        do {
-            let extensionInfo = try loadBundledExtensionInfo()
-            self.extensionInfo = extensionInfo
-            state = .activating
-            pendingRequestKind = .activation
-            appendActivity(level: .info,
-                           title: "Install Requested",
-                           detail: extensionInfo.identifier)
+        state = .activating
+        pendingRequestKind = .activation
+        appendActivity(level: .info,
+                       title: "Install Requested",
+                       detail: extensionInfo.identifier)
 
-            let activationRequest = OSSystemExtensionRequest.activationRequest(forExtensionWithIdentifier: extensionInfo.identifier,
-                                                                               queue: .main)
-            activationRequest.delegate = self
-            OSSystemExtensionManager.shared.submitRequest(activationRequest)
-        } catch {
-            handleFailure(error)
-        }
+        let activationRequest = OSSystemExtensionRequest.activationRequest(forExtensionWithIdentifier: extensionInfo.identifier,
+                                                                           queue: .main)
+        activationRequest.delegate = self
+        OSSystemExtensionManager.shared.submitRequest(activationRequest)
     }
 
     func uninstall() {
-        guard prepareForSystemExtensionRequest() else { return }
+        guard let extensionInfo = prepareForSystemExtensionRequest() else { return }
 
-        state = .locatingExtension
-        do {
-            let extensionInfo = try loadBundledExtensionInfo()
-            self.extensionInfo = extensionInfo
-            state = .deactivating
-            pendingRequestKind = .deactivation
-            appendActivity(level: .info,
-                           title: "Uninstall Requested",
-                           detail: extensionInfo.identifier)
+        state = .deactivating
+        pendingRequestKind = .deactivation
+        appendActivity(level: .info,
+                       title: "Uninstall Requested",
+                       detail: extensionInfo.identifier)
 
-            let deactivationRequest = OSSystemExtensionRequest.deactivationRequest(forExtensionWithIdentifier: extensionInfo.identifier,
-                                                                                   queue: .main)
-            deactivationRequest.delegate = self
-            OSSystemExtensionManager.shared.submitRequest(deactivationRequest)
-        } catch {
-            handleFailure(error)
-        }
+        let deactivationRequest = OSSystemExtensionRequest.deactivationRequest(forExtensionWithIdentifier: extensionInfo.identifier,
+                                                                               queue: .main)
+        deactivationRequest.delegate = self
+        OSSystemExtensionManager.shared.submitRequest(deactivationRequest)
     }
 
     func refreshExtensionInfo() {
-        codeSigningStatus = Self.evaluateCodeSigningStatus(for: Bundle.main.bundleURL)
+        appCodeSigningStatus = Self.evaluateCodeSigningStatus(for: Bundle.main.bundleURL)
 
         do {
-            extensionInfo = try loadBundledExtensionInfo()
+            let loadedExtensionInfo = try loadBundledExtensionInfo()
+            extensionInfo = loadedExtensionInfo
+            extensionCodeSigningStatus = Self.evaluateCodeSigningStatus(for: URL(fileURLWithPath: loadedExtensionInfo.bundlePath))
+
             switch state {
             case .idle, .ready, .needsApplicationLocation, .needsSigning, .deactivated:
                 state = readinessState
@@ -422,6 +418,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
                 break
             }
         } catch {
+            extensionInfo = nil
+            extensionCodeSigningStatus = .invalid("System extension code-signing status could not be checked: \(error.localizedDescription)")
             handleFailure(error)
         }
     }
@@ -497,24 +495,46 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
                                                               actual: unexpectedIdentifiers.joined(separator: ", "))
     }
 
-    private func prepareForSystemExtensionRequest() -> Bool {
+    private func prepareForSystemExtensionRequest() -> ExtensionInfo? {
+        appCodeSigningStatus = Self.evaluateCodeSigningStatus(for: Bundle.main.bundleURL)
+
         guard isRunningFromApplications else {
             state = .needsApplicationLocation
             appendActivity(level: .warning,
                            title: "Move Required",
                            detail: "Current path is \(applicationBundlePath).")
-            return false
+            return nil
         }
 
-        guard codeSigningStatus.isValid else {
+        guard appCodeSigningStatus.isValid else {
             state = .needsSigning
             appendActivity(level: .warning,
                            title: "Signing Required",
-                           detail: codeSigningStatus.detail)
-            return false
+                           detail: appCodeSigningStatus.detail)
+            return nil
         }
 
-        return true
+        state = .locatingExtension
+        let extensionInfo: ExtensionInfo
+        do {
+            extensionInfo = try loadBundledExtensionInfo()
+            self.extensionInfo = extensionInfo
+            extensionCodeSigningStatus = Self.evaluateCodeSigningStatus(for: URL(fileURLWithPath: extensionInfo.bundlePath))
+        } catch {
+            extensionCodeSigningStatus = .invalid("System extension code-signing status could not be checked: \(error.localizedDescription)")
+            handleFailure(error)
+            return nil
+        }
+
+        guard extensionCodeSigningStatus.isValid else {
+            state = .needsSigning
+            appendActivity(level: .warning,
+                           title: "Extension Signing Required",
+                           detail: extensionCodeSigningStatus.detail)
+            return nil
+        }
+
+        return extensionInfo
     }
 
     private var readinessState: InstallState {
@@ -522,7 +542,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             return .needsApplicationLocation
         }
 
-        if !codeSigningStatus.isValid {
+        if !appCodeSigningStatus.isValid || !extensionCodeSigningStatus.isValid {
             return .needsSigning
         }
 
@@ -808,9 +828,13 @@ private struct DetailsPanel: View {
 
                 DetailRow(title: "Extension Version", value: manager.extensionInfo?.version ?? "Unknown")
                 DetailRow(title: "Application Location", value: manager.applicationLocationStatus)
-                DetailRow(title: "Code Signing", value: manager.codeSigningStatus.title)
-                if !manager.codeSigningStatus.isValid {
-                    DetailRow(title: "Signing Detail", value: manager.codeSigningStatus.detail)
+                DetailRow(title: "App Signature", value: manager.appCodeSigningStatus.title)
+                if !manager.appCodeSigningStatus.isValid {
+                    DetailRow(title: "App Signature Detail", value: manager.appCodeSigningStatus.detail)
+                }
+                DetailRow(title: "Extension Signature", value: manager.extensionCodeSigningStatus.title)
+                if !manager.extensionCodeSigningStatus.isValid {
+                    DetailRow(title: "Extension Signature Detail", value: manager.extensionCodeSigningStatus.detail)
                 }
                 DetailRow(title: "Application Path", value: manager.applicationBundlePath, monospaced: true)
 
