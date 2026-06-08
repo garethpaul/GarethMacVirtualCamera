@@ -1341,6 +1341,22 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
     }
 
+    func copyRuntimeEvidenceExpectedDiagnostics() {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        let didCopyExpectedDiagnostics = pasteboard.setString(runtimeEvidenceExpectedDiagnostics, forType: .string)
+
+        if didCopyExpectedDiagnostics {
+            appendActivity(level: .success,
+                           title: "Expected Evidence Copied",
+                           detail: "Copied the expected signed-host diagnostics lines to the clipboard.")
+        } else {
+            appendActivity(level: .error,
+                           title: "Expected Evidence Copy Failed",
+                           detail: "macOS did not accept the expected runtime evidence lines on the clipboard.")
+        }
+    }
+
     func revealApplicationInFinder() {
         NSWorkspace.shared.activateFileViewerSelecting([Bundle.main.bundleURL])
         appendActivity(level: .info,
@@ -2298,6 +2314,12 @@ private struct RuntimeEvidencePanel: View {
         }
         .buttonStyle(.bordered)
         .help("Copy the runtime diagnostics command.")
+
+        Button(action: manager.copyRuntimeEvidenceExpectedDiagnostics) {
+            Label("Copy Expected Lines", systemImage: "checkmark.seal")
+        }
+        .buttonStyle(.bordered)
+        .help("Copy the expected signed-host diagnostics lines.")
 
         Button(action: manager.copyActivationChecklist) {
             Label("Copy Checklist", systemImage: "checklist")
