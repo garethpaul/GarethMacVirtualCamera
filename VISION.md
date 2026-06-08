@@ -48,3 +48,6 @@ model.
 - Hidden capture, upload, or streaming behavior
 - Validation removals without stronger replacement checks
 - Bundle ID, entitlement, or app-group changes without diagnostics updates
+
+This list is a roadmap guardrail, not a permanent rule.
+Strong user demand and strong technical rationale can change it.
