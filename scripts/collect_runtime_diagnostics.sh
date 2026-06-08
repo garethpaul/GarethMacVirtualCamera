@@ -213,6 +213,21 @@ read_team_identifier() {
   esac
 }
 
+team_identifiers_match_value() {
+  local app_team_identifier="$1"
+  local extension_team_identifier="$2"
+
+  if [ -n "$app_team_identifier" ] && [ -n "$extension_team_identifier" ]; then
+    if [ "$app_team_identifier" = "$extension_team_identifier" ]; then
+      printf 'yes\n'
+    else
+      printf 'no\n'
+    fi
+  else
+    printf 'unknown\n'
+  fi
+}
+
 has_boolean_entitlement() {
   local bundle_path="$1"
   local entitlement="$2"
@@ -771,6 +786,13 @@ run_executable_readiness_self_test() {
   /bin/rm -rf "$temp_dir"
 }
 
+run_team_identifier_self_test() {
+  printf 'Team ID match fixture: %s\n' "$(team_identifiers_match_value "ABCDE12345" "ABCDE12345")"
+  printf 'Team ID mismatch fixture: %s\n' "$(team_identifiers_match_value "ABCDE12345" "ZYXWV98765")"
+  printf 'Team ID missing app fixture: %s\n' "$(team_identifiers_match_value "" "ABCDE12345")"
+  printf 'Team ID missing extension fixture: %s\n' "$(team_identifiers_match_value "ABCDE12345" "")"
+}
+
 run_mach_service_self_test() {
   printf 'Mach service direct fixture resolved: %s\n' "$(mach_service_resolved_value "$EXTENSION_ID")"
   printf 'Mach service direct fixture matches expected: %s\n' "$(mach_service_matches_expected_value "$EXTENSION_ID" "$EXTENSION_ID")"
@@ -894,6 +916,10 @@ case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
     ;;
   executable-readiness)
     run_executable_readiness_self_test
+    exit 0
+    ;;
+  team-id)
+    run_team_identifier_self_test
     exit 0
     ;;
   mach-service)
@@ -1193,15 +1219,7 @@ if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
     printf 'Extension team identifier: unknown\n'
   fi
 
-  if [ -n "$app_team_identifier" ] && [ -n "$extension_team_identifier" ]; then
-    if [ "$app_team_identifier" = "$extension_team_identifier" ]; then
-      printf 'Team identifiers match: yes\n'
-    else
-      printf 'Team identifiers match: no\n'
-    fi
-  else
-    printf 'Team identifiers match: unknown\n'
-  fi
+  printf 'Team identifiers match: %s\n' "$(team_identifiers_match_value "$app_team_identifier" "$extension_team_identifier")"
 else
   printf 'Signing team comparison requires both the app and embedded system extension bundles.\n'
 fi
@@ -1336,13 +1354,7 @@ fi
 if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
   app_team_identifier="$(read_team_identifier "$APP_PATH" || true)"
   extension_team_identifier="$(read_team_identifier "$EXTENSION_PATH" || true)"
-  if [ -n "$app_team_identifier" ] && [ -n "$extension_team_identifier" ] && [ "$app_team_identifier" = "$extension_team_identifier" ]; then
-    print_readiness_check "Signing Team match ready" "yes"
-  elif [ -n "$app_team_identifier" ] && [ -n "$extension_team_identifier" ]; then
-    print_readiness_check "Signing Team match ready" "no"
-  else
-    print_readiness_check "Signing Team match ready" "unknown"
-  fi
+  print_readiness_check "Signing Team match ready" "$(team_identifiers_match_value "$app_team_identifier" "$extension_team_identifier")"
 else
   print_readiness_check "Signing Team match ready" "unknown"
 fi

@@ -20,6 +20,7 @@ unknown_output="$(GARETH_DIAGNOSTICS_SELF_TEST=readiness-rollup-unknown "$ROOT/s
 ready_output="$(GARETH_DIAGNOSTICS_SELF_TEST=readiness-rollup-ready "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 bundle_version_output="$(GARETH_DIAGNOSTICS_SELF_TEST=bundle-version-match "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 executable_readiness_output="$(GARETH_DIAGNOSTICS_SELF_TEST=executable-readiness "$ROOT/scripts/collect_runtime_diagnostics.sh")"
+team_id_output="$(GARETH_DIAGNOSTICS_SELF_TEST=team-id "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 mach_service_output="$(GARETH_DIAGNOSTICS_SELF_TEST=mach-service "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 application_group_output="$(GARETH_DIAGNOSTICS_SELF_TEST=application-group "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 camera_device_output="$(GARETH_DIAGNOSTICS_SELF_TEST=camera-device "$ROOT/scripts/collect_runtime_diagnostics.sh")"
@@ -67,6 +68,11 @@ require_output "$executable_readiness_output" "Executable missing name fixture: 
 require_output "$executable_readiness_output" "Executable missing file fixture: no"
 require_output "$executable_readiness_output" "Executable non-executable fixture: no"
 require_output "$executable_readiness_output" "Executable ready fixture: yes"
+
+require_output "$team_id_output" "Team ID match fixture: yes"
+require_output "$team_id_output" "Team ID mismatch fixture: no"
+require_output "$team_id_output" "Team ID missing app fixture: unknown"
+require_output "$team_id_output" "Team ID missing extension fixture: unknown"
 
 require_output "$mach_service_output" "Mach service direct fixture resolved: yes"
 require_output "$mach_service_output" "Mach service direct fixture matches expected: yes"

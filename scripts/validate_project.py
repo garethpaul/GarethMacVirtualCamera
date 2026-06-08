@@ -809,6 +809,9 @@ def main():
     require("GARETH_DIAGNOSTICS_SELF_TEST=executable-readiness" in runtime_diagnostics_test_source and "Executable missing name fixture: no" in runtime_diagnostics_test_source and "Executable missing file fixture: no" in runtime_diagnostics_test_source and "Executable non-executable fixture: no" in runtime_diagnostics_test_source and "Executable ready fixture: yes" in runtime_diagnostics_test_source,
             "runtime diagnostics test should cover executable readiness comparisons",
             failures)
+    require("GARETH_DIAGNOSTICS_SELF_TEST=team-id" in runtime_diagnostics_test_source and "Team ID match fixture: yes" in runtime_diagnostics_test_source and "Team ID mismatch fixture: no" in runtime_diagnostics_test_source and "Team ID missing app fixture: unknown" in runtime_diagnostics_test_source and "Team ID missing extension fixture: unknown" in runtime_diagnostics_test_source,
+            "runtime diagnostics test should cover signing Team ID readiness comparisons",
+            failures)
     require("Registration reversed fixture activated enabled: yes" in runtime_diagnostics_test_source and "[enabled activated]" in runtime_diagnostics_source and "bracket = substr($0, RSTART + 1, RLENGTH - 2)" in runtime_diagnostics_source,
             "runtime diagnostics registration checks should accept activated/enabled status tokens in either order",
             failures)
@@ -826,6 +829,9 @@ def main():
             failures)
     require("executable_readiness_value" in runtime_diagnostics_source and "run_executable_readiness_self_test" in runtime_diagnostics_source and "executable-readiness" in runtime_diagnostics_source and "Executable ready fixture: %s" in runtime_diagnostics_source and "App executable ready\" \"$(executable_readiness_value" in runtime_diagnostics_source and "Extension executable ready\" \"$(executable_readiness_value" in runtime_diagnostics_source,
             "runtime diagnostics script should test and reuse executable readiness comparisons",
+            failures)
+    require("team_identifiers_match_value" in runtime_diagnostics_source and "run_team_identifier_self_test" in runtime_diagnostics_source and "team-id" in runtime_diagnostics_source and "Team identifiers match: %s" in runtime_diagnostics_source and "Signing Team match ready\" \"$(team_identifiers_match_value" in runtime_diagnostics_source,
+            "runtime diagnostics script should test and reuse signing Team ID readiness comparisons",
             failures)
     require("./scripts/validate_project.py" in check_project_source and "./scripts/test_scan_build_log.py" in check_project_source and "./scripts/test_collect_runtime_diagnostics.sh" in check_project_source and "./scripts/test_verify_build_products.sh" in check_project_source and "bash -n ./scripts/collect_runtime_diagnostics.sh" in check_project_source and "bash -n ./scripts/build_unsigned.sh" in check_project_source and "bash -n ./scripts/verify_build_products.sh" in check_project_source and "bash -n ./scripts/check_project.sh" in check_project_source and "bash -n ./scripts/test_collect_runtime_diagnostics.sh" in check_project_source and "bash -n ./scripts/test_verify_build_products.sh" in check_project_source and "git diff --check" in check_project_source and "git diff-tree --check --root --no-commit-id -r HEAD" in check_project_source,
             "project check script should run validation, scanner tests, shell syntax checks, and whitespace checks",
