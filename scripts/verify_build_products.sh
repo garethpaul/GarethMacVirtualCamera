@@ -16,8 +16,13 @@ fi
 
 read_bundle_identifier() {
   local bundle_path="$1"
+  local info_plist="$bundle_path/Contents/Info.plist"
 
-  /usr/bin/defaults read "${bundle_path}/Contents/Info" CFBundleIdentifier 2>/dev/null || true
+  if [ ! -f "$info_plist" ]; then
+    return
+  fi
+
+  /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$info_plist" 2>/dev/null || true
 }
 
 for configuration in "${configurations[@]}"; do

@@ -593,7 +593,7 @@ def main():
     require(build_unsigned_path.stat().st_mode & 0o111,
             "unsigned build script should be executable",
             failures)
-    require("GarethVideoCam.app" in verify_build_products_source and "com.garethpaul.GarethVideoCam.Extension.systemextension" in verify_build_products_source and "Contents/Library/SystemExtensions" in verify_build_products_source and "Contents/Resources/video.mp4" in verify_build_products_source and "read_bundle_identifier" in verify_build_products_source and "Debug Release" in verify_build_products_source,
+    require("GarethVideoCam.app" in verify_build_products_source and "com.garethpaul.GarethVideoCam.Extension.systemextension" in verify_build_products_source and "Contents/Library/SystemExtensions" in verify_build_products_source and "Contents/Resources/video.mp4" in verify_build_products_source and "read_bundle_identifier" in verify_build_products_source and "Contents/Info.plist" in verify_build_products_source and "PlistBuddy" in verify_build_products_source and "Debug Release" in verify_build_products_source,
             "build-product verifier should check app, embedded extension, bundle identifiers, and bundled video",
             failures)
     require(verify_build_products_path.stat().st_mode & 0o111,
