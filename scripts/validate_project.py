@@ -166,6 +166,9 @@ def main():
     require("advanceLoopTiming(by: assetDuration)" in extension_source and "private func advanceLoopTiming(by duration: CMTime)" in extension_source,
             "extension should advance timestamps explicitly at bundled-video loop boundaries",
             failures)
+    require("kCVPixelBufferWidthKey" in extension_source and "kCVPixelBufferHeightKey" in extension_source and "kCVPixelBufferIOSurfacePropertiesKey" in extension_source,
+            "extension asset reader should produce pixel buffers matching the advertised stream dimensions",
+            failures)
     require("isPreparingStream" not in extension_source,
             "extension should not keep unused stream preparation state",
             failures)

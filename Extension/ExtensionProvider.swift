@@ -280,7 +280,10 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
             let nextAssetReader = try AVAssetReader(asset: asset)
 
             let outputSettings: [String: Any] = [
-                kCVPixelBufferPixelFormatTypeKey as String: Int(CameraExtensionConfiguration.pixelFormat)
+                kCVPixelBufferPixelFormatTypeKey as String: Int(CameraExtensionConfiguration.pixelFormat),
+                kCVPixelBufferWidthKey as String: Int(CameraExtensionConfiguration.dimensions.width),
+                kCVPixelBufferHeightKey as String: Int(CameraExtensionConfiguration.dimensions.height),
+                kCVPixelBufferIOSurfacePropertiesKey as String: [:]
             ]
 
             let nextTrackOutput = AVAssetReaderTrackOutput(track: videoTrack,
