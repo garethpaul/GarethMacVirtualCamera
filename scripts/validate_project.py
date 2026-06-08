@@ -543,7 +543,7 @@ def main():
         require("./scripts/scan_build_log.py build-Debug.log" in workflow_text and "./scripts/scan_build_log.py build-Release.log" in workflow_text,
                 "macOS build workflow should scan captured Debug and Release xcodebuild output",
                 failures)
-        require("actions/upload-artifact@v4" in workflow_text and "xcode-build-logs" in workflow_text and "path: build-*.log" in workflow_text and "if-no-files-found: ignore" in workflow_text,
+        require("actions/upload-artifact@v7.0.1" in workflow_text and "xcode-build-logs" in workflow_text and "path: build-*.log" in workflow_text and "if-no-files-found: ignore" in workflow_text,
                 "macOS build workflow should upload captured Xcode build logs for later inspection",
                 failures)
 
