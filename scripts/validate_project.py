@@ -829,6 +829,21 @@ def main():
     require("/usr/bin/ditto" in scheme_text and "/Applications/${FULL_PRODUCT_NAME}" in scheme_text and "/bin/rm -rf" in scheme_text and "/Applications/*.app" in scheme_text and "Built app bundle is missing" in scheme_text and "${CODESIGNING_FOLDER_PATH:-}" in scheme_text and "<PreActions>" in scheme_text and 'FilePath = "/Applications/GarethVideoCam.app"' in scheme_text,
             "shared scheme should replace the app in /Applications with source and destination guards before system-extension testing",
             failures)
+    scheme_copy_scripts = [
+        action.attrib.get("scriptText", "")
+        for action in scheme.findall(".//ActionContent")
+        if "/Applications/${FULL_PRODUCT_NAME}" in action.attrib.get("scriptText", "")
+        and "/usr/bin/ditto" in action.attrib.get("scriptText", "")
+    ]
+    require(bool(scheme_copy_scripts),
+            "shared scheme should include at least one app install-copy action",
+            failures)
+    require(all("Built app bundle is missing" in script and "${CODESIGNING_FOLDER_PATH:-}" in script for script in scheme_copy_scripts),
+            "shared scheme install-copy actions should check the built app path before removing /Applications/GarethVideoCam.app",
+            failures)
+    require(all("Built app bundle is missing" in script and "/bin/rm -rf" in script and script.index("Built app bundle is missing") < script.index("/bin/rm -rf") for script in scheme_copy_scripts),
+            "shared scheme install-copy actions should validate the built app path before rm -rf",
+            failures)
 
     workflow_path = ROOT / ".github/workflows/macos-build.yml"
     require(workflow_path.exists(),
