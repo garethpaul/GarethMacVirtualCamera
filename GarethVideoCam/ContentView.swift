@@ -56,6 +56,8 @@ private enum DashboardSection: String, CaseIterable, Hashable {
 }
 
 class SystemExtensionRequestManager: NSObject, ObservableObject {
+    private let expectedExtensionBundleIdentifier = "com.garethpaul.GarethVideoCam.Extension"
+
     enum InstallState: Equatable {
         case idle
         case ready
@@ -282,25 +284,40 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             throw ExtensionRequestError.missingExtensionsDirectory(extensionsDirectoryURL.path)
         }
 
-        guard let extensionURL = extensionURLs.first(where: { $0.pathExtension == "systemextension" }) else {
+        let extensionBundleURLs = extensionURLs
+            .filter { $0.pathExtension == "systemextension" }
+            .sorted { $0.lastPathComponent < $1.lastPathComponent }
+
+        guard !extensionBundleURLs.isEmpty else {
             throw ExtensionRequestError.missingBundledExtension
         }
 
-        guard let extensionBundle = Bundle(url: extensionURL) else {
-            throw ExtensionRequestError.unreadableExtensionBundle(extensionURL.path)
+        var unexpectedIdentifiers: [String] = []
+        for extensionURL in extensionBundleURLs {
+            guard let extensionBundle = Bundle(url: extensionURL) else {
+                throw ExtensionRequestError.unreadableExtensionBundle(extensionURL.path)
+            }
+
+            guard let identifier = extensionBundle.bundleIdentifier else {
+                throw ExtensionRequestError.missingBundleIdentifier(extensionURL.path)
+            }
+
+            guard identifier == expectedExtensionBundleIdentifier else {
+                unexpectedIdentifiers.append(identifier)
+                continue
+            }
+
+            let version = extensionBundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+                ?? extensionBundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String
+                ?? "Unknown"
+
+            return ExtensionInfo(identifier: identifier,
+                                 version: version,
+                                 bundlePath: extensionURL.path)
         }
 
-        guard let identifier = extensionBundle.bundleIdentifier else {
-            throw ExtensionRequestError.missingBundleIdentifier(extensionURL.path)
-        }
-
-        let version = extensionBundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
-            ?? extensionBundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String
-            ?? "Unknown"
-
-        return ExtensionInfo(identifier: identifier,
-                             version: version,
-                             bundlePath: extensionURL.path)
+        throw ExtensionRequestError.unexpectedBundleIdentifier(expected: expectedExtensionBundleIdentifier,
+                                                              actual: unexpectedIdentifiers.joined(separator: ", "))
     }
 
     private func prepareForSystemExtensionRequest() -> Bool {
@@ -409,6 +426,7 @@ enum ExtensionRequestError: LocalizedError {
     case missingBundledExtension
     case unreadableExtensionBundle(String)
     case missingBundleIdentifier(String)
+    case unexpectedBundleIdentifier(expected: String, actual: String)
 
     var errorDescription: String? {
         switch self {
@@ -420,6 +438,8 @@ enum ExtensionRequestError: LocalizedError {
             return "The bundled extension at \(path) could not be opened."
         case .missingBundleIdentifier(let path):
             return "The bundled extension at \(path) does not declare a bundle identifier."
+        case .unexpectedBundleIdentifier(let expected, let actual):
+            return "Expected bundled extension \(expected), but found \(actual)."
         }
     }
 }

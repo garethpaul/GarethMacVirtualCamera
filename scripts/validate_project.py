@@ -108,6 +108,9 @@ def main():
     require(".disabled(manager.isBusy || !manager.canSubmitSystemExtensionRequests)" in host_source,
             "host app should disable install controls when system-extension requests cannot be submitted",
             failures)
+    require(f'expectedExtensionBundleIdentifier = "{EXTENSION_BUNDLE_ID}"' in host_source and "unexpectedBundleIdentifier" in host_source,
+            "host app should verify the bundled system extension identifier before submitting requests",
+            failures)
     require("CI-equivalent unsigned compile" in readme_text and "-target GarethVideoCam" in readme_text,
             "README should document the CI-equivalent unsigned target build",
             failures)
