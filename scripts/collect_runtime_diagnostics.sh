@@ -106,6 +106,53 @@ read_extension_mach_service_name() {
   printf '%s\n' "$value"
 }
 
+contains_unresolved_build_setting() {
+  local value="$1"
+
+  if [[ "$value" == *'$('* || "$value" == *'${'* ]]; then
+    return 0
+  fi
+
+  return 1
+}
+
+mach_service_resolved_value() {
+  local mach_service_name="$1"
+
+  if [ -z "$mach_service_name" ]; then
+    printf 'unknown\n'
+  elif contains_unresolved_build_setting "$mach_service_name"; then
+    printf 'no\n'
+  else
+    printf 'yes\n'
+  fi
+}
+
+mach_service_matches_expected_value() {
+  local mach_service_name="$1"
+  local extension_identifier="$2"
+
+  if [ -z "$mach_service_name" ]; then
+    printf 'unknown\n'
+  elif [ "$mach_service_name" = "$extension_identifier" ] || [[ "$mach_service_name" == *".$extension_identifier" ]]; then
+    printf 'yes\n'
+  else
+    printf 'no\n'
+  fi
+}
+
+mach_service_readiness_value() {
+  local mach_service_name="$1"
+  local extension_identifier="$2"
+
+  if [ "$(mach_service_resolved_value "$mach_service_name")" = "yes" ] \
+    && [ "$(mach_service_matches_expected_value "$mach_service_name" "$extension_identifier")" = "yes" ]; then
+    printf 'yes\n'
+  else
+    printf 'no\n'
+  fi
+}
+
 read_team_identifier() {
   local bundle_path="$1"
   local signing_detail
@@ -260,6 +307,16 @@ run_bundle_version_match_self_test() {
   printf 'Bundle version missing fixture: %s\n' "$(bundle_versions_match_readiness_value "1.0" "" "1.0" "100")"
 }
 
+run_mach_service_self_test() {
+  printf 'Mach service direct fixture resolved: %s\n' "$(mach_service_resolved_value "$EXTENSION_ID")"
+  printf 'Mach service direct fixture matches expected: %s\n' "$(mach_service_matches_expected_value "$EXTENSION_ID" "$EXTENSION_ID")"
+  printf 'Mach service direct fixture ready: %s\n' "$(mach_service_readiness_value "$EXTENSION_ID" "$EXTENSION_ID")"
+  printf 'Mach service team-prefixed fixture ready: %s\n' "$(mach_service_readiness_value "ABCDE12345.$EXTENSION_ID" "$EXTENSION_ID")"
+  printf 'Mach service unresolved fixture resolved: %s\n' "$(mach_service_resolved_value '$(TeamIdentifierPrefix)$(PRODUCT_BUNDLE_IDENTIFIER)')"
+  printf 'Mach service wrong fixture matches expected: %s\n' "$(mach_service_matches_expected_value "com.example.WrongMachService" "$EXTENSION_ID")"
+  printf 'Mach service missing fixture ready: %s\n' "$(mach_service_readiness_value "" "$EXTENSION_ID")"
+}
+
 case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
   readiness-rollup|readiness-rollup-blocked)
     run_readiness_rollup_blocked_self_test
@@ -275,6 +332,10 @@ case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
     ;;
   bundle-version-match)
     run_bundle_version_match_self_test
+    exit 0
+    ;;
+  mach-service)
+    run_mach_service_self_test
     exit 0
     ;;
 esac
@@ -408,6 +469,8 @@ if [ -d "$EXTENSION_PATH" ]; then
     printf 'Extension executable is executable: unknown\n'
   fi
   printf 'Extension CMIO Mach service: %s\n' "${extension_mach_service_name:-unknown}"
+  printf 'Extension CMIO Mach service resolved: %s\n' "$(mach_service_resolved_value "$extension_mach_service_name")"
+  printf 'Extension CMIO Mach service matches expected identifier: %s\n' "$(mach_service_matches_expected_value "$extension_mach_service_name" "$EXTENSION_ID")"
 else
   printf 'Extension runtime metadata requires the embedded system extension bundle.\n'
 fi
@@ -619,11 +682,7 @@ if [ -d "$EXTENSION_PATH" ]; then
     print_readiness_check "Extension executable ready" "no"
   fi
 
-  if [ -n "$extension_mach_service_name" ]; then
-    print_readiness_check "Extension CMIO Mach service ready" "yes"
-  else
-    print_readiness_check "Extension CMIO Mach service ready" "no"
-  fi
+  print_readiness_check "Extension CMIO Mach service ready" "$(mach_service_readiness_value "$extension_mach_service_name" "$EXTENSION_ID")"
 else
   print_readiness_check "Extension bundle identifier ready" "unknown"
   print_readiness_check "Extension signature ready" "unknown"

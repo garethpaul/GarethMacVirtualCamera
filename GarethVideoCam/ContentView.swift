@@ -963,7 +963,11 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     var extensionMetadataStatus: String {
-        return extensionMetadataReadinessDetail == nil && extensionInfo != nil ? "Complete" : "Missing"
+        guard extensionInfo != nil else {
+            return "Missing"
+        }
+
+        return extensionMetadataReadinessDetail == nil ? "Complete" : "Invalid"
     }
 
     var bundledVideoReadinessStatus: String {
@@ -1511,6 +1515,14 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                 return "The bundled system extension does not declare CMIOExtensionMachServiceName."
             }
 
+            if Self.containsUnresolvedBuildSetting(extensionInfo.machServiceName) {
+                return "The bundled system extension CMIOExtensionMachServiceName contains unresolved build settings: \(extensionInfo.machServiceName)."
+            }
+
+            if !Self.isExpectedMachServiceName(extensionInfo.machServiceName, for: extensionInfo.identifier) {
+                return "The bundled system extension CMIOExtensionMachServiceName \(extensionInfo.machServiceName) must be \(extensionInfo.identifier) or a Team ID-prefixed value ending in .\(extensionInfo.identifier)."
+            }
+
             return nil
         }
 
@@ -1678,6 +1690,14 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         return detail.localizedCaseInsensitiveContains("CFBundleExecutable")
             || detail.localizedCaseInsensitiveContains("CMIOExtensionMachServiceName")
             || detail.localizedCaseInsensitiveContains("extension executable")
+    }
+
+    private static func containsUnresolvedBuildSetting(_ value: String) -> Bool {
+        return value.contains("$(") || value.contains("${")
+    }
+
+    private static func isExpectedMachServiceName(_ machServiceName: String, for extensionIdentifier: String) -> Bool {
+        return machServiceName == extensionIdentifier || machServiceName.hasSuffix(".\(extensionIdentifier)")
     }
 
     private func handleReadinessFailure(_ error: Error) {
