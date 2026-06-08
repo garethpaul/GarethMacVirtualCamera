@@ -596,6 +596,9 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             .prefix(8)
             .map { "\($0.title): \($0.detail)" }
             .joined(separator: "\n")
+        let readinessDescription = readinessChecks
+            .map { "\($0.title): \($0.status.title) - \($0.detail)" }
+            .joined(separator: "\n")
 
         return """
         Gareth Video Cam Diagnostics
@@ -611,6 +614,9 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         Request Readiness: \(requestReadinessStatus)
         Request Readiness Detail: \(requestReadinessDetail ?? "System extension requests can be submitted.")
         Last Failure: \(lastFailureDetail ?? "No failure recorded.")
+        Readiness Checks:
+        \(readinessDescription)
+
         App Code Signing: \(appCodeSigningStatus.title)
         App Code Signing Detail: \(appCodeSigningStatus.detail)
         App System Extension Entitlement: \(appSystemExtensionEntitlementStatus)
