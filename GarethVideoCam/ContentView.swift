@@ -970,6 +970,22 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         return extensionMetadataReadinessDetail == nil ? "Complete" : "Invalid"
     }
 
+    var extensionMachServiceResolvedStatus: String {
+        guard let extensionInfo else {
+            return "Unknown"
+        }
+
+        return Self.containsUnresolvedBuildSetting(extensionInfo.machServiceName) ? "Unresolved" : "Resolved"
+    }
+
+    var extensionMachServiceIdentifierMatchStatus: String {
+        guard let extensionInfo else {
+            return "Unknown"
+        }
+
+        return Self.isExpectedMachServiceName(extensionInfo.machServiceName, for: extensionInfo.identifier) ? "Matches" : "Mismatch"
+    }
+
     var bundledVideoReadinessStatus: String {
         return bundledVideoReadinessDetail == nil && extensionInfo != nil ? "Present" : "Missing"
     }
@@ -1045,6 +1061,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         Extension Quarantine Detail: \(extensionQuarantineStatus.detail)
         Extension Host-Only Entitlement: \(extensionHostOnlyEntitlementStatus)
         Extension Team ID: \(extensionTeamIdentifier)
+        Extension CMIO Mach Service Resolved: \(extensionMachServiceResolvedStatus)
+        Extension CMIO Mach Service Identifier Match: \(extensionMachServiceIdentifierMatchStatus)
         \(extensionDescription)
 
         Recent Activity:
@@ -2190,6 +2208,8 @@ private struct DetailsPanel: View {
                 DetailRow(title: "Extension Host-Only Entitlement", value: manager.extensionHostOnlyEntitlementStatus)
                 DetailRow(title: "Extension Team ID", value: manager.extensionTeamIdentifier)
                 DetailRow(title: "Extension Metadata", value: manager.extensionMetadataStatus)
+                DetailRow(title: "Extension CMIO Mach Service Resolved", value: manager.extensionMachServiceResolvedStatus)
+                DetailRow(title: "Extension CMIO Mach Service Identifier Match", value: manager.extensionMachServiceIdentifierMatchStatus)
                 DetailRow(title: "Bundled Video", value: manager.bundledVideoReadinessStatus)
                 DetailRow(title: "Application Path", value: manager.applicationBundlePath, monospaced: true)
 
