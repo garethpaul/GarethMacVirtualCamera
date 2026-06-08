@@ -139,6 +139,9 @@ def main():
     require("$(SYSTEM_EXTENSIONS_FOLDER_PATH)" in project_text and "Embed System Extensions" in project_text,
             "project should embed the extension in the app SystemExtensions folder",
             failures)
+    require('"Gareth Video Cam publishes a virtual camera stream."' in project_text and '"Gareth Video Cam Extension"' in project_text and '"Gareth Video Cam publishes the bundled video as a virtual camera stream."' in project_text,
+            "project should use product-specific generated Info.plist display and privacy strings",
+            failures)
     require('explicitFileType = "wrapper.system-extension";' in project_text and 'productType = "com.apple.product-type.system-extension";' in project_text,
             "project should keep the extension configured as a system extension product",
             failures)

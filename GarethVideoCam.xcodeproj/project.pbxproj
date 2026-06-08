@@ -386,7 +386,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Camera Extension";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Gareth Video Cam publishes a virtual camera stream.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSSystemExtensionUsageDescription = "Gareth Video Cam installs a camera extension that makes the bundled video available as a virtual camera.";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -422,7 +422,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Camera Extension";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Gareth Video Cam publishes a virtual camera stream.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSSystemExtensionUsageDescription = "Gareth Video Cam installs a camera extension that makes the bundled video available as a virtual camera.";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -452,10 +452,10 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Extension/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Extension;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Camera Extension";
+				INFOPLIST_KEY_CFBundleDisplayName = "Gareth Video Cam Extension";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Gareth Video Cam publishes the bundled video as a virtual camera stream.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSSystemExtensionUsageDescription = "Camera Extension";
+				INFOPLIST_KEY_NSSystemExtensionUsageDescription = "Gareth Video Cam installs a camera extension that makes the bundled video available as a virtual camera.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -485,10 +485,10 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Extension/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Extension;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Camera Extension";
+				INFOPLIST_KEY_CFBundleDisplayName = "Gareth Video Cam Extension";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Gareth Video Cam publishes the bundled video as a virtual camera stream.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSSystemExtensionUsageDescription = "Camera Extension";
+				INFOPLIST_KEY_NSSystemExtensionUsageDescription = "Gareth Video Cam installs a camera extension that makes the bundled video available as a virtual camera.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
