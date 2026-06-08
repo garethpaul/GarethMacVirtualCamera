@@ -120,8 +120,8 @@ def main():
         require("-target GarethVideoCam" in workflow_text,
                 "macOS build workflow should build the app target without running scheme post-actions",
                 failures)
-        require("runner_arch=\"$(uname -m)\"" in workflow_text and "platform=macOS,arch=${runner_arch}" in workflow_text,
-                "macOS build workflow should disambiguate the macOS destination architecture",
+        require("runner_arch=\"$(uname -m)\"" in workflow_text and "ARCHS=\"${runner_arch}\"" in workflow_text,
+                "macOS build workflow should build the target for the runner architecture",
                 failures)
         require("tee build.log" in workflow_text,
                 "macOS build workflow should capture xcodebuild output",
