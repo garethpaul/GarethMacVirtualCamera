@@ -73,12 +73,29 @@ def test_scans_multiple_build_logs():
     require(":2: SwiftCompile warning: release source warning" in result.stdout, result.stdout)
 
 
+def test_fails_on_missing_build_log():
+    missing_build_log = Path(tempfile.gettempdir()) / "gareth-missing-build.log"
+    missing_build_log.unlink(missing_ok=True)
+
+    result = subprocess.run(
+        [sys.executable, str(SCANNER), str(missing_build_log)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    require(result.returncode == 2, result.stdout + result.stderr)
+    require(f"Build log not found: {missing_build_log}" in result.stderr, result.stderr)
+
+
 def main():
     test_ignores_appintents_metadata_notice()
     test_fails_on_actionable_warning()
     test_fails_on_other_appintents_warning()
     test_fails_on_actionable_error()
     test_scans_multiple_build_logs()
+    test_fails_on_missing_build_log()
     print("Build-log scanner tests passed.")
     return 0
 
