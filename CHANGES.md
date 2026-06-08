@@ -32,3 +32,4 @@
 - Verified bundled runtime diagnostics Mach service self-tests inside built app products.
 - Deferred bundled diagnostics self-tests until after extension and video metadata checks to keep verifier failures fast.
 - Consolidated stale bundled-diagnostics fixture generation in build-product verifier tests.
+- Refreshed extension metadata before copying runtime diagnostics commands or expected evidence lines.

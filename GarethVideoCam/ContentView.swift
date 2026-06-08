@@ -1502,6 +1502,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     func copyRuntimeDiagnosticsCommand() {
+        refreshExtensionInfo()
+
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         let didCopyCommand = pasteboard.setString(runtimeDiagnosticsCommand, forType: .string)
@@ -1518,6 +1520,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     func copyRuntimeEvidenceExpectedDiagnostics() {
+        refreshExtensionInfo()
+
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         let didCopyExpectedDiagnostics = pasteboard.setString(runtimeEvidenceExpectedDiagnostics, forType: .string)
