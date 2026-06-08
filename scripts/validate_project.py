@@ -399,6 +399,9 @@ def main():
     require("diagnosticSummary" in host_source and "NSPasteboard.general" in host_source and "Copy Diagnostics" in host_source,
             "host app should expose copyable diagnostics for activation troubleshooting",
             failures)
+    require("diagnosticGeneratedAt" in host_source and "Generated At:" in host_source and "ISO8601DateFormatter" in host_source,
+            "host app copied diagnostics should include an ISO-8601 generation timestamp",
+            failures)
     require("didCopyDiagnostics" in host_source and "Diagnostics Copy Failed" in host_source,
             "host app should report clipboard failures when copying diagnostics",
             failures)
@@ -441,7 +444,7 @@ def main():
     require("Runtime Activation" in readme_text and "valid Apple Developer signing identity" in readme_text,
             "README should document signed runtime activation requirements",
             failures)
-    require("System Settings shortcut" in readme_text and "diagnostics snapshot" in readme_text and "bundled system extension signature is invalid" in readme_text and "Team IDs" in readme_text and "last recorded request failure" in readme_text,
+    require("System Settings shortcut" in readme_text and "diagnostics snapshot" in readme_text and "generation timestamp" in readme_text and "bundled system extension signature is invalid" in readme_text and "Team IDs" in readme_text and "last recorded request failure" in readme_text,
             "README should document the in-app approval and diagnostics actions",
             failures)
     require("collect_runtime_diagnostics.sh" in readme_text and "bundle versions" in readme_text and "bundled-video byte size, checksum, metadata" in readme_text and "expected bundle identifier checks" in readme_text and "matching Team IDs" in readme_text and "Gatekeeper assessment" in readme_text and "signed entitlements" in readme_text and "systemextensionsctl" in readme_text and "unified-log window" in readme_text and "system-extension/CMIO log context" in readme_text,

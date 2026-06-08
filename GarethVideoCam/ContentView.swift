@@ -407,6 +407,12 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         return extensionCodeSigningStatus.teamIdentifier ?? "Unknown"
     }
 
+    var diagnosticGeneratedAt: String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.string(from: Date())
+    }
+
     var bundledVideoSize: String {
         guard let videoByteCount = extensionInfo?.videoByteCount else {
             return "Unknown"
@@ -436,6 +442,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         return """
         Gareth Video Cam Diagnostics
+        Generated At: \(diagnosticGeneratedAt)
         State: \(state.title)
         App Version: \(applicationVersion)
         App Location: \(applicationLocationStatus)
