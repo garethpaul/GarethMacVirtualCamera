@@ -184,6 +184,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     struct ExtensionInfo: Equatable {
         var identifier: String
         var version: String
+        var shortVersion: String?
+        var buildVersion: String?
         var executableName: String
         var executablePath: String
         var machServiceName: String
@@ -474,10 +476,16 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     var applicationVersion: String {
-        let shortVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
-        let buildVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
+        return Self.displayVersion(shortVersion: applicationShortVersionValue,
+                                   buildVersion: applicationBuildVersionValue)
+    }
 
-        return Self.displayVersion(shortVersion: shortVersion, buildVersion: buildVersion)
+    var applicationShortVersion: String {
+        return applicationShortVersionValue ?? "Unknown"
+    }
+
+    var applicationBuildVersion: String {
+        return applicationBuildVersionValue ?? "Unknown"
     }
 
     var hostOperatingSystemVersion: String {
@@ -502,8 +510,25 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                               buildVersion: properties.bundleVersion)
     }
 
+    private static func infoPlistString(in bundle: Bundle, key: String) -> String? {
+        guard let value = bundle.object(forInfoDictionaryKey: key) as? String else {
+            return nil
+        }
+
+        let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmedValue.isEmpty ? nil : trimmedValue
+    }
+
     var applicationBundleIdentifier: String {
         return Bundle.main.bundleIdentifier ?? "Unknown"
+    }
+
+    private var applicationShortVersionValue: String? {
+        return Self.infoPlistString(in: Bundle.main, key: "CFBundleShortVersionString")
+    }
+
+    private var applicationBuildVersionValue: String? {
+        return Self.infoPlistString(in: Bundle.main, key: "CFBundleVersion")
     }
 
     var expectedApplicationIdentifier: String {
@@ -627,7 +652,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                 bundleVersionDetail = bundleVersionReadinessDetail
             } else {
                 bundleVersionStatus = .passing
-                bundleVersionDetail = "App and embedded extension versions both report \(applicationVersion)."
+                bundleVersionDetail = "App and embedded extension short/build versions both report \(applicationVersion)."
             }
         } else {
             bundleVersionStatus = .pending
@@ -877,6 +902,32 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         return bundleVersionReadinessDetail == nil ? "Matches" : "Mismatch"
     }
 
+    var bundleShortVersionMatchStatus: String {
+        guard let extensionInfo else {
+            return "Unknown"
+        }
+
+        guard let applicationShortVersion = applicationShortVersionValue,
+              let extensionShortVersion = extensionInfo.shortVersion else {
+            return "Unknown"
+        }
+
+        return applicationShortVersion == extensionShortVersion ? "Matches" : "Mismatch"
+    }
+
+    var bundleBuildVersionMatchStatus: String {
+        guard let extensionInfo else {
+            return "Unknown"
+        }
+
+        guard let applicationBuildVersion = applicationBuildVersionValue,
+              let extensionBuildVersion = extensionInfo.buildVersion else {
+            return "Unknown"
+        }
+
+        return applicationBuildVersion == extensionBuildVersion ? "Matches" : "Mismatch"
+    }
+
     var diagnosticGeneratedAt: String {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -915,6 +966,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             extensionDescription = """
             Extension ID: \(extensionInfo.identifier)
             Extension Version: \(extensionInfo.version)
+            Extension Bundle Short Version: \(extensionInfo.shortVersion ?? "Unknown")
+            Extension Bundle Build Version: \(extensionInfo.buildVersion ?? "Unknown")
             Extension Executable: \(extensionInfo.executableName)
             Extension Executable Path: \(extensionInfo.executablePath)
             Extension CMIO Mach Service: \(extensionInfo.machServiceName)
@@ -940,7 +993,11 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         State: \(state.title)
         macOS Version: \(hostOperatingSystemVersion)
         App Version: \(applicationVersion)
+        App Bundle Short Version: \(applicationShortVersion)
+        App Bundle Build Version: \(applicationBuildVersion)
         Bundle Version Check: \(bundleVersionStatus)
+        Bundle Short Version Match: \(bundleShortVersionMatchStatus)
+        Bundle Build Version Match: \(bundleBuildVersionMatchStatus)
         Expected App ID: \(expectedApplicationIdentifier)
         Actual App ID: \(applicationBundleIdentifier)
         App Bundle ID Check: \(applicationBundleIdentifierStatus)
@@ -1136,8 +1193,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                 continue
             }
 
-            let shortVersion = extensionBundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
-            let buildVersion = extensionBundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String
+            let shortVersion = Self.infoPlistString(in: extensionBundle, key: "CFBundleShortVersionString")
+            let buildVersion = Self.infoPlistString(in: extensionBundle, key: "CFBundleVersion")
             let version = Self.displayVersion(shortVersion: shortVersion,
                                               buildVersion: buildVersion)
             guard let executableName = extensionBundle.object(forInfoDictionaryKey: "CFBundleExecutable") as? String,
@@ -1162,6 +1219,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
             return ExtensionInfo(identifier: identifier,
                                  version: version,
+                                 shortVersion: shortVersion,
+                                 buildVersion: buildVersion,
                                  executableName: executableName,
                                  executablePath: executableURL.path,
                                  machServiceName: machServiceName,
@@ -1352,13 +1411,24 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return nil
         }
 
-        let appVersion = applicationVersion
-        guard appVersion != "Unknown", extensionInfo.version != "Unknown" else {
-            return "Both app and embedded system extension bundle versions must be known; app is \(appVersion), extension is \(extensionInfo.version)."
+        guard let appShortVersion = applicationShortVersionValue,
+              let appBuildVersion = applicationBuildVersionValue,
+              let extensionShortVersion = extensionInfo.shortVersion,
+              let extensionBuildVersion = extensionInfo.buildVersion else {
+            return "Both app and embedded system extension short/build versions must be known; app short is \(applicationShortVersion), app build is \(applicationBuildVersion), extension short is \(extensionInfo.shortVersion ?? "Unknown"), extension build is \(extensionInfo.buildVersion ?? "Unknown")."
         }
 
-        guard appVersion == extensionInfo.version else {
-            return "The app version \(appVersion) does not match the embedded system extension version \(extensionInfo.version)."
+        var mismatches: [String] = []
+        if appShortVersion != extensionShortVersion {
+            mismatches.append("short version \(appShortVersion) does not match \(extensionShortVersion)")
+        }
+
+        if appBuildVersion != extensionBuildVersion {
+            mismatches.append("build version \(appBuildVersion) does not match \(extensionBuildVersion)")
+        }
+
+        guard mismatches.isEmpty else {
+            return "The app and embedded system extension bundle versions differ: \(mismatches.joined(separator: ", "))."
         }
 
         return nil
@@ -2014,12 +2084,18 @@ private struct DetailsPanel: View {
 
                 DetailRow(title: "macOS Version", value: manager.hostOperatingSystemVersion)
                 DetailRow(title: "App Version", value: manager.applicationVersion)
+                DetailRow(title: "App Bundle Short Version", value: manager.applicationShortVersion)
+                DetailRow(title: "App Bundle Build Version", value: manager.applicationBuildVersion)
                 DetailRow(title: "Bundle Version Check", value: manager.bundleVersionStatus)
+                DetailRow(title: "Bundle Short Version Match", value: manager.bundleShortVersionMatchStatus)
+                DetailRow(title: "Bundle Build Version Match", value: manager.bundleBuildVersionMatchStatus)
                 DetailRow(title: "App Bundle ID", value: manager.applicationBundleIdentifier)
                 DetailRow(title: "App Bundle ID Check", value: manager.applicationBundleIdentifierStatus)
                 DetailRow(title: "Expected App ID", value: manager.expectedApplicationIdentifier)
                 DetailRow(title: "Expected Extension ID", value: manager.expectedExtensionIdentifier)
                 DetailRow(title: "Extension Version", value: manager.extensionInfo?.version ?? "Unknown")
+                DetailRow(title: "Extension Bundle Short Version", value: manager.extensionInfo?.shortVersion ?? "Unknown")
+                DetailRow(title: "Extension Bundle Build Version", value: manager.extensionInfo?.buildVersion ?? "Unknown")
                 DetailRow(title: "Application Location", value: manager.applicationLocationStatus)
                 DetailRow(title: "Expected App Path", value: manager.expectedApplicationPath, monospaced: true)
                 DetailRow(title: "App Quarantine", value: manager.appQuarantineStatus.title)
