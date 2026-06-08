@@ -71,6 +71,7 @@ def main():
     extension_main_source = (ROOT / "Extension/main.swift").read_text()
     readme_text = (ROOT / "README.md").read_text()
     build_log_scanner_source = (ROOT / "scripts/scan_build_log.py").read_text()
+    build_log_scanner_test_source = (ROOT / "scripts/test_scan_build_log.py").read_text()
     require(f"PRODUCT_BUNDLE_IDENTIFIER = {APP_BUNDLE_ID};" in project_text,
             "project is missing the host app bundle identifier",
             failures)
@@ -160,6 +161,9 @@ def main():
     require("ACTIONABLE_PATTERN" in build_log_scanner_source and "appintentsmetadataprocessor" in build_log_scanner_source,
             "build-log scanner should fail on warnings while ignoring Xcode AppIntents metadata noise",
             failures)
+    require("test_ignores_appintents_metadata_notice" in build_log_scanner_test_source and "test_fails_on_actionable_warning" in build_log_scanner_test_source,
+            "build-log scanner should have regression coverage for ignored and actionable warnings",
+            failures)
 
     scheme_path = ROOT / "GarethVideoCam.xcodeproj/xcshareddata/xcschemes/GarethVideoCam.xcscheme"
     scheme = ET.parse(scheme_path).getroot()
@@ -186,6 +190,9 @@ def main():
                 failures)
         require("Xcode_26.5" in workflow_text,
                 "macOS build workflow should explicitly select Xcode 26.5",
+                failures)
+        require("./scripts/test_scan_build_log.py" in workflow_text,
+                "macOS build workflow should test the build-log scanner",
                 failures)
         require("xcodebuild" in workflow_text and "CODE_SIGNING_ALLOWED=NO" in workflow_text,
                 "macOS build workflow should perform an unsigned xcodebuild",

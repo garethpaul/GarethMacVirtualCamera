@@ -40,6 +40,9 @@ jobs:
           sw_vers
           xcodebuild -version
 
+      - name: Test build log scanner
+        run: ./scripts/test_scan_build_log.py
+
       - name: Validate project metadata
         run: ./scripts/validate_project.py
 
