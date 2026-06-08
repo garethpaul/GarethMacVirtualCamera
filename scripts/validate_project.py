@@ -546,7 +546,7 @@ def main():
     require("./scripts/check_project.sh" in readme_text and "project metadata validation, build-log scanner tests, shell syntax checks, and whitespace checks" in readme_text,
             "README should document the local pre-push project check",
             failures)
-    require("CI-equivalent unsigned compile" in readme_text and "./scripts/build_unsigned.sh" in readme_text and "./scripts/scan_build_log.py build-Debug.log build-Release.log" in readme_text and ".build/DerivedData" in readme_text and "DERIVED_DATA_PATH" in readme_text,
+    require("CI-equivalent unsigned compile" in readme_text and "./scripts/build_unsigned.sh" in readme_text and "./scripts/scan_build_log.py build-Debug.log build-Release.log" in readme_text and ".build/Xcode" in readme_text and "BUILD_OUTPUT_PATH" in readme_text,
             "README should document the CI-equivalent unsigned Debug and Release target builds with log scanning",
             failures)
     require("parseable dimensions, frame rate, and positive video duration" in readme_text,
@@ -573,7 +573,7 @@ def main():
     require("test_ignores_appintents_metadata_notice" in build_log_scanner_test_source and "test_fails_on_actionable_warning" in build_log_scanner_test_source and "test_fails_on_other_appintents_warning" in build_log_scanner_test_source and "test_scans_multiple_build_logs" in build_log_scanner_test_source and ":2: SwiftCompile warning: real source warning" in build_log_scanner_test_source,
             "build-log scanner should have regression coverage for ignored and actionable warnings",
             failures)
-    require("xcodebuild" in build_unsigned_source and "-target \"$TARGET_NAME\"" in build_unsigned_source and "CODE_SIGNING_ALLOWED=NO" in build_unsigned_source and "CODE_SIGNING_REQUIRED=NO" in build_unsigned_source and "BUILD_ARCH" in build_unsigned_source and "RUNNER_ARCH" not in build_unsigned_source and "DERIVED_DATA_PATH" in build_unsigned_source and "-derivedDataPath \"$DERIVED_DATA_PATH\"" in build_unsigned_source and "configurations=(Debug Release)" in build_unsigned_source and "build-${configuration}.log" in build_unsigned_source,
+    require("xcodebuild" in build_unsigned_source and "-target \"$TARGET_NAME\"" in build_unsigned_source and "CODE_SIGNING_ALLOWED=NO" in build_unsigned_source and "CODE_SIGNING_REQUIRED=NO" in build_unsigned_source and "BUILD_ARCH" in build_unsigned_source and "RUNNER_ARCH" not in build_unsigned_source and "BUILD_OUTPUT_PATH" in build_unsigned_source and "SYMROOT=\"$BUILD_OUTPUT_PATH/Products\"" in build_unsigned_source and "OBJROOT=\"$BUILD_OUTPUT_PATH/Intermediates\"" in build_unsigned_source and "-derivedDataPath" not in build_unsigned_source and "configurations=(Debug Release)" in build_unsigned_source and "build-${configuration}.log" in build_unsigned_source,
             "unsigned build script should perform Debug and Release app target builds without code signing",
             failures)
     require(build_unsigned_path.stat().st_mode & 0o111,
@@ -636,8 +636,8 @@ def main():
         require("BUILD_ARCH=\"${BUILD_ARCH:-$(uname -m)}\"" in build_unsigned_source and "ARCHS=\"$BUILD_ARCH\"" in build_unsigned_source,
                 "unsigned build script should build the target for the runner architecture",
                 failures)
-        require("DERIVED_DATA_PATH=\"${DERIVED_DATA_PATH:-.build/DerivedData}\"" in build_unsigned_source and "-derivedDataPath \"$DERIVED_DATA_PATH\"" in build_unsigned_source,
-                "unsigned build script should use an overridable repository-local DerivedData path",
+        require("BUILD_OUTPUT_PATH=\"${BUILD_OUTPUT_PATH:-.build/Xcode}\"" in build_unsigned_source and "SYMROOT=\"$BUILD_OUTPUT_PATH/Products\"" in build_unsigned_source and "OBJROOT=\"$BUILD_OUTPUT_PATH/Intermediates\"" in build_unsigned_source and "-derivedDataPath" not in build_unsigned_source,
+                "unsigned build script should use overridable repository-local target build output paths",
                 failures)
         require("configurations=(Debug Release)" in build_unsigned_source,
                 "unsigned build script should build both Debug and Release configurations",
