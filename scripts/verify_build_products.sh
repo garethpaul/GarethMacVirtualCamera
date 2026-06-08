@@ -7,6 +7,8 @@ APP_NAME="${APP_NAME:-GarethVideoCam.app}"
 EXTENSION_NAME="${EXTENSION_NAME:-com.garethpaul.GarethVideoCam.Extension.systemextension}"
 APP_ID="${APP_ID:-com.garethpaul.GarethVideoCam}"
 EXTENSION_ID="${EXTENSION_ID:-com.garethpaul.GarethVideoCam.Extension}"
+APP_DISPLAY_NAME="${APP_DISPLAY_NAME:-Gareth Video Cam}"
+EXTENSION_DISPLAY_NAME="${EXTENSION_DISPLAY_NAME:-Gareth Video Cam Extension}"
 
 if [ "$#" -gt 0 ]; then
   configurations=("$@")
@@ -114,6 +116,21 @@ verify_info_plist_string() {
   fi
 }
 
+verify_info_plist_value() {
+  local configuration="$1"
+  local bundle_label="$2"
+  local bundle_path="$3"
+  local key="$4"
+  local expected_value="$5"
+  local actual_value
+
+  actual_value="$(read_info_plist_string "$bundle_path" "$key")"
+  if [ "$actual_value" != "$expected_value" ]; then
+    printf 'Unexpected %s %s %s: %s\n' "$configuration" "$bundle_label" "$key" "${actual_value:-unknown}" >&2
+    exit 1
+  fi
+}
+
 verify_extension_cmio_metadata() {
   local configuration="$1"
   local bundle_path="$2"
@@ -178,6 +195,8 @@ for configuration in "${configurations[@]}"; do
   fi
 
   verify_bundle_executable "$configuration" "app" "$app_path"
+  verify_info_plist_value "$configuration" "app" "$app_path" "CFBundleDisplayName" "$APP_DISPLAY_NAME"
+  verify_info_plist_value "$configuration" "app" "$app_path" "CFBundleName" "$APP_DISPLAY_NAME"
   verify_info_plist_string "$configuration" "app" "$app_path" "NSCameraUsageDescription"
   verify_info_plist_string "$configuration" "app" "$app_path" "NSSystemExtensionUsageDescription"
 
@@ -194,6 +213,7 @@ for configuration in "${configurations[@]}"; do
 
   verify_aligned_bundle_versions "$configuration" "$app_path" "$extension_path"
   verify_bundle_executable "$configuration" "extension" "$extension_path"
+  verify_info_plist_value "$configuration" "extension" "$extension_path" "CFBundleDisplayName" "$EXTENSION_DISPLAY_NAME"
   verify_info_plist_string "$configuration" "extension" "$extension_path" "NSCameraUsageDescription"
   verify_info_plist_string "$configuration" "extension" "$extension_path" "NSSystemExtensionUsageDescription"
   verify_extension_cmio_metadata "$configuration" "$extension_path"
@@ -203,5 +223,5 @@ for configuration in "${configurations[@]}"; do
     exit 1
   fi
 
-  printf 'Verified %s app product, embedded system extension, versions, executables, privacy usage strings, resolved CMIO metadata, and bundled video.\n' "$configuration"
+  printf 'Verified %s app product, embedded system extension, versions, executables, display metadata, privacy usage strings, resolved CMIO metadata, and bundled video.\n' "$configuration"
 done
