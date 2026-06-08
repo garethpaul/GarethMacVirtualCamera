@@ -6,6 +6,7 @@ LOG_WINDOW="${2:-30m}"
 APP_ID="com.garethpaul.GarethVideoCam"
 EXTENSION_ID="com.garethpaul.GarethVideoCam.Extension"
 EXTENSION_PATH="${APP_PATH}/Contents/Library/SystemExtensions/${EXTENSION_ID}.systemextension"
+VIDEO_PATH="${EXTENSION_PATH}/Contents/Resources/video.mp4"
 LOG_SUBSYSTEM="com.garethpaul.GarethVideoCam"
 
 section() {
@@ -90,6 +91,20 @@ if [ -d "$EXTENSION_PATH" ]; then
   print_bundle_metadata "$EXTENSION_PATH"
 else
   printf 'Expected embedded system extension was not found.\n'
+fi
+
+section "Bundled Video"
+printf 'Video path: %s\n' "$VIDEO_PATH"
+if [ -f "$VIDEO_PATH" ]; then
+  /bin/ls -lh "$VIDEO_PATH" 2>/dev/null || true
+  run_if_available mdls \
+    -name kMDItemCodecs \
+    -name kMDItemPixelWidth \
+    -name kMDItemPixelHeight \
+    -name kMDItemDurationSeconds \
+    "$VIDEO_PATH"
+else
+  printf 'Expected bundled video resource was not found.\n'
 fi
 
 section "Bundle Identifier Check"
