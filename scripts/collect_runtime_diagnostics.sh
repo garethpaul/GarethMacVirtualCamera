@@ -25,10 +25,17 @@ run_if_available() {
 print_bundle_metadata() {
   local bundle_path="$1"
   local info_plist="${bundle_path}/Contents/Info"
+  local bundle_identifier
+  local short_version
+  local build_version
 
-  /usr/bin/defaults read "$info_plist" CFBundleIdentifier 2>/dev/null || true
-  /usr/bin/defaults read "$info_plist" CFBundleShortVersionString 2>/dev/null || true
-  /usr/bin/defaults read "$info_plist" CFBundleVersion 2>/dev/null || true
+  bundle_identifier="$(/usr/bin/defaults read "$info_plist" CFBundleIdentifier 2>/dev/null || true)"
+  short_version="$(/usr/bin/defaults read "$info_plist" CFBundleShortVersionString 2>/dev/null || true)"
+  build_version="$(/usr/bin/defaults read "$info_plist" CFBundleVersion 2>/dev/null || true)"
+
+  printf 'Bundle identifier: %s\n' "${bundle_identifier:-unknown}"
+  printf 'Bundle short version: %s\n' "${short_version:-unknown}"
+  printf 'Bundle build version: %s\n' "${build_version:-unknown}"
 }
 
 section "Host"
