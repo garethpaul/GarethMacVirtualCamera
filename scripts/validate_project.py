@@ -76,6 +76,9 @@ def main():
     require(project_text.count("ENABLE_HARDENED_RUNTIME = YES;") >= 4,
             "all app and extension configurations should enable hardened runtime",
             failures)
+    require(project_text.count("ENABLE_APP_INTENTS_METADATA_GENERATION = NO;") >= 4,
+            "app and extension configurations should skip unused AppIntents metadata generation",
+            failures)
     marketing_versions = set(re.findall(r"MARKETING_VERSION = ([^;]+);", project_text))
     build_versions = set(re.findall(r"CURRENT_PROJECT_VERSION = ([^;]+);", project_text))
     require(len(marketing_versions) == 1,
