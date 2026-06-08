@@ -579,7 +579,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         } catch {
             extensionInfo = nil
             extensionCodeSigningStatus = .invalid("System extension code-signing status could not be checked: \(error.localizedDescription)")
-            handleFailure(error)
+            handleReadinessFailure(error)
         }
     }
 
@@ -761,8 +761,9 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             extensionCodeSigningStatus = Self.evaluateCodeSigningStatus(for: URL(fileURLWithPath: extensionInfo.bundlePath),
                                                                         validDetail: "The embedded system extension code signature is valid.")
         } catch {
+            extensionInfo = nil
             extensionCodeSigningStatus = .invalid("System extension code-signing status could not be checked: \(error.localizedDescription)")
-            handleFailure(error)
+            handleReadinessFailure(error)
             return nil
         }
 
@@ -910,12 +911,11 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         })
     }
 
-    private func handleFailure(_ error: Error) {
+    private func handleReadinessFailure(_ error: Error) {
         let message = error.localizedDescription
-        pendingRequestKind = nil
         lastFailureDetail = message
         state = .failed(message)
-        appendActivity(level: .error, title: "Request Failed", detail: message)
+        appendActivity(level: .error, title: "Readiness Failed", detail: message)
     }
 
     private func appendActivity(level: ActivityItem.Level, title: String, detail: String) {
