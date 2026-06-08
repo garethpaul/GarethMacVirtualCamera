@@ -60,6 +60,7 @@ private enum DashboardSection: String, CaseIterable, Hashable {
 class SystemExtensionRequestManager: NSObject, ObservableObject {
     private let expectedApplicationBundleIdentifier = "com.garethpaul.GarethVideoCam"
     private let expectedExtensionBundleIdentifier = "com.garethpaul.GarethVideoCam.Extension"
+    private let requiredSystemExtensionInstallEntitlement = "com.apple.developer.system-extension.install"
 
     enum InstallState: Equatable {
         case idle
@@ -201,7 +202,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     enum CodeSigningStatus: Equatable {
-        case valid(String, String?)
+        case valid(String, String?, Set<String>)
         case invalid(String)
 
         var title: String {
@@ -215,7 +216,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         var detail: String {
             switch self {
-            case .valid(let detail, _):
+            case .valid(let detail, _, _):
                 return detail
             case .invalid(let detail):
                 return detail
@@ -233,10 +234,19 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         var teamIdentifier: String? {
             switch self {
-            case .valid(_, let teamIdentifier):
+            case .valid(_, let teamIdentifier, _):
                 return teamIdentifier
             case .invalid:
                 return nil
+            }
+        }
+
+        func hasEnabledEntitlement(_ entitlement: String) -> Bool {
+            switch self {
+            case .valid(_, _, let enabledEntitlementKeys):
+                return enabledEntitlementKeys.contains(entitlement)
+            case .invalid:
+                return false
             }
         }
     }
@@ -360,6 +370,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     var canSubmitSystemExtensionRequests: Bool {
         return isRunningFromApplications
             && appCodeSigningStatus.isValid
+            && appEntitlementReadinessDetail == nil
             && extensionCodeSigningStatus.isValid
             && signingTeamReadinessDetail == nil
     }
@@ -375,6 +386,10 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         if !appCodeSigningStatus.isValid {
             return "System extension requests require a valid app signature."
+        }
+
+        if appEntitlementReadinessDetail != nil {
+            return "System extension requests require the app System Extension entitlement."
         }
 
         if !extensionCodeSigningStatus.isValid {
@@ -401,6 +416,10 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             return appCodeSigningStatus.detail
         }
 
+        if let appEntitlementReadinessDetail {
+            return appEntitlementReadinessDetail
+        }
+
         if !extensionCodeSigningStatus.isValid {
             return extensionCodeSigningStatus.detail
         }
@@ -414,6 +433,14 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
     var appTeamIdentifier: String {
         return appCodeSigningStatus.teamIdentifier ?? "Unknown"
+    }
+
+    var appSystemExtensionEntitlementStatus: String {
+        guard appCodeSigningStatus.isValid else {
+            return "Unknown"
+        }
+
+        return appCodeSigningStatus.hasEnabledEntitlement(requiredSystemExtensionInstallEntitlement) ? "Present" : "Missing"
     }
 
     var extensionTeamIdentifier: String {
@@ -468,6 +495,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         Last Failure: \(lastFailureDetail ?? "No failure recorded.")
         App Code Signing: \(appCodeSigningStatus.title)
         App Code Signing Detail: \(appCodeSigningStatus.detail)
+        App System Extension Entitlement: \(appSystemExtensionEntitlementStatus)
         App Team ID: \(appTeamIdentifier)
         Extension Code Signing: \(extensionCodeSigningStatus.title)
         Extension Code Signing Detail: \(extensionCodeSigningStatus.detail)
@@ -688,6 +716,14 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             return nil
         }
 
+        if let appEntitlementReadinessDetail {
+            state = .needsSigning
+            appendActivity(level: .warning,
+                           title: "Entitlement Required",
+                           detail: appEntitlementReadinessDetail)
+            return nil
+        }
+
         state = .locatingExtension
         let extensionInfo: ExtensionInfo
         do {
@@ -725,11 +761,26 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             return .needsApplicationLocation
         }
 
-        if !appCodeSigningStatus.isValid || !extensionCodeSigningStatus.isValid || signingTeamReadinessDetail != nil {
+        if !appCodeSigningStatus.isValid
+            || appEntitlementReadinessDetail != nil
+            || !extensionCodeSigningStatus.isValid
+            || signingTeamReadinessDetail != nil {
             return .needsSigning
         }
 
         return .ready
+    }
+
+    private var appEntitlementReadinessDetail: String? {
+        guard appCodeSigningStatus.isValid else {
+            return nil
+        }
+
+        guard appCodeSigningStatus.hasEnabledEntitlement(requiredSystemExtensionInstallEntitlement) else {
+            return "The app signature does not include the \(requiredSystemExtensionInstallEntitlement) entitlement."
+        }
+
+        return nil
     }
 
     private var signingTeamReadinessDetail: String? {
@@ -764,7 +815,10 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             return .invalid(errorMessage(for: checkStatus))
         }
 
-        return .valid(validDetail, teamIdentifier(for: staticCode))
+        let signingDictionary = signingInformation(for: staticCode)
+        return .valid(validDetail,
+                      teamIdentifier(in: signingDictionary),
+                      enabledEntitlementKeys(in: signingDictionary))
     }
 
     private static func errorMessage(for status: OSStatus) -> String {
@@ -772,20 +826,47 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         return SecCopyErrorMessageString(status, nil) as String? ?? fallback
     }
 
-    private static func teamIdentifier(for staticCode: SecStaticCode) -> String? {
+    private static func signingInformation(for staticCode: SecStaticCode) -> [String: Any]? {
         var signingInformation: CFDictionary?
         let infoStatus = SecCodeCopySigningInformation(staticCode,
-                                                       SecCSFlags(rawValue: kSecCSSigningInformation),
+                                                       SecCSFlags(rawValue: kSecCSSigningInformation | kSecCSRequirementInformation),
                                                        &signingInformation)
         guard infoStatus == errSecSuccess,
               let signingInformation,
-              let signingDictionary = signingInformation as? [String: Any],
+              let signingDictionary = signingInformation as? [String: Any] else {
+            return nil
+        }
+
+        return signingDictionary
+    }
+
+    private static func teamIdentifier(in signingDictionary: [String: Any]?) -> String? {
+        guard let signingDictionary,
               let teamIdentifier = signingDictionary[kSecCodeInfoTeamIdentifier as String] as? String,
               !teamIdentifier.isEmpty else {
             return nil
         }
 
         return teamIdentifier
+    }
+
+    private static func enabledEntitlementKeys(in signingDictionary: [String: Any]?) -> Set<String> {
+        guard let signingDictionary,
+              let entitlementDictionary = signingDictionary[kSecCodeInfoEntitlementsDict as String] as? [String: Any] else {
+            return []
+        }
+
+        return Set(entitlementDictionary.compactMap { key, value in
+            if let isEnabled = value as? Bool {
+                return isEnabled ? key : nil
+            }
+
+            if let number = value as? NSNumber {
+                return number.boolValue ? key : nil
+            }
+
+            return nil
+        })
     }
 
     private func handleFailure(_ error: Error) {
@@ -1109,6 +1190,7 @@ private struct DetailsPanel: View {
                 if !manager.appCodeSigningStatus.isValid {
                     DetailRow(title: "App Signature Detail", value: manager.appCodeSigningStatus.detail)
                 }
+                DetailRow(title: "System Extension Entitlement", value: manager.appSystemExtensionEntitlementStatus)
                 DetailRow(title: "App Team ID", value: manager.appTeamIdentifier)
                 DetailRow(title: "Extension Signature", value: manager.extensionCodeSigningStatus.title)
                 if !manager.extensionCodeSigningStatus.isValid {

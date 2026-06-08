@@ -354,6 +354,9 @@ def main():
     require("SecCodeCopySigningInformation" in host_source and "kSecCodeInfoTeamIdentifier" in host_source and "signingTeamReadinessDetail" in host_source and "Team Identifier Required" in host_source,
             "host app should verify matching app and embedded system-extension signing team identifiers before submitting requests",
             failures)
+    require("requiredSystemExtensionInstallEntitlement" in host_source and "kSecCodeInfoEntitlementsDict" in host_source and "hasEnabledEntitlement" in host_source and "appEntitlementReadinessDetail" in host_source and "Entitlement Required" in host_source,
+            "host app should verify the signed app has the System Extension entitlement before submitting requests",
+            failures)
     require("case needsSigning" in host_source and "requestReadinessMessage" in host_source and "App Signature" in host_source and "Extension Signature" in host_source,
             "host app should surface signing readiness in state, controls, and details",
             failures)
@@ -408,6 +411,9 @@ def main():
     require("applicationVersion" in host_source and "App Version" in host_source and "CFBundleShortVersionString" in host_source,
             "host app should show and copy app version diagnostics",
             failures)
+    require("System Extension Entitlement" in host_source and "App System Extension Entitlement:" in host_source,
+            "host app should show and copy app System Extension entitlement diagnostics",
+            failures)
     require("expectedApplicationBundleIdentifier" in host_source and "applicationBundleIdentifier" in host_source and "Expected App ID" in host_source and "Actual App ID" in host_source and "Expected Extension ID" in host_source,
             "host app should show and copy expected and actual bundle identifier diagnostics",
             failures)
@@ -450,7 +456,7 @@ def main():
     require("Runtime Activation" in readme_text and "valid Apple Developer signing identity" in readme_text,
             "README should document signed runtime activation requirements",
             failures)
-    require("System Settings shortcut" in readme_text and "reveal the app and embedded extension in Finder" in readme_text and "diagnostics snapshot" in readme_text and "generation timestamp" in readme_text and "bundle identifiers" in readme_text and "bundled system extension signature is invalid" in readme_text and "Team IDs" in readme_text and "last recorded request failure" in readme_text,
+    require("System Settings shortcut" in readme_text and "reveal the app and embedded extension in Finder" in readme_text and "diagnostics snapshot" in readme_text and "generation timestamp" in readme_text and "bundle identifiers" in readme_text and "missing the System Extension entitlement" in readme_text and "bundled system extension signature is invalid" in readme_text and "Team IDs" in readme_text and "last recorded request failure" in readme_text,
             "README should document the in-app approval and diagnostics actions",
             failures)
     require("collect_runtime_diagnostics.sh" in readme_text and "bundle versions" in readme_text and "bundled-video byte size, checksum, metadata" in readme_text and "expected bundle identifier checks" in readme_text and "matching Team IDs" in readme_text and "Gatekeeper assessment" in readme_text and "signed entitlements" in readme_text and "systemextensionsctl" in readme_text and "unified-log window" in readme_text and "system-extension/CMIO log context" in readme_text,
