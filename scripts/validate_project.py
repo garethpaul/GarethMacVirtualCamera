@@ -174,6 +174,12 @@ def main():
     require("case needsApplicationLocation" in host_source and "canSubmitSystemExtensionRequests" in host_source,
             "host app should model the /Applications requirement before submitting system-extension requests",
             failures)
+    require("import Security" in host_source and "CodeSigningStatus" in host_source and "SecStaticCodeCheckValidityWithErrors" in host_source,
+            "host app should check code-signing validity before submitting system-extension requests",
+            failures)
+    require("case needsSigning" in host_source and "requestReadinessMessage" in host_source and "Code Signing" in host_source,
+            "host app should surface signing readiness in state, controls, and details",
+            failures)
     require(".disabled(manager.isBusy || !manager.canSubmitSystemExtensionRequests)" in host_source,
             "host app should disable install controls when system-extension requests cannot be submitted",
             failures)
@@ -207,7 +213,7 @@ def main():
     require("Runtime Activation" in readme_text and "valid Apple Developer signing identity" in readme_text,
             "README should document signed runtime activation requirements",
             failures)
-    require("System Settings shortcut" in readme_text and "diagnostics snapshot" in readme_text,
+    require("System Settings shortcut" in readme_text and "diagnostics snapshot" in readme_text and "code signature is invalid" in readme_text,
             "README should document the in-app approval and diagnostics actions",
             failures)
     require("collect_runtime_diagnostics.sh" in readme_text and "signed entitlements" in readme_text and "systemextensionsctl" in readme_text,

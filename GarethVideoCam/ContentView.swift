@@ -4,6 +4,7 @@
 
 import Foundation
 import AppKit
+import Security
 import SwiftUI
 import SystemExtensions
 
@@ -63,6 +64,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         case idle
         case ready
         case needsApplicationLocation
+        case needsSigning
         case locatingExtension
         case activating
         case needsApproval
@@ -80,6 +82,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
                 return "Ready"
             case .needsApplicationLocation:
                 return "Move to Applications"
+            case .needsSigning:
+                return "Signing Required"
             case .locatingExtension:
                 return "Locating Extension"
             case .activating:
@@ -105,6 +109,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
                 return "circle.dashed"
             case .needsApplicationLocation:
                 return "exclamationmark.triangle.fill"
+            case .needsSigning:
+                return "lock.fill"
             case .locatingExtension, .activating, .deactivating:
                 return "arrow.triangle.2.circlepath"
             case .needsApproval:
@@ -127,6 +133,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             case .ready:
                 return .blue
             case .needsApplicationLocation:
+                return .orange
+            case .needsSigning:
                 return .orange
             case .locatingExtension, .activating, .deactivating:
                 return .indigo
@@ -189,6 +197,38 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         let detail: String
     }
 
+    enum CodeSigningStatus: Equatable {
+        case valid
+        case invalid(String)
+
+        var title: String {
+            switch self {
+            case .valid:
+                return "Valid"
+            case .invalid:
+                return "Invalid"
+            }
+        }
+
+        var detail: String {
+            switch self {
+            case .valid:
+                return "The app bundle code signature is valid."
+            case .invalid(let detail):
+                return detail
+            }
+        }
+
+        var isValid: Bool {
+            switch self {
+            case .valid:
+                return true
+            case .invalid:
+                return false
+            }
+        }
+    }
+
     private enum RequestKind {
         case activation
         case deactivation
@@ -242,6 +282,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     @Published var state: InstallState = .idle
     @Published var extensionInfo: ExtensionInfo?
     @Published var activity: [ActivityItem] = []
+    @Published var codeSigningStatus: CodeSigningStatus = .invalid("Code-signing status has not been checked yet.")
 
     private var pendingRequestKind: RequestKind?
 
@@ -267,7 +308,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     var applicationLocationStatus: String {
-        return canSubmitSystemExtensionRequests ? "In Applications" : "Outside Applications"
+        return isRunningFromApplications ? "In Applications" : "Outside Applications"
     }
 
     var applicationBundlePath: String {
@@ -275,7 +316,23 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     var canSubmitSystemExtensionRequests: Bool {
+        return isRunningFromApplications && codeSigningStatus.isValid
+    }
+
+    var isRunningFromApplications: Bool {
         return applicationBundlePath.hasPrefix("/Applications/")
+    }
+
+    var requestReadinessMessage: String? {
+        if !isRunningFromApplications {
+            return "System extension requests require /Applications."
+        }
+
+        if !codeSigningStatus.isValid {
+            return "System extension requests require a valid app signature."
+        }
+
+        return nil
     }
 
     var diagnosticSummary: String {
@@ -300,6 +357,8 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         State: \(state.title)
         App Location: \(applicationLocationStatus)
         App Path: \(applicationBundlePath)
+        Code Signing: \(codeSigningStatus.title)
+        Code Signing Detail: \(codeSigningStatus.detail)
         \(extensionDescription)
 
         Recent Activity:
@@ -352,11 +411,13 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     func refreshExtensionInfo() {
+        codeSigningStatus = Self.evaluateCodeSigningStatus(for: Bundle.main.bundleURL)
+
         do {
             extensionInfo = try loadBundledExtensionInfo()
             switch state {
-            case .idle, .ready, .needsApplicationLocation, .deactivated:
-                state = canSubmitSystemExtensionRequests ? .ready : .needsApplicationLocation
+            case .idle, .ready, .needsApplicationLocation, .needsSigning, .deactivated:
+                state = readinessState
             default:
                 break
             }
@@ -437,7 +498,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     private func prepareForSystemExtensionRequest() -> Bool {
-        guard canSubmitSystemExtensionRequests else {
+        guard isRunningFromApplications else {
             state = .needsApplicationLocation
             appendActivity(level: .warning,
                            title: "Move Required",
@@ -445,7 +506,47 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
             return false
         }
 
+        guard codeSigningStatus.isValid else {
+            state = .needsSigning
+            appendActivity(level: .warning,
+                           title: "Signing Required",
+                           detail: codeSigningStatus.detail)
+            return false
+        }
+
         return true
+    }
+
+    private var readinessState: InstallState {
+        if !isRunningFromApplications {
+            return .needsApplicationLocation
+        }
+
+        if !codeSigningStatus.isValid {
+            return .needsSigning
+        }
+
+        return .ready
+    }
+
+    private static func evaluateCodeSigningStatus(for bundleURL: URL) -> CodeSigningStatus {
+        var staticCode: SecStaticCode?
+        let createStatus = SecStaticCodeCreateWithPath(bundleURL as CFURL, SecCSFlags(), &staticCode)
+        guard createStatus == errSecSuccess, let staticCode else {
+            return .invalid(errorMessage(for: createStatus))
+        }
+
+        let checkStatus = SecStaticCodeCheckValidityWithErrors(staticCode, SecCSFlags(), nil, nil)
+        guard checkStatus == errSecSuccess else {
+            return .invalid(errorMessage(for: checkStatus))
+        }
+
+        return .valid
+    }
+
+    private static func errorMessage(for status: OSStatus) -> String {
+        let fallback = "Code-signing check failed with OSStatus \(status)."
+        return SecCopyErrorMessageString(status, nil) as String? ?? fallback
     }
 
     private func handleFailure(_ error: Error) {
@@ -686,8 +787,8 @@ private struct ActionPanel: View {
                     .disabled(manager.isBusy || !manager.canSubmitSystemExtensionRequests)
                 }
 
-                if !manager.canSubmitSystemExtensionRequests {
-                    Label("System extension requests require /Applications.", systemImage: "exclamationmark.triangle.fill")
+                if let requestReadinessMessage = manager.requestReadinessMessage {
+                    Label(requestReadinessMessage, systemImage: "exclamationmark.triangle.fill")
                         .font(.callout)
                         .foregroundStyle(.orange)
                 }
@@ -707,6 +808,10 @@ private struct DetailsPanel: View {
 
                 DetailRow(title: "Extension Version", value: manager.extensionInfo?.version ?? "Unknown")
                 DetailRow(title: "Application Location", value: manager.applicationLocationStatus)
+                DetailRow(title: "Code Signing", value: manager.codeSigningStatus.title)
+                if !manager.codeSigningStatus.isValid {
+                    DetailRow(title: "Signing Detail", value: manager.codeSigningStatus.detail)
+                }
                 DetailRow(title: "Application Path", value: manager.applicationBundlePath, monospaced: true)
 
                 if let bundlePath = manager.extensionInfo?.bundlePath {
