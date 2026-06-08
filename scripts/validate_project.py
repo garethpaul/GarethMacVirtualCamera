@@ -414,6 +414,9 @@ def main():
     require("private enum RequestKind" in host_source and "pendingRequestKind = .activation" in host_source and "pendingRequestKind = .deactivation" in host_source,
             "host app should track whether the pending system-extension request is install or uninstall",
             failures)
+    require("displayVersion(for properties: OSSystemExtensionProperties)" in host_source and "properties.bundleVersion" in host_source and "Self.displayVersion(for: existing)" in host_source,
+            "host app should log replacement app-extension versions with short and build numbers",
+            failures)
     require("case deactivated" in host_source and "return .deactivated" in host_source and "Uninstall Completed" in host_source,
             "host app should report successful deactivation separately from activation",
             failures)

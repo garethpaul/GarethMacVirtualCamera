@@ -427,6 +427,11 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
     }
 
+    private static func displayVersion(for properties: OSSystemExtensionProperties) -> String {
+        return displayVersion(shortVersion: properties.bundleShortVersion,
+                              buildVersion: properties.bundleVersion)
+    }
+
     var applicationBundleIdentifier: String {
         return Bundle.main.bundleIdentifier ?? "Unknown"
     }
@@ -1144,7 +1149,7 @@ extension SystemExtensionRequestManager: OSSystemExtensionRequestDelegate {
     public func request(_ request: OSSystemExtensionRequest, actionForReplacingExtension existing: OSSystemExtensionProperties, withExtension ext: OSSystemExtensionProperties) -> OSSystemExtensionRequest.ReplacementAction {
         appendActivity(level: .info,
                        title: "Replacing Extension",
-                       detail: "\(existing.bundleShortVersion) -> \(ext.bundleShortVersion)")
+                       detail: "\(Self.displayVersion(for: existing)) -> \(Self.displayVersion(for: ext))")
         return .replace
     }
 
