@@ -57,20 +57,20 @@ private enum CameraExtensionError: LocalizedError {
     }
 }
 
-private struct LoadedVideoAsset {
+private struct LoadedVideoAsset: @unchecked Sendable {
     let asset: AVAsset
     let videoTrack: AVAssetTrack
     let duration: CMTime
 }
 
-private struct AssetReaderState {
+private struct AssetReaderState: @unchecked Sendable {
     let assetReader: AVAssetReader
     let trackOutput: AVAssetReaderTrackOutput
 }
 
 // MARK: - ExtensionDeviceSource
 
-final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource {
+final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @unchecked Sendable {
     // MARK: Lifecycle
 
     init(localizedName: String) {
