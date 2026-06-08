@@ -38,6 +38,24 @@ print_bundle_metadata() {
   printf 'Bundle build version: %s\n' "${build_version:-unknown}"
 }
 
+read_team_identifier() {
+  local bundle_path="$1"
+  local signing_detail
+  local team_identifier
+
+  signing_detail="$(/usr/bin/codesign -dv "$bundle_path" 2>&1 || true)"
+  team_identifier="$(printf '%s\n' "$signing_detail" | /usr/bin/awk -F= '/^TeamIdentifier=/{ print $2; exit }')"
+
+  case "$team_identifier" in
+    ""|"not set")
+      return 1
+      ;;
+    *)
+      printf '%s\n' "$team_identifier"
+      ;;
+  esac
+}
+
 section "Host"
 printf 'Log window: %s\n' "$LOG_WINDOW"
 run_if_available sw_vers
@@ -66,6 +84,36 @@ if [ -d "$EXTENSION_PATH" ]; then
   print_bundle_metadata "$EXTENSION_PATH"
 else
   printf 'Expected embedded system extension was not found.\n'
+fi
+
+section "Signing Team Match"
+if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
+  app_team_identifier=""
+  extension_team_identifier=""
+
+  if app_team_identifier="$(read_team_identifier "$APP_PATH")"; then
+    printf 'App team identifier: %s\n' "$app_team_identifier"
+  else
+    printf 'App team identifier: unknown\n'
+  fi
+
+  if extension_team_identifier="$(read_team_identifier "$EXTENSION_PATH")"; then
+    printf 'Extension team identifier: %s\n' "$extension_team_identifier"
+  else
+    printf 'Extension team identifier: unknown\n'
+  fi
+
+  if [ -n "$app_team_identifier" ] && [ -n "$extension_team_identifier" ]; then
+    if [ "$app_team_identifier" = "$extension_team_identifier" ]; then
+      printf 'Team identifiers match: yes\n'
+    else
+      printf 'Team identifiers match: no\n'
+    fi
+  else
+    printf 'Team identifiers match: unknown\n'
+  fi
+else
+  printf 'Signing team comparison requires both the app and embedded system extension bundles.\n'
 fi
 
 section "System Extension Registration"

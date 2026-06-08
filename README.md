@@ -48,7 +48,7 @@ Pushes and pull requests to `main` also run `.github/workflows/macos-build.yml` 
 
 Runtime activation still requires a macOS host with a valid Apple Developer signing identity, the System Extension entitlement, and user approval in System Settings. The app must run from `/Applications/GarethVideoCam.app`; the shared Xcode scheme replaces the app there before launch for local testing.
 
-The app disables install and uninstall actions when it is not running from `/Applications`, when its app signature is invalid, or when the bundled system extension signature is invalid. It exposes a System Settings shortcut for approval and can copy a diagnostics snapshot with the current app path, app and extension signing status, bundled extension metadata, and recent request activity.
+The app disables install and uninstall actions when it is not running from `/Applications`, when its app signature is invalid, when the bundled system extension signature is invalid, or when the app and extension signing Team IDs are missing or do not match. It exposes a System Settings shortcut for approval and can copy a diagnostics snapshot with the current app path, app and extension signing status, Team IDs, bundled extension metadata, and recent request activity.
 
 After approving the camera extension in System Settings, it should appear in camera pickers as `Gareth Video Cam`.
 
@@ -60,4 +60,4 @@ To collect runtime evidence from a signed macOS host:
 
 Pass a second argument to change the unified-log window, for example `1h`.
 
-The diagnostics script reports host tool versions, app and extension bundle versions, code-signing status, Gatekeeper assessment, signed entitlements, embedded system-extension metadata, `systemextensionsctl` registration, recent `com.garethpaul.GarethVideoCam` unified logs, and recent system-extension/CMIO log context.
+The diagnostics script reports host tool versions, app and extension bundle versions, code-signing status, matching Team IDs, Gatekeeper assessment, signed entitlements, embedded system-extension metadata, `systemextensionsctl` registration, recent `com.garethpaul.GarethVideoCam` unified logs, and recent system-extension/CMIO log context.
