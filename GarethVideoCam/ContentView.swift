@@ -49,12 +49,15 @@ struct ContentView: View {
 
 private enum DashboardSection: String, CaseIterable, Hashable {
     case overview
+    case evidence
     case activity
 
     var title: String {
         switch self {
         case .overview:
             return "Overview"
+        case .evidence:
+            return "Evidence"
         case .activity:
             return "Activity"
         }
@@ -64,6 +67,8 @@ private enum DashboardSection: String, CaseIterable, Hashable {
         switch self {
         case .overview:
             return "rectangle.grid.2x2"
+        case .evidence:
+            return "checklist"
         case .activity:
             return "list.bullet.rectangle"
         }
@@ -308,6 +313,12 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         let level: Level
         let title: String
         let detail: String
+    }
+
+    struct RuntimeEvidenceCheck: Identifiable, Equatable {
+        let id: String
+        let title: String
+        let expectedValue: String
     }
 
     enum CodeSigningStatus: Equatable {
@@ -1150,6 +1161,35 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         return "./scripts/collect_runtime_diagnostics.sh \(expectedApplicationPath) 1h"
     }
 
+    var runtimeEvidenceChecks: [RuntimeEvidenceCheck] {
+        return [
+            RuntimeEvidenceCheck(id: "readiness",
+                                 title: "Runtime readiness result",
+                                 expectedValue: "ready"),
+            RuntimeEvidenceCheck(id: "activation-evidence",
+                                 title: "Runtime activation evidence result",
+                                 expectedValue: "active"),
+            RuntimeEvidenceCheck(id: "registration-present",
+                                 title: "Extension registration entry present",
+                                 expectedValue: "yes"),
+            RuntimeEvidenceCheck(id: "registration-active-enabled",
+                                 title: "Extension registration activated enabled",
+                                 expectedValue: "yes"),
+            RuntimeEvidenceCheck(id: "application-group",
+                                 title: "Application group match ready",
+                                 expectedValue: "yes"),
+            RuntimeEvidenceCheck(id: "camera-device",
+                                 title: "Expected virtual camera device present",
+                                 expectedValue: "yes")
+        ]
+    }
+
+    var runtimeEvidenceExpectedDiagnostics: String {
+        return runtimeEvidenceChecks
+            .map { "\($0.title): \($0.expectedValue)" }
+            .joined(separator: "\n")
+    }
+
     var activationChecklist: String {
         return """
         Gareth Video Cam Signed Runtime Activation Checklist
@@ -1169,12 +1209,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         6. Confirm the diagnostics report the expected activation evidence.
 
         Expected Diagnostics:
-        Runtime readiness result: ready
-        Runtime activation evidence result: active
-        Extension registration entry present: yes
-        Extension registration activated enabled: yes
-        Application group match ready: yes
-        Expected virtual camera device present: yes
+        \(runtimeEvidenceExpectedDiagnostics)
 
         Diagnostics Command:
         \(runtimeDiagnosticsCommand)
@@ -2181,15 +2216,85 @@ private struct DashboardView: View {
                 case .overview:
                     ActionPanel(manager: manager)
                     ReadinessPanel(manager: manager)
+                case .evidence:
+                    RuntimeEvidencePanel(manager: manager)
+                case .activity:
+                    ActivityPanel(items: manager.activity)
+                }
+
+                switch selectedSection {
+                case .overview, .evidence:
                     DetailsPanel(manager: manager)
                     ActivityPanel(items: Array(manager.activity.prefix(5)))
                 case .activity:
-                    ActivityPanel(items: manager.activity)
+                    EmptyView()
                 }
             }
             .padding(28)
             .frame(maxWidth: 920, alignment: .leading)
         }
+    }
+}
+
+private struct RuntimeEvidencePanel: View {
+    @ObservedObject var manager: SystemExtensionRequestManager
+
+    var body: some View {
+        SectionSurface {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Runtime Evidence")
+                    .font(.title3.weight(.semibold))
+
+                DetailRow(title: "Diagnostics Command", value: manager.runtimeDiagnosticsCommand, monospaced: true)
+
+                VStack(spacing: 0) {
+                    ForEach(Array(manager.runtimeEvidenceChecks.enumerated()), id: \.element.id) { index, check in
+                        DetailRow(title: check.title, value: check.expectedValue)
+                            .padding(.vertical, 8)
+
+                        if index < manager.runtimeEvidenceChecks.count - 1 {
+                            Divider()
+                        }
+                    }
+                }
+
+                runtimeEvidenceActions
+            }
+        }
+    }
+
+    private var runtimeEvidenceActions: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 10) {
+                actionButtons
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                actionButtons
+            }
+        }
+        .padding(.top, 4)
+    }
+
+    @ViewBuilder
+    private var actionButtons: some View {
+        Button(action: manager.copyRuntimeDiagnosticsCommand) {
+            Label("Copy Command", systemImage: "terminal")
+        }
+        .buttonStyle(.bordered)
+        .help("Copy the runtime diagnostics command.")
+
+        Button(action: manager.copyActivationChecklist) {
+            Label("Copy Checklist", systemImage: "checklist")
+        }
+        .buttonStyle(.bordered)
+        .help("Copy the signed runtime activation checklist.")
+
+        Button(action: manager.copyDiagnostics) {
+            Label("Copy Diagnostics", systemImage: "doc.on.doc")
+        }
+        .buttonStyle(.bordered)
+        .help("Copy the current readiness and diagnostics snapshot.")
     }
 }
 
