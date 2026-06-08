@@ -83,6 +83,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         case needsApplicationLocation
         case needsBundleIdentifier
         case needsBundleVersion
+        case needsExtensionMetadata
+        case needsBundledVideo
         case needsSigning
         case locatingExtension
         case activating
@@ -105,6 +107,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                 return "Bundle ID Required"
             case .needsBundleVersion:
                 return "Version Mismatch"
+            case .needsExtensionMetadata:
+                return "Extension Metadata"
+            case .needsBundledVideo:
+                return "Bundled Video"
             case .needsSigning:
                 return "Signing Required"
             case .locatingExtension:
@@ -136,6 +142,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                 return "tag.fill"
             case .needsBundleVersion:
                 return "exclamationmark.triangle.fill"
+            case .needsExtensionMetadata:
+                return "puzzlepiece.extension.fill"
+            case .needsBundledVideo:
+                return "film.fill"
             case .needsSigning:
                 return "lock.fill"
             case .locatingExtension, .activating, .deactivating:
@@ -164,6 +174,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             case .needsBundleIdentifier:
                 return .orange
             case .needsBundleVersion:
+                return .orange
+            case .needsExtensionMetadata:
+                return .orange
+            case .needsBundledVideo:
                 return .orange
             case .needsSigning:
                 return .orange
@@ -1080,7 +1094,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             extensionQuarantineStatus = Self.quarantineStatus(for: URL(fileURLWithPath: loadedExtensionInfo.bundlePath))
 
             switch state {
-            case .idle, .ready, .needsApplicationLocation, .needsBundleIdentifier, .needsBundleVersion, .needsSigning, .deactivated, .failed:
+            case .idle, .ready, .needsApplicationLocation, .needsBundleIdentifier, .needsBundleVersion, .needsExtensionMetadata, .needsBundledVideo, .needsSigning, .deactivated, .failed:
                 state = readinessState
             default:
                 break
@@ -1324,6 +1338,20 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return nil
         }
 
+        if let extensionMetadataReadinessDetail {
+            recordReadinessBlock(state: .needsExtensionMetadata,
+                                 title: "Extension Metadata Required",
+                                 detail: extensionMetadataReadinessDetail)
+            return nil
+        }
+
+        if let bundledVideoReadinessDetail {
+            recordReadinessBlock(state: .needsBundledVideo,
+                                 title: "Bundled Video Required",
+                                 detail: bundledVideoReadinessDetail)
+            return nil
+        }
+
         guard extensionCodeSigningStatus.isValid else {
             recordReadinessBlock(state: .needsSigning,
                                  title: "Extension Signing Required",
@@ -1361,10 +1389,16 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return .needsBundleVersion
         }
 
+        if extensionMetadataReadinessDetail != nil {
+            return .needsExtensionMetadata
+        }
+
+        if bundledVideoReadinessDetail != nil {
+            return .needsBundledVideo
+        }
+
         if !appCodeSigningStatus.isValid
             || appEntitlementReadinessDetail != nil
-            || extensionMetadataReadinessDetail != nil
-            || bundledVideoReadinessDetail != nil
             || !extensionCodeSigningStatus.isValid
             || extensionHostOnlyEntitlementReadinessDetail != nil
             || signingTeamReadinessDetail != nil {
@@ -1649,8 +1683,17 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     private func handleReadinessFailure(_ error: Error) {
         let message = error.localizedDescription
         lastFailureDetail = message
-        state = .failed(message)
-        appendActivity(level: .error, title: "Readiness Failed", detail: message)
+
+        if Self.isExtensionMetadataFailureDetail(message) {
+            state = .needsExtensionMetadata
+            appendActivity(level: .warning, title: "Extension Metadata Required", detail: message)
+        } else if Self.isBundledVideoFailureDetail(message) {
+            state = .needsBundledVideo
+            appendActivity(level: .warning, title: "Bundled Video Required", detail: message)
+        } else {
+            state = .failed(message)
+            appendActivity(level: .error, title: "Readiness Failed", detail: message)
+        }
     }
 
     private func recordReadinessBlock(state: InstallState, title: String, detail: String) {
