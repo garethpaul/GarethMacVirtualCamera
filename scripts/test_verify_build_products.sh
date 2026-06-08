@@ -117,6 +117,24 @@ passing_outputs = {
         "Mach service dotted-prefix fixture ready: no",
         "Mach service unresolved fixture resolved: no",
     ],
+    "camera-device": [
+        "Camera device present fixture: yes",
+        "Camera device missing fixture: no",
+        "Camera device empty fixture: unknown",
+    ],
+    "registration": [
+        "Registration active fixture present: yes",
+        "Registration active fixture activated enabled: yes",
+        "Registration waiting fixture activated enabled: no",
+        "Registration empty fixture present: unknown",
+    ],
+    "activation-evidence": [
+        "Runtime activation evidence result: active",
+        "Runtime activation evidence checks ready: 3/3",
+        "Runtime activation evidence result: blocked",
+        "Runtime activation evidence result: incomplete",
+        "Runtime activation evidence next action: inspect Extension registration activated enabled",
+    ],
     "video-parser": [
         "Video parser metadata ready fixture: yes",
     ],
@@ -145,6 +163,22 @@ stale_outputs = {
         "Mach service direct fixture ready: no",
         "Mach service dotted-prefix fixture ready: yes",
         "Mach service unresolved fixture resolved: yes",
+    ],
+    "camera-device": [
+        "Camera device present fixture: no",
+        "Camera device missing fixture: yes",
+        "Camera device empty fixture: yes",
+    ],
+    "registration": [
+        "Registration active fixture present: no",
+        "Registration active fixture activated enabled: no",
+        "Registration waiting fixture activated enabled: yes",
+        "Registration empty fixture present: yes",
+    ],
+    "activation-evidence": [
+        "Runtime activation evidence result: inactive",
+        "Runtime activation evidence checks ready: 0/3",
+        "Runtime activation evidence next action: none",
     ],
 }
 
@@ -200,6 +234,24 @@ write_stale_mach_service_diagnostics_fixture() {
   local products_path="$1"
   local configuration="$2"
   write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "mach-service"
+}
+
+write_stale_camera_device_diagnostics_fixture() {
+  local products_path="$1"
+  local configuration="$2"
+  write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "camera-device"
+}
+
+write_stale_registration_diagnostics_fixture() {
+  local products_path="$1"
+  local configuration="$2"
+  write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "registration"
+}
+
+write_stale_activation_evidence_diagnostics_fixture() {
+  local products_path="$1"
+  local configuration="$2"
+  write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "activation-evidence"
 }
 
 remove_info_plist_key() {
@@ -418,6 +470,51 @@ fi
 if ! grep -q "Unexpected Debug app bundled runtime diagnostics mach-service self-test output" "$TMP_DIR/stale-mach-service-diagnostics.err"; then
   printf 'Verifier failure did not explain the stale bundled runtime diagnostics mach-service self-test output.\n' >&2
   cat "$TMP_DIR/stale-mach-service-diagnostics.err" >&2
+  exit 1
+fi
+
+STALE_CAMERA_DEVICE_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-camera-device-diagnostics/Products"
+write_product_fixture "$STALE_CAMERA_DEVICE_DIAGNOSTICS_PRODUCTS" Debug
+write_stale_camera_device_diagnostics_fixture "$STALE_CAMERA_DEVICE_DIAGNOSTICS_PRODUCTS" Debug
+
+if PRODUCTS_PATH="$STALE_CAMERA_DEVICE_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stale-camera-device-diagnostics.out" 2>"$TMP_DIR/stale-camera-device-diagnostics.err"; then
+  printf 'Expected verifier to reject stale bundled runtime diagnostics camera-device self-test output.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Unexpected Debug app bundled runtime diagnostics camera-device self-test output" "$TMP_DIR/stale-camera-device-diagnostics.err"; then
+  printf 'Verifier failure did not explain the stale bundled runtime diagnostics camera-device self-test output.\n' >&2
+  cat "$TMP_DIR/stale-camera-device-diagnostics.err" >&2
+  exit 1
+fi
+
+STALE_REGISTRATION_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-registration-diagnostics/Products"
+write_product_fixture "$STALE_REGISTRATION_DIAGNOSTICS_PRODUCTS" Debug
+write_stale_registration_diagnostics_fixture "$STALE_REGISTRATION_DIAGNOSTICS_PRODUCTS" Debug
+
+if PRODUCTS_PATH="$STALE_REGISTRATION_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stale-registration-diagnostics.out" 2>"$TMP_DIR/stale-registration-diagnostics.err"; then
+  printf 'Expected verifier to reject stale bundled runtime diagnostics registration self-test output.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Unexpected Debug app bundled runtime diagnostics registration self-test output" "$TMP_DIR/stale-registration-diagnostics.err"; then
+  printf 'Verifier failure did not explain the stale bundled runtime diagnostics registration self-test output.\n' >&2
+  cat "$TMP_DIR/stale-registration-diagnostics.err" >&2
+  exit 1
+fi
+
+STALE_ACTIVATION_EVIDENCE_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-activation-evidence-diagnostics/Products"
+write_product_fixture "$STALE_ACTIVATION_EVIDENCE_DIAGNOSTICS_PRODUCTS" Debug
+write_stale_activation_evidence_diagnostics_fixture "$STALE_ACTIVATION_EVIDENCE_DIAGNOSTICS_PRODUCTS" Debug
+
+if PRODUCTS_PATH="$STALE_ACTIVATION_EVIDENCE_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stale-activation-evidence-diagnostics.out" 2>"$TMP_DIR/stale-activation-evidence-diagnostics.err"; then
+  printf 'Expected verifier to reject stale bundled runtime diagnostics activation-evidence self-test output.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Unexpected Debug app bundled runtime diagnostics activation-evidence self-test output" "$TMP_DIR/stale-activation-evidence-diagnostics.err"; then
+  printf 'Verifier failure did not explain the stale bundled runtime diagnostics activation-evidence self-test output.\n' >&2
+  cat "$TMP_DIR/stale-activation-evidence-diagnostics.err" >&2
   exit 1
 fi
 

@@ -176,6 +176,9 @@ verify_app_diagnostics_resources() {
   local video_metadata_self_test_output
   local application_group_self_test_output
   local mach_service_self_test_output
+  local camera_device_self_test_output
+  local registration_self_test_output
+  local activation_evidence_self_test_output
   local parser_self_test_output
 
   if [ ! -f "$script_path" ]; then
@@ -289,6 +292,50 @@ verify_app_diagnostics_resources() {
     || ! printf '%s\n' "$mach_service_self_test_output" | /usr/bin/grep -F "Mach service unresolved fixture resolved: no" >/dev/null; then
     printf 'Unexpected %s app bundled runtime diagnostics mach-service self-test output.\n' "$configuration" >&2
     printf '%s\n' "$mach_service_self_test_output" >&2
+    exit 1
+  fi
+
+  if ! camera_device_self_test_output="$(GARETH_DIAGNOSTICS_SELF_TEST=camera-device /bin/bash "$script_path" "$app_path" 1m 2>&1)"; then
+    printf 'Failed %s app bundled runtime diagnostics camera-device self-test.\n' "$configuration" >&2
+    printf '%s\n' "$camera_device_self_test_output" >&2
+    exit 1
+  fi
+
+  if ! printf '%s\n' "$camera_device_self_test_output" | /usr/bin/grep -F "Camera device present fixture: yes" >/dev/null \
+    || ! printf '%s\n' "$camera_device_self_test_output" | /usr/bin/grep -F "Camera device missing fixture: no" >/dev/null \
+    || ! printf '%s\n' "$camera_device_self_test_output" | /usr/bin/grep -F "Camera device empty fixture: unknown" >/dev/null; then
+    printf 'Unexpected %s app bundled runtime diagnostics camera-device self-test output.\n' "$configuration" >&2
+    printf '%s\n' "$camera_device_self_test_output" >&2
+    exit 1
+  fi
+
+  if ! registration_self_test_output="$(GARETH_DIAGNOSTICS_SELF_TEST=registration /bin/bash "$script_path" "$app_path" 1m 2>&1)"; then
+    printf 'Failed %s app bundled runtime diagnostics registration self-test.\n' "$configuration" >&2
+    printf '%s\n' "$registration_self_test_output" >&2
+    exit 1
+  fi
+
+  if ! printf '%s\n' "$registration_self_test_output" | /usr/bin/grep -F "Registration active fixture present: yes" >/dev/null \
+    || ! printf '%s\n' "$registration_self_test_output" | /usr/bin/grep -F "Registration active fixture activated enabled: yes" >/dev/null \
+    || ! printf '%s\n' "$registration_self_test_output" | /usr/bin/grep -F "Registration waiting fixture activated enabled: no" >/dev/null \
+    || ! printf '%s\n' "$registration_self_test_output" | /usr/bin/grep -F "Registration empty fixture present: unknown" >/dev/null; then
+    printf 'Unexpected %s app bundled runtime diagnostics registration self-test output.\n' "$configuration" >&2
+    printf '%s\n' "$registration_self_test_output" >&2
+    exit 1
+  fi
+
+  if ! activation_evidence_self_test_output="$(GARETH_DIAGNOSTICS_SELF_TEST=activation-evidence /bin/bash "$script_path" "$app_path" 1m 2>&1)"; then
+    printf 'Failed %s app bundled runtime diagnostics activation-evidence self-test.\n' "$configuration" >&2
+    printf '%s\n' "$activation_evidence_self_test_output" >&2
+    exit 1
+  fi
+
+  if ! printf '%s\n' "$activation_evidence_self_test_output" | /usr/bin/grep -F "Runtime activation evidence result: active" >/dev/null \
+    || ! printf '%s\n' "$activation_evidence_self_test_output" | /usr/bin/grep -F "Runtime activation evidence result: blocked" >/dev/null \
+    || ! printf '%s\n' "$activation_evidence_self_test_output" | /usr/bin/grep -F "Runtime activation evidence result: incomplete" >/dev/null \
+    || ! printf '%s\n' "$activation_evidence_self_test_output" | /usr/bin/grep -F "Runtime activation evidence next action: inspect Extension registration activated enabled" >/dev/null; then
+    printf 'Unexpected %s app bundled runtime diagnostics activation-evidence self-test output.\n' "$configuration" >&2
+    printf '%s\n' "$activation_evidence_self_test_output" >&2
     exit 1
   fi
 

@@ -869,6 +869,15 @@ def main():
     require("GARETH_DIAGNOSTICS_SELF_TEST=mach-service" in verify_build_products_source and "Mach service direct fixture ready: yes" in verify_build_products_source and "Mach service dotted-prefix fixture ready: no" in verify_build_products_source and "Mach service unresolved fixture resolved: no" in verify_build_products_source,
             "build-product verifier should run the bundled runtime diagnostics mach-service self-test",
             failures)
+    require("GARETH_DIAGNOSTICS_SELF_TEST=camera-device" in verify_build_products_source and "Camera device present fixture: yes" in verify_build_products_source and "Camera device missing fixture: no" in verify_build_products_source and "Camera device empty fixture: unknown" in verify_build_products_source,
+            "build-product verifier should run the bundled runtime diagnostics camera-device self-test",
+            failures)
+    require("GARETH_DIAGNOSTICS_SELF_TEST=registration" in verify_build_products_source and "Registration active fixture present: yes" in verify_build_products_source and "Registration active fixture activated enabled: yes" in verify_build_products_source and "Registration waiting fixture activated enabled: no" in verify_build_products_source and "Registration empty fixture present: unknown" in verify_build_products_source,
+            "build-product verifier should run the bundled runtime diagnostics registration self-test",
+            failures)
+    require("GARETH_DIAGNOSTICS_SELF_TEST=activation-evidence" in verify_build_products_source and "Runtime activation evidence result: active" in verify_build_products_source and "Runtime activation evidence result: blocked" in verify_build_products_source and "Runtime activation evidence result: incomplete" in verify_build_products_source and "Runtime activation evidence next action: inspect Extension registration activated enabled" in verify_build_products_source,
+            "build-product verifier should run the bundled runtime diagnostics activation-evidence self-test",
+            failures)
     require('verify_bundled_video_metadata "$configuration" "$video_path"\n  verify_app_diagnostics_resources "$configuration" "$app_path"' in verify_build_products_source,
             "build-product verifier should run bundled app diagnostics self-tests after extension and video metadata checks",
             failures)
@@ -895,6 +904,15 @@ def main():
             failures)
     require("write_stale_mach_service_diagnostics_fixture" in verify_build_products_test_source and "stale-mach-service-diagnostics" in verify_build_products_test_source and "Unexpected Debug app bundled runtime diagnostics mach-service self-test output" in verify_build_products_test_source,
             "build-product verifier tests should reject stale bundled runtime diagnostics mach-service self-test output",
+            failures)
+    require("write_stale_camera_device_diagnostics_fixture" in verify_build_products_test_source and "stale-camera-device-diagnostics" in verify_build_products_test_source and "Unexpected Debug app bundled runtime diagnostics camera-device self-test output" in verify_build_products_test_source,
+            "build-product verifier tests should reject stale bundled runtime diagnostics camera-device self-test output",
+            failures)
+    require("write_stale_registration_diagnostics_fixture" in verify_build_products_test_source and "stale-registration-diagnostics" in verify_build_products_test_source and "Unexpected Debug app bundled runtime diagnostics registration self-test output" in verify_build_products_test_source,
+            "build-product verifier tests should reject stale bundled runtime diagnostics registration self-test output",
+            failures)
+    require("write_stale_activation_evidence_diagnostics_fixture" in verify_build_products_test_source and "stale-activation-evidence-diagnostics" in verify_build_products_test_source and "Unexpected Debug app bundled runtime diagnostics activation-evidence self-test output" in verify_build_products_test_source,
+            "build-product verifier tests should reject stale bundled runtime diagnostics activation-evidence self-test output",
             failures)
     require(verify_build_products_test_path.stat().st_mode & 0o111,
             "build-product verifier test script should be executable",

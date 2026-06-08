@@ -34,3 +34,4 @@
 - Consolidated stale bundled-diagnostics fixture generation in build-product verifier tests.
 - Refreshed extension metadata before copying runtime diagnostics commands or expected evidence lines.
 - Added extension executable and CMIO Mach service readiness to copied runtime evidence expectations.
+- Verified bundled runtime diagnostics camera-device, registration, and activation-evidence self-tests inside built app products.
