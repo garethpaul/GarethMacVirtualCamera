@@ -457,6 +457,10 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         return Self.displayVersion(shortVersion: shortVersion, buildVersion: buildVersion)
     }
 
+    var hostOperatingSystemVersion: String {
+        return ProcessInfo.processInfo.operatingSystemVersionString
+    }
+
     private static func displayVersion(shortVersion: String?, buildVersion: String?) -> String {
         switch (shortVersion, buildVersion) {
         case let (shortVersion?, buildVersion?):
@@ -731,6 +735,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         Gareth Video Cam Diagnostics
         Generated At: \(diagnosticGeneratedAt)
         State: \(state.title)
+        macOS Version: \(hostOperatingSystemVersion)
         App Version: \(applicationVersion)
         Expected App ID: \(expectedApplicationIdentifier)
         Actual App ID: \(applicationBundleIdentifier)
@@ -1670,6 +1675,7 @@ private struct DetailsPanel: View {
                 Text("Build")
                     .font(.title3.weight(.semibold))
 
+                DetailRow(title: "macOS Version", value: manager.hostOperatingSystemVersion)
                 DetailRow(title: "App Version", value: manager.applicationVersion)
                 DetailRow(title: "App Bundle ID", value: manager.applicationBundleIdentifier)
                 DetailRow(title: "App Bundle ID Check", value: manager.applicationBundleIdentifierStatus)
