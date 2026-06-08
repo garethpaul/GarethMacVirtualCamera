@@ -424,6 +424,10 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
             return
         }
 
+        guard validateSampleBufferPixelBuffer(sampleBuffer) else {
+            return
+        }
+
         let presentationTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         guard presentationTime.flags.contains(.valid) else {
             logger.error("Skipping sample buffer with invalid presentation timestamp")
@@ -445,6 +449,29 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
         _streamSource.stream.send(retimedSampleBuffer,
                                   discontinuity: [],
                                   hostTimeInNanoseconds: currentHostTimeInNanoseconds())
+    }
+
+    private func validateSampleBufferPixelBuffer(_ sampleBuffer: CMSampleBuffer) -> Bool {
+        guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
+            logger.error("Skipping sample buffer without a CVPixelBuffer image buffer")
+            return false
+        }
+
+        let pixelFormat = CVPixelBufferGetPixelFormatType(imageBuffer)
+        guard pixelFormat == CameraExtensionConfiguration.pixelFormat else {
+            logger.error("Skipping sample buffer with unexpected pixel format: \(pixelFormat, privacy: .public)")
+            return false
+        }
+
+        let width = CVPixelBufferGetWidth(imageBuffer)
+        let height = CVPixelBufferGetHeight(imageBuffer)
+        guard width == Int(CameraExtensionConfiguration.dimensions.width),
+              height == Int(CameraExtensionConfiguration.dimensions.height) else {
+            logger.error("Skipping sample buffer with unexpected pixel buffer dimensions: \(width, privacy: .public)x\(height, privacy: .public)")
+            return false
+        }
+
+        return true
     }
 
     private func retimedSampleBuffer(from sampleBuffer: CMSampleBuffer,

@@ -381,6 +381,15 @@ def main():
     require("CMSampleBufferDataIsReady(sampleBuffer)" in extension_source and "Skipping sample buffer that is not ready" in extension_source,
             "extension should skip asset-reader sample buffers that are not ready",
             failures)
+    require("validateSampleBufferPixelBuffer(sampleBuffer)" in extension_source and "CMSampleBufferGetImageBuffer(sampleBuffer)" in extension_source and "Skipping sample buffer without a CVPixelBuffer image buffer" in extension_source,
+            "extension should skip sample buffers that do not expose a CVPixelBuffer",
+            failures)
+    require("CVPixelBufferGetPixelFormatType(imageBuffer)" in extension_source and "pixelFormat == CameraExtensionConfiguration.pixelFormat" in extension_source and "Skipping sample buffer with unexpected pixel format" in extension_source,
+            "extension should skip sample buffers whose pixel format does not match the advertised stream format",
+            failures)
+    require("CVPixelBufferGetWidth(imageBuffer)" in extension_source and "CVPixelBufferGetHeight(imageBuffer)" in extension_source and "Skipping sample buffer with unexpected pixel buffer dimensions" in extension_source,
+            "extension should skip sample buffers whose dimensions do not match the advertised stream dimensions",
+            failures)
     require("CMTimeConvertScale(hostTime" in extension_source and "CMTimeGetSeconds(hostTime)" not in extension_source,
             "extension should convert host timestamps with integer CoreMedia scaling",
             failures)
@@ -626,6 +635,9 @@ def main():
             failures)
     require("parseable dimensions, frame rate, and positive video duration" in readme_text,
             "README should document bundled-video metadata validation",
+            failures)
+    require("decoded pixel-buffer guards" in readme_text and "stream-format regressions" in readme_text,
+            "README should document decoded pixel-buffer stream-format validation",
             failures)
     require("Runtime Activation" in readme_text and "valid Apple Developer signing identity" in readme_text,
             "README should document signed runtime activation requirements",
