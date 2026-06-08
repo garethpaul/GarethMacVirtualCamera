@@ -300,6 +300,9 @@ def main():
     require("tooManyStreamingClients" in extension_source and "_streamingCounter < UInt32.max" in extension_source,
             "extension should guard the active streaming client counter from overflow",
             failures)
+    require("Attached streaming client; active clients" in extension_source and "Detached streaming client; active clients" in extension_source,
+            "extension should log multi-client streaming attach and detach counts",
+            failures)
     require("guard _timer == nil else" in extension_source and "Duplicate stream timer start ignored" in extension_source,
             "extension should keep stream timer startup idempotent",
             failures)

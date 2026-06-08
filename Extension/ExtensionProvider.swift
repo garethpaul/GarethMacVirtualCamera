@@ -164,6 +164,7 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
                 }
 
                 _streamingCounter += 1
+                logger.info("Attached streaming client; active clients: \(self._streamingCounter, privacy: .public)")
                 return
             }
 
@@ -193,6 +194,8 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
             if _streamingCounter == 0 {
                 stopStreamingSession()
                 logger.info("Stopped stream")
+            } else {
+                logger.info("Detached streaming client; active clients: \(self._streamingCounter, privacy: .public)")
             }
         }
     }
