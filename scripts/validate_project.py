@@ -139,6 +139,12 @@ def main():
     require("nsError.domain" in host_source and "unknown code \\(errorCode)" in host_source,
             "host app should preserve system-extension failure domain and code diagnostics",
             failures)
+    require("diagnosticSummary" in host_source and "NSPasteboard.general" in host_source and "Copy Diagnostics" in host_source,
+            "host app should expose copyable diagnostics for activation troubleshooting",
+            failures)
+    require("activateFileViewerSelecting" in host_source and "Reveal App" in host_source,
+            "host app should let users reveal the running app bundle in Finder",
+            failures)
     require("CI-equivalent unsigned compile" in readme_text and "-target GarethVideoCam" in readme_text,
             "README should document the CI-equivalent unsigned target build",
             failures)

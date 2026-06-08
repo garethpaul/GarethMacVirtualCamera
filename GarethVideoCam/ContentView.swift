@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import AppKit
 import SwiftUI
 import SystemExtensions
 
@@ -277,6 +278,35 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         return applicationBundlePath.hasPrefix("/Applications/")
     }
 
+    var diagnosticSummary: String {
+        let extensionDescription: String
+        if let extensionInfo {
+            extensionDescription = """
+            Extension ID: \(extensionInfo.identifier)
+            Extension Version: \(extensionInfo.version)
+            Extension Path: \(extensionInfo.bundlePath)
+            """
+        } else {
+            extensionDescription = "Extension: No bundled extension loaded"
+        }
+
+        let recentActivity = activity
+            .prefix(8)
+            .map { "\($0.title): \($0.detail)" }
+            .joined(separator: "\n")
+
+        return """
+        Gareth Video Cam Diagnostics
+        State: \(state.title)
+        App Location: \(applicationLocationStatus)
+        App Path: \(applicationBundlePath)
+        \(extensionDescription)
+
+        Recent Activity:
+        \(recentActivity.isEmpty ? "No activity yet" : recentActivity)
+        """
+    }
+
     func install() {
         guard prepareForSystemExtensionRequest() else { return }
 
@@ -333,6 +363,23 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
         } catch {
             handleFailure(error)
         }
+    }
+
+    func copyDiagnostics() {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(diagnosticSummary, forType: .string)
+
+        appendActivity(level: .success,
+                       title: "Diagnostics Copied",
+                       detail: "Copied current app and extension status to the clipboard.")
+    }
+
+    func revealApplicationInFinder() {
+        NSWorkspace.shared.activateFileViewerSelecting([Bundle.main.bundleURL])
+        appendActivity(level: .info,
+                       title: "App Revealed",
+                       detail: applicationBundlePath)
     }
 
     private func loadBundledExtensionInfo() throws -> ExtensionInfo {
@@ -657,6 +704,19 @@ private struct DetailsPanel: View {
                 if let bundlePath = manager.extensionInfo?.bundlePath {
                     DetailRow(title: "Bundle Path", value: bundlePath, monospaced: true)
                 }
+
+                HStack(spacing: 10) {
+                    Button(action: manager.copyDiagnostics) {
+                        Label("Copy Diagnostics", systemImage: "doc.on.doc")
+                    }
+                    .buttonStyle(.bordered)
+
+                    Button(action: manager.revealApplicationInFinder) {
+                        Label("Reveal App", systemImage: "folder")
+                    }
+                    .buttonStyle(.bordered)
+                }
+                .padding(.top, 4)
             }
         }
     }
