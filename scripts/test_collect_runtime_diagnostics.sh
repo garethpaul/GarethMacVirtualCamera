@@ -20,6 +20,7 @@ ready_output="$(GARETH_DIAGNOSTICS_SELF_TEST=readiness-rollup-ready "$ROOT/scrip
 bundle_version_output="$(GARETH_DIAGNOSTICS_SELF_TEST=bundle-version-match "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 mach_service_output="$(GARETH_DIAGNOSTICS_SELF_TEST=mach-service "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 application_group_output="$(GARETH_DIAGNOSTICS_SELF_TEST=application-group "$ROOT/scripts/collect_runtime_diagnostics.sh")"
+camera_device_output="$(GARETH_DIAGNOSTICS_SELF_TEST=camera-device "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 
 require_output "$blocked_output" "Ready fixture: yes"
 require_output "$blocked_output" "Blocked fixture: no"
@@ -63,5 +64,9 @@ require_output "$application_group_output" "Application group missing fixture re
 require_output "$application_group_output" "Application group mismatched fixture ready: no"
 require_output "$application_group_output" "Application group wrong suffix fixture ready: no"
 require_output "$application_group_output" "Application group unresolved fixture ready: no"
+
+require_output "$camera_device_output" "Camera device present fixture: yes"
+require_output "$camera_device_output" "Camera device missing fixture: no"
+require_output "$camera_device_output" "Camera device empty fixture: unknown"
 
 printf 'Runtime diagnostics tests passed.\n'

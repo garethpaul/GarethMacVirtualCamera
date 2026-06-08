@@ -12,6 +12,7 @@ LOG_SUBSYSTEM="com.garethpaul.GarethVideoCam"
 HOST_SYSTEM_EXTENSION_ENTITLEMENT="com.apple.developer.system-extension.install"
 APP_GROUP_ENTITLEMENT="com.apple.security.application-groups"
 APP_GROUP_BASE_ID="com.garethpaul.GarethVideoCam"
+EXPECTED_CAMERA_NAME="Gareth Video Cam"
 EXTENSION_INFO_PLIST="${EXTENSION_PATH}/Contents/Info.plist"
 
 section() {
@@ -320,6 +321,19 @@ application_groups_ready_value() {
   fi
 }
 
+camera_device_present_value() {
+  local camera_inventory="$1"
+  local expected_camera_name="$2"
+
+  if [ -z "$camera_inventory" ]; then
+    printf 'unknown\n'
+  elif printf '%s\n' "$camera_inventory" | /usr/bin/grep -F "$expected_camera_name" >/dev/null; then
+    printf 'yes\n'
+  else
+    printf 'no\n'
+  fi
+}
+
 file_byte_count() {
   local file_path="$1"
 
@@ -459,6 +473,18 @@ run_application_group_self_test() {
   printf 'Application group unresolved fixture ready: %s\n' "$(application_groups_ready_value '$(TeamIdentifierPrefix)com.garethpaul.GarethVideoCam' '$(TeamIdentifierPrefix)com.garethpaul.GarethVideoCam')"
 }
 
+run_camera_device_self_test() {
+  local present_inventory
+  local missing_inventory
+
+  present_inventory=$'Camera:\n\n    Gareth Video Cam:\n\n      Model ID: Virtual Camera\n'
+  missing_inventory=$'Camera:\n\n    FaceTime HD Camera:\n\n      Model ID: Built-In Camera\n'
+
+  printf 'Camera device present fixture: %s\n' "$(camera_device_present_value "$present_inventory" "$EXPECTED_CAMERA_NAME")"
+  printf 'Camera device missing fixture: %s\n' "$(camera_device_present_value "$missing_inventory" "$EXPECTED_CAMERA_NAME")"
+  printf 'Camera device empty fixture: %s\n' "$(camera_device_present_value "" "$EXPECTED_CAMERA_NAME")"
+}
+
 case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
   readiness-rollup|readiness-rollup-blocked)
     run_readiness_rollup_blocked_self_test
@@ -482,6 +508,10 @@ case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
     ;;
   application-group)
     run_application_group_self_test
+    exit 0
+    ;;
+  camera-device)
+    run_camera_device_self_test
     exit 0
     ;;
 esac
@@ -923,7 +953,20 @@ else
 fi
 
 section "Camera Devices"
-run_if_available system_profiler SPCameraDataType
+printf 'Expected virtual camera device: %s\n' "$EXPECTED_CAMERA_NAME"
+if command -v system_profiler >/dev/null 2>&1; then
+  camera_inventory="$(system_profiler SPCameraDataType 2>&1 || true)"
+  print_yes_no_unknown "Expected virtual camera device present" "$(camera_device_present_value "$camera_inventory" "$EXPECTED_CAMERA_NAME")"
+  printf 'Full system_profiler SPCameraDataType output:\n'
+  if [ -n "$camera_inventory" ]; then
+    printf '%s\n' "$camera_inventory"
+  else
+    printf 'system_profiler SPCameraDataType produced no output.\n'
+  fi
+else
+  printf 'system_profiler is not available on this host.\n'
+  print_yes_no_unknown "Expected virtual camera device present" "unknown"
+fi
 
 section "Running App and Extension Processes"
 if [ -x /bin/ps ]; then
