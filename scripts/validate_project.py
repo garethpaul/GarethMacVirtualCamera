@@ -267,6 +267,8 @@ def main():
     build_unsigned_source = build_unsigned_path.read_text()
     verify_build_products_path = ROOT / "scripts/verify_build_products.sh"
     verify_build_products_source = verify_build_products_path.read_text()
+    verify_build_products_test_path = ROOT / "scripts/test_verify_build_products.sh"
+    verify_build_products_test_source = verify_build_products_test_path.read_text()
     build_log_scanner_source = (ROOT / "scripts/scan_build_log.py").read_text()
     build_log_scanner_test_source = (ROOT / "scripts/test_scan_build_log.py").read_text()
     runtime_diagnostics_source = (ROOT / "scripts/collect_runtime_diagnostics.sh").read_text()
@@ -560,7 +562,7 @@ def main():
     require("didOpenSettings" in host_source and "System Settings Unavailable" in host_source,
             "host app should report System Settings launch failures",
             failures)
-    require("./scripts/check_project.sh" in readme_text and "project metadata validation, build-log scanner tests, shell syntax checks, and whitespace checks" in readme_text,
+    require("./scripts/check_project.sh" in readme_text and "project metadata validation, build-log scanner tests, build-product verifier tests, shell syntax checks, and whitespace checks" in readme_text,
             "README should document the local pre-push project check",
             failures)
     require("CI-equivalent unsigned compile" in readme_text and "./scripts/build_unsigned.sh" in readme_text and "./scripts/scan_build_log.py build-Debug.log build-Release.log" in readme_text and ".build/Xcode" in readme_text and "BUILD_OUTPUT_PATH" in readme_text,
@@ -599,13 +601,19 @@ def main():
     require(build_unsigned_path.stat().st_mode & 0o111,
             "unsigned build script should be executable",
             failures)
-    require("GarethVideoCam.app" in verify_build_products_source and "com.garethpaul.GarethVideoCam.Extension.systemextension" in verify_build_products_source and "Contents/Library/SystemExtensions" in verify_build_products_source and "Contents/Resources/video.mp4" in verify_build_products_source and "read_bundle_identifier" in verify_build_products_source and "Contents/Info.plist" in verify_build_products_source and "PlistBuddy" in verify_build_products_source and "Debug Release" in verify_build_products_source,
+    require("GarethVideoCam.app" in verify_build_products_source and "com.garethpaul.GarethVideoCam.Extension.systemextension" in verify_build_products_source and "Contents/Library/SystemExtensions" in verify_build_products_source and "Contents/Resources/video.mp4" in verify_build_products_source and "read_bundle_identifier" in verify_build_products_source and "Contents/Info.plist" in verify_build_products_source and "plistlib" in verify_build_products_source and "PlistBuddy" not in verify_build_products_source and "Debug Release" in verify_build_products_source,
             "build-product verifier should check app, embedded extension, bundle identifiers, and bundled video",
             failures)
     require(verify_build_products_path.stat().st_mode & 0o111,
             "build-product verifier script should be executable",
             failures)
-    require("./scripts/validate_project.py" in check_project_source and "./scripts/test_scan_build_log.py" in check_project_source and "bash -n ./scripts/collect_runtime_diagnostics.sh" in check_project_source and "bash -n ./scripts/build_unsigned.sh" in check_project_source and "bash -n ./scripts/verify_build_products.sh" in check_project_source and "git diff --check" in check_project_source and "git diff-tree --check --root --no-commit-id -r HEAD" in check_project_source,
+    require("write_product_fixture" in verify_build_products_test_source and "com.example.WrongExtension" in verify_build_products_test_source and "Unexpected Debug extension bundle identifier" in verify_build_products_test_source and "Build-product verifier tests passed." in verify_build_products_test_source,
+            "build-product verifier should have fixture coverage for passing products and bundle identifier failures",
+            failures)
+    require(verify_build_products_test_path.stat().st_mode & 0o111,
+            "build-product verifier test script should be executable",
+            failures)
+    require("./scripts/validate_project.py" in check_project_source and "./scripts/test_scan_build_log.py" in check_project_source and "./scripts/test_verify_build_products.sh" in check_project_source and "bash -n ./scripts/collect_runtime_diagnostics.sh" in check_project_source and "bash -n ./scripts/build_unsigned.sh" in check_project_source and "bash -n ./scripts/verify_build_products.sh" in check_project_source and "bash -n ./scripts/test_verify_build_products.sh" in check_project_source and "git diff --check" in check_project_source and "git diff-tree --check --root --no-commit-id -r HEAD" in check_project_source,
             "project check script should run validation, scanner tests, shell syntax checks, and whitespace checks",
             failures)
     require(check_project_path.stat().st_mode & 0o111,
@@ -647,7 +655,10 @@ def main():
         require("./scripts/test_scan_build_log.py" in workflow_text,
                 "macOS build workflow should test the build-log scanner",
                 failures)
-        require("bash -n ./scripts/collect_runtime_diagnostics.sh" in workflow_text and "bash -n ./scripts/build_unsigned.sh" in workflow_text and "bash -n ./scripts/verify_build_products.sh" in workflow_text,
+        require("./scripts/test_verify_build_products.sh" in workflow_text and "Test build product verifier" in workflow_text,
+                "macOS build workflow should test the build-product verifier",
+                failures)
+        require("bash -n ./scripts/collect_runtime_diagnostics.sh" in workflow_text and "bash -n ./scripts/build_unsigned.sh" in workflow_text and "bash -n ./scripts/verify_build_products.sh" in workflow_text and "bash -n ./scripts/test_verify_build_products.sh" in workflow_text,
                 "macOS build workflow should syntax-check the runtime diagnostics, unsigned build, and build-product verifier scripts",
                 failures)
         require("git diff-tree --check --root --no-commit-id -r HEAD" in workflow_text,

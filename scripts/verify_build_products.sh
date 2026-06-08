@@ -22,7 +22,16 @@ read_bundle_identifier() {
     return
   fi
 
-  /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$info_plist" 2>/dev/null || true
+  python3 - "$info_plist" 2>/dev/null <<'PY' || true
+import plistlib
+import sys
+
+with open(sys.argv[1], "rb") as info_file:
+    bundle_identifier = plistlib.load(info_file).get("CFBundleIdentifier", "")
+
+if bundle_identifier:
+    print(bundle_identifier)
+PY
 }
 
 for configuration in "${configurations[@]}"; do
