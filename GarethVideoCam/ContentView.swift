@@ -1603,11 +1603,11 @@ private struct ActivityPanel: View {
                         .foregroundStyle(.secondary)
                 } else {
                     VStack(spacing: 0) {
-                        ForEach(items) { item in
+                        ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                             ActivityRow(item: item)
                                 .padding(.vertical, 10)
 
-                            if item.id != items.last?.id {
+                            if index < items.count - 1 {
                                 Divider()
                             }
                         }
