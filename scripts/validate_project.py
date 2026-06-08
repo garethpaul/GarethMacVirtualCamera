@@ -826,8 +826,8 @@ def main():
             failures)
 
     scheme_text = scheme_path.read_text()
-    require("/usr/bin/ditto" in scheme_text and "/Applications/${FULL_PRODUCT_NAME}" in scheme_text and "/bin/rm -rf" in scheme_text and "/Applications/*.app" in scheme_text and "<PreActions>" in scheme_text and 'FilePath = "/Applications/GarethVideoCam.app"' in scheme_text,
-            "shared scheme should replace the app in /Applications with a guarded launch pre-action before system-extension testing",
+    require("/usr/bin/ditto" in scheme_text and "/Applications/${FULL_PRODUCT_NAME}" in scheme_text and "/bin/rm -rf" in scheme_text and "/Applications/*.app" in scheme_text and "Built app bundle is missing" in scheme_text and "${CODESIGNING_FOLDER_PATH:-}" in scheme_text and "<PreActions>" in scheme_text and 'FilePath = "/Applications/GarethVideoCam.app"' in scheme_text,
+            "shared scheme should replace the app in /Applications with source and destination guards before system-extension testing",
             failures)
 
     workflow_path = ROOT / ".github/workflows/macos-build.yml"
