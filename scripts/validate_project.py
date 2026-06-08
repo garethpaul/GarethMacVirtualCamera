@@ -265,6 +265,8 @@ def main():
     check_project_source = check_project_path.read_text()
     build_unsigned_path = ROOT / "scripts/build_unsigned.sh"
     build_unsigned_source = build_unsigned_path.read_text()
+    verify_build_products_path = ROOT / "scripts/verify_build_products.sh"
+    verify_build_products_source = verify_build_products_path.read_text()
     build_log_scanner_source = (ROOT / "scripts/scan_build_log.py").read_text()
     build_log_scanner_test_source = (ROOT / "scripts/test_scan_build_log.py").read_text()
     runtime_diagnostics_source = (ROOT / "scripts/collect_runtime_diagnostics.sh").read_text()
@@ -558,6 +560,9 @@ def main():
     require("CI-equivalent unsigned compile" in readme_text and "./scripts/build_unsigned.sh" in readme_text and "./scripts/scan_build_log.py build-Debug.log build-Release.log" in readme_text and ".build/Xcode" in readme_text and "BUILD_OUTPUT_PATH" in readme_text,
             "README should document the CI-equivalent unsigned Debug and Release target builds with log scanning",
             failures)
+    require("verifies the built app products contain the embedded system extension and bundled video" in readme_text,
+            "README should document CI build-product verification",
+            failures)
     require("parseable dimensions, frame rate, and positive video duration" in readme_text,
             "README should document bundled-video metadata validation",
             failures)
@@ -588,7 +593,13 @@ def main():
     require(build_unsigned_path.stat().st_mode & 0o111,
             "unsigned build script should be executable",
             failures)
-    require("./scripts/validate_project.py" in check_project_source and "./scripts/test_scan_build_log.py" in check_project_source and "bash -n ./scripts/collect_runtime_diagnostics.sh" in check_project_source and "bash -n ./scripts/build_unsigned.sh" in check_project_source and "git diff --check" in check_project_source and "git diff-tree --check --root --no-commit-id -r HEAD" in check_project_source,
+    require("GarethVideoCam.app" in verify_build_products_source and "com.garethpaul.GarethVideoCam.Extension.systemextension" in verify_build_products_source and "Contents/Library/SystemExtensions" in verify_build_products_source and "Contents/Resources/video.mp4" in verify_build_products_source and "read_bundle_identifier" in verify_build_products_source and "Debug Release" in verify_build_products_source,
+            "build-product verifier should check app, embedded extension, bundle identifiers, and bundled video",
+            failures)
+    require(verify_build_products_path.stat().st_mode & 0o111,
+            "build-product verifier script should be executable",
+            failures)
+    require("./scripts/validate_project.py" in check_project_source and "./scripts/test_scan_build_log.py" in check_project_source and "bash -n ./scripts/collect_runtime_diagnostics.sh" in check_project_source and "bash -n ./scripts/build_unsigned.sh" in check_project_source and "bash -n ./scripts/verify_build_products.sh" in check_project_source and "git diff --check" in check_project_source and "git diff-tree --check --root --no-commit-id -r HEAD" in check_project_source,
             "project check script should run validation, scanner tests, shell syntax checks, and whitespace checks",
             failures)
     require(check_project_path.stat().st_mode & 0o111,
@@ -630,14 +641,17 @@ def main():
         require("./scripts/test_scan_build_log.py" in workflow_text,
                 "macOS build workflow should test the build-log scanner",
                 failures)
-        require("bash -n ./scripts/collect_runtime_diagnostics.sh" in workflow_text and "bash -n ./scripts/build_unsigned.sh" in workflow_text,
-                "macOS build workflow should syntax-check the runtime diagnostics and unsigned build scripts",
+        require("bash -n ./scripts/collect_runtime_diagnostics.sh" in workflow_text and "bash -n ./scripts/build_unsigned.sh" in workflow_text and "bash -n ./scripts/verify_build_products.sh" in workflow_text,
+                "macOS build workflow should syntax-check the runtime diagnostics, unsigned build, and build-product verifier scripts",
                 failures)
         require("git diff-tree --check --root --no-commit-id -r HEAD" in workflow_text,
                 "macOS build workflow should check committed whitespace",
                 failures)
         require("./scripts/build_unsigned.sh" in workflow_text,
                 "macOS build workflow should perform the shared unsigned xcodebuild script",
+                failures)
+        require("./scripts/verify_build_products.sh" in workflow_text and "Verify build products" in workflow_text,
+                "macOS build workflow should verify unsigned app products after building",
                 failures)
         require("-target \"$TARGET_NAME\"" in build_unsigned_source,
                 "unsigned build script should build the app target without running scheme post-actions",

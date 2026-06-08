@@ -50,6 +50,7 @@ jobs:
         run: |
           bash -n ./scripts/collect_runtime_diagnostics.sh
           bash -n ./scripts/build_unsigned.sh
+          bash -n ./scripts/verify_build_products.sh
 
       - name: Validate project metadata
         run: ./scripts/validate_project.py
@@ -59,6 +60,9 @@ jobs:
 
       - name: Build GarethVideoCam
         run: ./scripts/build_unsigned.sh
+
+      - name: Verify build products
+        run: ./scripts/verify_build_products.sh
 
       - name: Scan build log for source warnings
         run: ./scripts/scan_build_log.py build-Debug.log build-Release.log

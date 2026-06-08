@@ -5,5 +5,6 @@ set -euo pipefail
 ./scripts/test_scan_build_log.py
 bash -n ./scripts/collect_runtime_diagnostics.sh
 bash -n ./scripts/build_unsigned.sh
+bash -n ./scripts/verify_build_products.sh
 git diff --check
 git diff-tree --check --root --no-commit-id -r HEAD
