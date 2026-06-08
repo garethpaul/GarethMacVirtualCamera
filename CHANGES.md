@@ -40,3 +40,4 @@
 - Matched expected virtual camera device evidence against exact normalized camera names.
 - Matched system-extension registration evidence against the exact extension identifier field.
 - Matched system-extension registration status evidence against exact activated/enabled tokens.
+- Refreshed prerelease Apple toolchain watch items with current beta names and build numbers.
