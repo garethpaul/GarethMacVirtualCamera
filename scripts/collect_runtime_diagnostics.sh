@@ -375,9 +375,23 @@ fi
 
 section "System Extension Registration"
 if [ -x /usr/bin/systemextensionsctl ]; then
-  /usr/bin/systemextensionsctl list | /usr/bin/grep -E "${EXTENSION_ID}|enabled|activated|waiting|terminated|replaced" || true
+  registration_output="$(/usr/bin/systemextensionsctl list 2>&1 || true)"
+
+  if printf '%s\n' "$registration_output" | /usr/bin/grep -F "$EXTENSION_ID" >/dev/null; then
+    print_yes_no_unknown "Extension registration entry present" "yes"
+  else
+    print_yes_no_unknown "Extension registration entry present" "no"
+  fi
+
+  printf 'Full systemextensionsctl list output:\n'
+  if [ -n "$registration_output" ]; then
+    printf '%s\n' "$registration_output"
+  else
+    printf 'systemextensionsctl list produced no output.\n'
+  fi
 else
   printf 'systemextensionsctl is not available on this host.\n'
+  print_yes_no_unknown "Extension registration entry present" "unknown"
 fi
 
 section "Camera Devices"
