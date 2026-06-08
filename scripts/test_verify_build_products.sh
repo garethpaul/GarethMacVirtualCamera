@@ -58,4 +58,19 @@ if ! grep -q "Unexpected Debug extension bundle identifier" "$TMP_DIR/bad.err"; 
   exit 1
 fi
 
+MISSING_VIDEO_PRODUCTS="$TMP_DIR/missing-video/Products"
+write_product_fixture "$MISSING_VIDEO_PRODUCTS" Debug
+rm "$MISSING_VIDEO_PRODUCTS/Debug/GarethVideoCam.app/Contents/Library/SystemExtensions/$EXTENSION_NAME/Contents/Resources/video.mp4"
+
+if PRODUCTS_PATH="$MISSING_VIDEO_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/missing-video.out" 2>"$TMP_DIR/missing-video.err"; then
+  printf 'Expected verifier to reject a missing bundled video resource.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing or empty Debug bundled video resource" "$TMP_DIR/missing-video.err"; then
+  printf 'Verifier failure did not explain the missing bundled video resource.\n' >&2
+  cat "$TMP_DIR/missing-video.err" >&2
+  exit 1
+fi
+
 printf 'Build-product verifier tests passed.\n'
