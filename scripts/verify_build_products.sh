@@ -164,22 +164,43 @@ verify_info_plist_value() {
   fi
 }
 
+verify_app_diagnostics_self_test() {
+  local configuration="$1"
+  local app_path="$2"
+  local script_path="$3"
+  local self_test="$4"
+  local failure_label="$5"
+  local self_test_output
+  local expected_output
+
+  shift 5
+
+  if [ "$self_test" = "video-parser" ]; then
+    if ! self_test_output="$(GARETH_DIAGNOSTICS_SELF_TEST="$self_test" GARETH_DIAGNOSTICS_VIDEO_FIXTURE="$ROOT/Extension/video.mp4" /bin/bash "$script_path" "$app_path" 1m 2>&1)"; then
+      printf 'Failed %s app bundled runtime diagnostics %s self-test.\n' "$configuration" "$failure_label" >&2
+      printf '%s\n' "$self_test_output" >&2
+      exit 1
+    fi
+  elif ! self_test_output="$(GARETH_DIAGNOSTICS_SELF_TEST="$self_test" /bin/bash "$script_path" "$app_path" 1m 2>&1)"; then
+    printf 'Failed %s app bundled runtime diagnostics %s self-test.\n' "$configuration" "$failure_label" >&2
+    printf '%s\n' "$self_test_output" >&2
+    exit 1
+  fi
+
+  for expected_output in "$@"; do
+    if ! printf '%s\n' "$self_test_output" | /usr/bin/grep -F "$expected_output" >/dev/null; then
+      printf 'Unexpected %s app bundled runtime diagnostics %s self-test output.\n' "$configuration" "$failure_label" >&2
+      printf '%s\n' "$self_test_output" >&2
+      exit 1
+    fi
+  done
+}
+
 verify_app_diagnostics_resources() {
   local configuration="$1"
   local app_path="$2"
   local script_path="$app_path/Contents/Resources/collect_runtime_diagnostics.sh"
   local parser_path="$app_path/Contents/Resources/validate_project.py"
-  local resource_self_test_output
-  local executable_self_test_output
-  local team_identifier_self_test_output
-  local application_identity_self_test_output
-  local video_metadata_self_test_output
-  local application_group_self_test_output
-  local mach_service_self_test_output
-  local camera_device_self_test_output
-  local registration_self_test_output
-  local activation_evidence_self_test_output
-  local parser_self_test_output
 
   if [ ! -f "$script_path" ]; then
     printf 'Missing %s app runtime diagnostics script: %s\n' "$configuration" "$script_path" >&2
@@ -201,155 +222,56 @@ verify_app_diagnostics_resources() {
     exit 1
   fi
 
-  if ! resource_self_test_output="$(GARETH_DIAGNOSTICS_SELF_TEST=resource-discovery /bin/bash "$script_path" "$app_path" 1m 2>&1)"; then
-    printf 'Failed %s app bundled runtime diagnostics resource self-test.\n' "$configuration" >&2
-    printf '%s\n' "$resource_self_test_output" >&2
-    exit 1
-  fi
+  verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "resource-discovery" "resource" \
+    "Diagnostics parser source: adjacent script resource" \
+    "Diagnostics parser available: yes"
 
-  if ! printf '%s\n' "$resource_self_test_output" | /usr/bin/grep -F "Diagnostics parser source: adjacent script resource" >/dev/null \
-    || ! printf '%s\n' "$resource_self_test_output" | /usr/bin/grep -F "Diagnostics parser available: yes" >/dev/null; then
-    printf 'Unexpected %s app bundled runtime diagnostics resource self-test output.\n' "$configuration" >&2
-    printf '%s\n' "$resource_self_test_output" >&2
-    exit 1
-  fi
+  verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "executable-readiness" "executable-readiness" \
+    "Executable ready fixture: yes" \
+    "Executable non-executable fixture: no"
 
-  if ! executable_self_test_output="$(GARETH_DIAGNOSTICS_SELF_TEST=executable-readiness /bin/bash "$script_path" "$app_path" 1m 2>&1)"; then
-    printf 'Failed %s app bundled runtime diagnostics executable-readiness self-test.\n' "$configuration" >&2
-    printf '%s\n' "$executable_self_test_output" >&2
-    exit 1
-  fi
+  verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "team-id" "Team ID" \
+    "Team ID match fixture: yes" \
+    "Team ID mismatch fixture: no"
 
-  if ! printf '%s\n' "$executable_self_test_output" | /usr/bin/grep -F "Executable ready fixture: yes" >/dev/null \
-    || ! printf '%s\n' "$executable_self_test_output" | /usr/bin/grep -F "Executable non-executable fixture: no" >/dev/null; then
-    printf 'Unexpected %s app bundled runtime diagnostics executable-readiness self-test output.\n' "$configuration" >&2
-    printf '%s\n' "$executable_self_test_output" >&2
-    exit 1
-  fi
+  verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "application-identity" "application-identity" \
+    "App path match fixture: yes" \
+    "Bundle identifier missing fixture: no"
 
-  if ! team_identifier_self_test_output="$(GARETH_DIAGNOSTICS_SELF_TEST=team-id /bin/bash "$script_path" "$app_path" 1m 2>&1)"; then
-    printf 'Failed %s app bundled runtime diagnostics Team ID self-test.\n' "$configuration" >&2
-    printf '%s\n' "$team_identifier_self_test_output" >&2
-    exit 1
-  fi
+  verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "video-metadata" "video-metadata" \
+    "Video metadata spaced width fixture: 1280" \
+    "Video metadata quoted duration fixture: 12.5" \
+    "Video metadata negative duration fixture: no"
 
-  if ! printf '%s\n' "$team_identifier_self_test_output" | /usr/bin/grep -F "Team ID match fixture: yes" >/dev/null \
-    || ! printf '%s\n' "$team_identifier_self_test_output" | /usr/bin/grep -F "Team ID mismatch fixture: no" >/dev/null; then
-    printf 'Unexpected %s app bundled runtime diagnostics Team ID self-test output.\n' "$configuration" >&2
-    printf '%s\n' "$team_identifier_self_test_output" >&2
-    exit 1
-  fi
+  verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "application-group" "application-group" \
+    "Application group shared fixture ready: yes" \
+    "Application group dotted-prefix fixture ready: no" \
+    "Application group list format fixture: ABCDE12345.com.garethpaul.GarethVideoCam, ZYXWV98765.com.garethpaul.GarethVideoCam"
 
-  if ! application_identity_self_test_output="$(GARETH_DIAGNOSTICS_SELF_TEST=application-identity /bin/bash "$script_path" "$app_path" 1m 2>&1)"; then
-    printf 'Failed %s app bundled runtime diagnostics application-identity self-test.\n' "$configuration" >&2
-    printf '%s\n' "$application_identity_self_test_output" >&2
-    exit 1
-  fi
+  verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "mach-service" "mach-service" \
+    "Mach service direct fixture ready: yes" \
+    "Mach service dotted-prefix fixture ready: no" \
+    "Mach service unresolved fixture resolved: no"
 
-  if ! printf '%s\n' "$application_identity_self_test_output" | /usr/bin/grep -F "App path match fixture: yes" >/dev/null \
-    || ! printf '%s\n' "$application_identity_self_test_output" | /usr/bin/grep -F "Bundle identifier missing fixture: no" >/dev/null; then
-    printf 'Unexpected %s app bundled runtime diagnostics application-identity self-test output.\n' "$configuration" >&2
-    printf '%s\n' "$application_identity_self_test_output" >&2
-    exit 1
-  fi
+  verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "camera-device" "camera-device" \
+    "Camera device present fixture: yes" \
+    "Camera device missing fixture: no" \
+    "Camera device empty fixture: unknown"
 
-  if ! video_metadata_self_test_output="$(GARETH_DIAGNOSTICS_SELF_TEST=video-metadata /bin/bash "$script_path" "$app_path" 1m 2>&1)"; then
-    printf 'Failed %s app bundled runtime diagnostics video-metadata self-test.\n' "$configuration" >&2
-    printf '%s\n' "$video_metadata_self_test_output" >&2
-    exit 1
-  fi
+  verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "registration" "registration" \
+    "Registration active fixture present: yes" \
+    "Registration active fixture activated enabled: yes" \
+    "Registration waiting fixture activated enabled: no" \
+    "Registration empty fixture present: unknown"
 
-  if ! printf '%s\n' "$video_metadata_self_test_output" | /usr/bin/grep -F "Video metadata spaced width fixture: 1280" >/dev/null \
-    || ! printf '%s\n' "$video_metadata_self_test_output" | /usr/bin/grep -F "Video metadata quoted duration fixture: 12.5" >/dev/null \
-    || ! printf '%s\n' "$video_metadata_self_test_output" | /usr/bin/grep -F "Video metadata negative duration fixture: no" >/dev/null; then
-    printf 'Unexpected %s app bundled runtime diagnostics video-metadata self-test output.\n' "$configuration" >&2
-    printf '%s\n' "$video_metadata_self_test_output" >&2
-    exit 1
-  fi
+  verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "activation-evidence" "activation-evidence" \
+    "Runtime activation evidence result: active" \
+    "Runtime activation evidence result: blocked" \
+    "Runtime activation evidence result: incomplete" \
+    "Runtime activation evidence next action: inspect Extension registration activated enabled"
 
-  if ! application_group_self_test_output="$(GARETH_DIAGNOSTICS_SELF_TEST=application-group /bin/bash "$script_path" "$app_path" 1m 2>&1)"; then
-    printf 'Failed %s app bundled runtime diagnostics application-group self-test.\n' "$configuration" >&2
-    printf '%s\n' "$application_group_self_test_output" >&2
-    exit 1
-  fi
-
-  if ! printf '%s\n' "$application_group_self_test_output" | /usr/bin/grep -F "Application group shared fixture ready: yes" >/dev/null \
-    || ! printf '%s\n' "$application_group_self_test_output" | /usr/bin/grep -F "Application group dotted-prefix fixture ready: no" >/dev/null \
-    || ! printf '%s\n' "$application_group_self_test_output" | /usr/bin/grep -F "Application group list format fixture: ABCDE12345.com.garethpaul.GarethVideoCam, ZYXWV98765.com.garethpaul.GarethVideoCam" >/dev/null; then
-    printf 'Unexpected %s app bundled runtime diagnostics application-group self-test output.\n' "$configuration" >&2
-    printf '%s\n' "$application_group_self_test_output" >&2
-    exit 1
-  fi
-
-  if ! mach_service_self_test_output="$(GARETH_DIAGNOSTICS_SELF_TEST=mach-service /bin/bash "$script_path" "$app_path" 1m 2>&1)"; then
-    printf 'Failed %s app bundled runtime diagnostics mach-service self-test.\n' "$configuration" >&2
-    printf '%s\n' "$mach_service_self_test_output" >&2
-    exit 1
-  fi
-
-  if ! printf '%s\n' "$mach_service_self_test_output" | /usr/bin/grep -F "Mach service direct fixture ready: yes" >/dev/null \
-    || ! printf '%s\n' "$mach_service_self_test_output" | /usr/bin/grep -F "Mach service dotted-prefix fixture ready: no" >/dev/null \
-    || ! printf '%s\n' "$mach_service_self_test_output" | /usr/bin/grep -F "Mach service unresolved fixture resolved: no" >/dev/null; then
-    printf 'Unexpected %s app bundled runtime diagnostics mach-service self-test output.\n' "$configuration" >&2
-    printf '%s\n' "$mach_service_self_test_output" >&2
-    exit 1
-  fi
-
-  if ! camera_device_self_test_output="$(GARETH_DIAGNOSTICS_SELF_TEST=camera-device /bin/bash "$script_path" "$app_path" 1m 2>&1)"; then
-    printf 'Failed %s app bundled runtime diagnostics camera-device self-test.\n' "$configuration" >&2
-    printf '%s\n' "$camera_device_self_test_output" >&2
-    exit 1
-  fi
-
-  if ! printf '%s\n' "$camera_device_self_test_output" | /usr/bin/grep -F "Camera device present fixture: yes" >/dev/null \
-    || ! printf '%s\n' "$camera_device_self_test_output" | /usr/bin/grep -F "Camera device missing fixture: no" >/dev/null \
-    || ! printf '%s\n' "$camera_device_self_test_output" | /usr/bin/grep -F "Camera device empty fixture: unknown" >/dev/null; then
-    printf 'Unexpected %s app bundled runtime diagnostics camera-device self-test output.\n' "$configuration" >&2
-    printf '%s\n' "$camera_device_self_test_output" >&2
-    exit 1
-  fi
-
-  if ! registration_self_test_output="$(GARETH_DIAGNOSTICS_SELF_TEST=registration /bin/bash "$script_path" "$app_path" 1m 2>&1)"; then
-    printf 'Failed %s app bundled runtime diagnostics registration self-test.\n' "$configuration" >&2
-    printf '%s\n' "$registration_self_test_output" >&2
-    exit 1
-  fi
-
-  if ! printf '%s\n' "$registration_self_test_output" | /usr/bin/grep -F "Registration active fixture present: yes" >/dev/null \
-    || ! printf '%s\n' "$registration_self_test_output" | /usr/bin/grep -F "Registration active fixture activated enabled: yes" >/dev/null \
-    || ! printf '%s\n' "$registration_self_test_output" | /usr/bin/grep -F "Registration waiting fixture activated enabled: no" >/dev/null \
-    || ! printf '%s\n' "$registration_self_test_output" | /usr/bin/grep -F "Registration empty fixture present: unknown" >/dev/null; then
-    printf 'Unexpected %s app bundled runtime diagnostics registration self-test output.\n' "$configuration" >&2
-    printf '%s\n' "$registration_self_test_output" >&2
-    exit 1
-  fi
-
-  if ! activation_evidence_self_test_output="$(GARETH_DIAGNOSTICS_SELF_TEST=activation-evidence /bin/bash "$script_path" "$app_path" 1m 2>&1)"; then
-    printf 'Failed %s app bundled runtime diagnostics activation-evidence self-test.\n' "$configuration" >&2
-    printf '%s\n' "$activation_evidence_self_test_output" >&2
-    exit 1
-  fi
-
-  if ! printf '%s\n' "$activation_evidence_self_test_output" | /usr/bin/grep -F "Runtime activation evidence result: active" >/dev/null \
-    || ! printf '%s\n' "$activation_evidence_self_test_output" | /usr/bin/grep -F "Runtime activation evidence result: blocked" >/dev/null \
-    || ! printf '%s\n' "$activation_evidence_self_test_output" | /usr/bin/grep -F "Runtime activation evidence result: incomplete" >/dev/null \
-    || ! printf '%s\n' "$activation_evidence_self_test_output" | /usr/bin/grep -F "Runtime activation evidence next action: inspect Extension registration activated enabled" >/dev/null; then
-    printf 'Unexpected %s app bundled runtime diagnostics activation-evidence self-test output.\n' "$configuration" >&2
-    printf '%s\n' "$activation_evidence_self_test_output" >&2
-    exit 1
-  fi
-
-  if ! parser_self_test_output="$(GARETH_DIAGNOSTICS_SELF_TEST=video-parser GARETH_DIAGNOSTICS_VIDEO_FIXTURE="$ROOT/Extension/video.mp4" /bin/bash "$script_path" "$app_path" 1m 2>&1)"; then
-    printf 'Failed %s app bundled runtime diagnostics parser self-test.\n' "$configuration" >&2
-    printf '%s\n' "$parser_self_test_output" >&2
-    exit 1
-  fi
-
-  if ! printf '%s\n' "$parser_self_test_output" | /usr/bin/grep -F "Video parser metadata ready fixture: yes" >/dev/null; then
-    printf 'Unexpected %s app bundled runtime diagnostics parser self-test output.\n' "$configuration" >&2
-    printf '%s\n' "$parser_self_test_output" >&2
-    exit 1
-  fi
+  verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "video-parser" "parser" \
+    "Video parser metadata ready fixture: yes"
 }
 
 verify_extension_cmio_metadata() {
