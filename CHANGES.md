@@ -8,3 +8,6 @@
 - Routed CI pre-build validation through `make check` so local and CI baselines stay aligned.
 - Added unsigned build script fixture tests for the `xcodebuild` invocation contract.
 - Strengthened build-product verification for missing app/extension products, declared executables, bundled diagnostics self-tests, and product-specific privacy usage strings.
+- Added the expected runtime evidence copy action to the Build details actions so it matches the Runtime Evidence panel and Camera menu.
+- Covered missing extension usage strings, wrong app camera usage strings, and unsigned build failure propagation in fixture tests.
+- Covered bundled-video metadata fallback behavior in runtime diagnostics self-tests.
