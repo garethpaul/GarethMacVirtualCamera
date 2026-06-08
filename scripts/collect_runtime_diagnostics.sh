@@ -879,11 +879,14 @@ run_video_metadata_self_test() {
   printf 'Video metadata null fallback fixture: %s\n' "$(preferred_metadata_value "null" "640")"
   printf 'Video metadata parenthesized null fallback fixture: %s\n' "$(preferred_metadata_value "(null)" "640")"
   printf 'Video metadata ready fixture: %s\n' "$(video_metadata_readiness_value "1280" "720" "24" "12.5")"
+  printf 'Video metadata decimal fixture: %s\n' "$(video_metadata_readiness_value "1280.0" "720.0" "24.0" "12.5")"
+  printf 'Video metadata non-numeric width fixture: %s\n' "$(video_metadata_readiness_value "wide" "720" "24" "12.5")"
   printf 'Video metadata wrong width fixture: %s\n' "$(video_metadata_readiness_value "640" "720" "24" "12.5")"
   printf 'Video metadata wrong frame rate fixture: %s\n' "$(video_metadata_readiness_value "1280" "720" "30" "12.5")"
   printf 'Video metadata missing frame rate fixture: %s\n' "$(video_metadata_readiness_value "1280" "720" "" "12.5")"
   printf 'Video metadata missing duration fixture: %s\n' "$(video_metadata_readiness_value "1280" "720" "24" "")"
   printf 'Video metadata zero duration fixture: %s\n' "$(video_metadata_readiness_value "1280" "720" "24" "0")"
+  printf 'Video metadata negative duration fixture: %s\n' "$(video_metadata_readiness_value "1280" "720" "24" "-1")"
 }
 
 run_video_parser_self_test() {

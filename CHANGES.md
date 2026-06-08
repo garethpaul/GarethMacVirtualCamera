@@ -16,3 +16,4 @@
 - Added activity feedback for automatic foreground refreshes when visible readiness state changes after returning to the app.
 - Covered non-executable host app binaries and missing extension executable declarations in build-product verifier fixtures.
 - Covered empty and multi-value application-group formatting in runtime diagnostics self-tests.
+- Covered decimal, non-numeric, and negative-duration bundled-video metadata readiness cases in runtime diagnostics self-tests.
