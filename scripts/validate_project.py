@@ -425,6 +425,16 @@ def main():
     require("Swift 6 language mode" in readme_text and project_text.count("SWIFT_VERSION = 6.0;") == 4 and "SWIFT_VERSION = 5.0;" not in project_text,
             "app and extension targets should use Swift 6 language mode",
             failures)
+    required_readme_target_fragments = (
+        "Stable CI toolchain: Xcode 26.5 with the macOS 26.5 SDK",
+        "Stable macOS compatibility reference: macOS Tahoe 26.5.1",
+        "Deployment target: macOS 14.0 or later",
+        "Pre-release watch items as of June 8, 2026: Xcode 26.6 RC, macOS 26.6 beta, and Xcode 27 / macOS 27 beta",
+        "keep CI on stable Xcode 26.5 until those prerelease toolchains are stable and available on GitHub-hosted runners",
+    )
+    require("## Current Target" in readme_text and all(fragment in readme_text for fragment in required_readme_target_fragments),
+            "README should distinguish stable CI target versions from prerelease Apple toolchain watch items",
+            failures)
     require(project_text.count("ENABLE_HARDENED_RUNTIME = YES;") >= 4,
             "all app and extension configurations should enable hardened runtime",
             failures)
