@@ -123,6 +123,9 @@ def main():
     require(".disabled(manager.isBusy || !manager.canSubmitSystemExtensionRequests)" in host_source,
             "host app should disable install controls when system-extension requests cannot be submitted",
             failures)
+    require("case .locatingExtension, .activating, .needsApproval, .deactivating, .requiresRestart:" in host_source,
+            "host app should keep controls disabled while approval or restart is pending",
+            failures)
     require(f'expectedExtensionBundleIdentifier = "{EXTENSION_BUNDLE_ID}"' in host_source and "unexpectedBundleIdentifier" in host_source,
             "host app should verify the bundled system extension identifier before submitting requests",
             failures)

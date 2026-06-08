@@ -199,7 +199,7 @@ class SystemExtensionRequestManager: NSObject, ObservableObject {
 
     var isBusy: Bool {
         switch state {
-        case .locatingExtension, .activating, .deactivating:
+        case .locatingExtension, .activating, .needsApproval, .deactivating, .requiresRestart:
             return true
         default:
             return false
