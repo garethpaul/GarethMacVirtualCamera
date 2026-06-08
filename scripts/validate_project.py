@@ -417,6 +417,9 @@ def main():
     require("case .completed:" in host_source and "case .willCompleteAfterReboot:" in host_source and "@unknown default:" in host_source and "switch result.rawValue" not in host_source,
             "host app should handle system-extension request results with typed enum cases",
             failures)
+    require("case .willCompleteAfterReboot:\n            pendingRequestKind = requestKind" in host_source,
+            "host app should preserve the deferred request direction when macOS requires restart",
+            failures)
     require(f'expectedExtensionBundleIdentifier = "{EXTENSION_BUNDLE_ID}"' in host_source and "unexpectedBundleIdentifier" in host_source,
             "host app should verify the bundled system extension identifier before submitting requests",
             failures)

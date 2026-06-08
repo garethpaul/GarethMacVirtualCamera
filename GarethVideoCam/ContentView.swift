@@ -1139,22 +1139,24 @@ extension SystemExtensionRequestManager: OSSystemExtensionRequestDelegate {
 
     public func request(_ request: OSSystemExtensionRequest, didFinishWithResult result: OSSystemExtensionRequest.Result) {
         let requestKind = pendingRequestKind ?? .activation
-        pendingRequestKind = nil
 
         switch result {
         case .completed:
+            pendingRequestKind = nil
             lastFailureDetail = nil
             state = requestKind.completedState
             appendActivity(level: .success,
                            title: requestKind.completedTitle,
                            detail: requestKind.completedDetail)
         case .willCompleteAfterReboot:
+            pendingRequestKind = requestKind
             lastFailureDetail = nil
             state = .requiresRestart
             appendActivity(level: .warning,
                            title: "Restart Required",
                            detail: requestKind.restartDetail)
         @unknown default:
+            pendingRequestKind = nil
             lastFailureDetail = nil
             state = .ready
             appendActivity(level: .info,
