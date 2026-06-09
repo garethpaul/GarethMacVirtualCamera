@@ -909,6 +909,24 @@ def test_validator_rejects_missing_host_mp4_video_track_dimension_gate():
     )
 
 
+def test_validator_rejects_broad_appintents_log_ignore():
+    assert_validator_rejects_mutation(
+        "scripts/scan_build_log.py",
+        """    (
+        "appintentsmetadataprocessor",
+        "warning:",
+        "Metadata extraction skipped. No AppIntents.framework dependency found.",
+    ),
+""",
+        """    (
+        "appintentsmetadataprocessor",
+        "Metadata extraction skipped. No AppIntents.framework dependency found.",
+    ),
+""",
+        "build-log scanner should fail on warnings, errors, build/test-failed banners, build/test failure summaries, and nonzero Xcode command failures while narrowly ignoring known Xcode AppIntents metadata noise",
+    )
+
+
 def test_validator_rejects_missing_partial_ci_log_scan():
     assert_validator_rejects_mutation(
         ".github/workflows/macos-build.yml",
@@ -1040,6 +1058,7 @@ def main():
     test_validator_rejects_missing_host_mp4_mdhd_version_guard()
     test_validator_rejects_missing_host_mp4_full_box_version_guards()
     test_validator_rejects_missing_host_mp4_video_track_dimension_gate()
+    test_validator_rejects_broad_appintents_log_ignore()
     test_validator_rejects_missing_partial_ci_log_scan()
     test_validator_rejects_root_level_unsigned_build_logs()
     test_validator_rejects_missing_build_product_python_resolver()

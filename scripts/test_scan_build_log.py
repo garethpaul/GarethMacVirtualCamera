@@ -58,6 +58,15 @@ def test_fails_on_other_appintents_warning():
     require("unexpected metadata failure" in result.stdout, result.stdout)
 
 
+def test_fails_on_appintents_error_notice():
+    result = run_scanner(
+        "appintentsmetadataprocessor error: Metadata extraction skipped. "
+        "No AppIntents.framework dependency found.\n"
+    )
+    require(result.returncode == 1, result.stdout + result.stderr)
+    require("appintentsmetadataprocessor error" in result.stdout, result.stdout)
+
+
 def test_fails_on_actionable_error():
     result = run_scanner("SwiftCompile error: real source error\n")
     require(result.returncode == 1, result.stdout + result.stderr)
@@ -160,6 +169,7 @@ def main():
     test_ignores_appintents_metadata_notice()
     test_fails_on_actionable_warning()
     test_fails_on_other_appintents_warning()
+    test_fails_on_appintents_error_notice()
     test_fails_on_actionable_error()
     test_fails_on_nonzero_command_failure()
     test_fails_on_build_commands_failed_summary()

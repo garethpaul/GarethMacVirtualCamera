@@ -11,6 +11,7 @@ ACTIONABLE_PATTERN = re.compile(
 IGNORED_LINE_TOKEN_GROUPS = (
     (
         "appintentsmetadataprocessor",
+        "warning:",
         "Metadata extraction skipped. No AppIntents.framework dependency found.",
     ),
 )
