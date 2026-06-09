@@ -1160,27 +1160,61 @@ def test_validator_rejects_missing_make_gate_aliases():
 def test_validator_rejects_missing_build_product_info_plist_string_type_guard():
     assert_validator_rejects_mutation(
         "scripts/verify_build_products.sh",
-        "if isinstance(value, str) and value.strip():",
+        """if isinstance(value, str):
+    trimmed_value = value.strip()
+    if trimmed_value and trimmed_value == value:
+        print(value)""",
         "if value:",
-        "build-product verifier should reject non-string or blank Info.plist display and privacy strings",
+        "build-product verifier should reject non-string, blank, or untrimmed Info.plist display and privacy strings",
     )
 
 
 def test_validator_rejects_missing_build_product_blank_info_plist_guard():
     assert_validator_rejects_mutation(
         "scripts/verify_build_products.sh",
-        "if isinstance(value, str) and value.strip():",
-        "if isinstance(value, str) and value:",
-        "build-product verifier should reject non-string or blank Info.plist display and privacy strings",
+        "if trimmed_value and trimmed_value == value:",
+        "if value:",
+        "build-product verifier should reject non-string, blank, or untrimmed Info.plist display and privacy strings",
+    )
+
+
+def test_validator_rejects_missing_build_product_untrimmed_info_plist_guard():
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
+        "if trimmed_value and trimmed_value == value:",
+        "if trimmed_value:",
+        "build-product verifier should reject non-string, blank, or untrimmed Info.plist display and privacy strings",
     )
 
 
 def test_validator_rejects_missing_build_product_blank_cmio_guard():
     assert_validator_rejects_mutation(
         "scripts/verify_build_products.sh",
-        "if isinstance(mach_service_name, str) and mach_service_name.strip():",
-        "if isinstance(mach_service_name, str) and mach_service_name:",
-        "build-product verifier should reject non-string or blank CMIO Mach-service metadata as missing",
+        "if trimmed_mach_service_name and trimmed_mach_service_name == mach_service_name:",
+        "if mach_service_name:",
+        "build-product verifier should reject non-string, blank, or untrimmed CMIO Mach-service metadata as missing",
+    )
+
+
+def test_validator_rejects_missing_build_product_cmio_string_type_guard():
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
+        """if isinstance(mach_service_name, str):
+    trimmed_mach_service_name = mach_service_name.strip()
+    if trimmed_mach_service_name and trimmed_mach_service_name == mach_service_name:
+        print(mach_service_name)""",
+        """if mach_service_name:
+    print(mach_service_name)""",
+        "build-product verifier should reject non-string, blank, or untrimmed CMIO Mach-service metadata as missing",
+    )
+
+
+def test_validator_rejects_missing_build_product_untrimmed_cmio_guard():
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
+        "if trimmed_mach_service_name and trimmed_mach_service_name == mach_service_name:",
+        "if trimmed_mach_service_name:",
+        "build-product verifier should reject non-string, blank, or untrimmed CMIO Mach-service metadata as missing",
     )
 
 
@@ -1263,7 +1297,10 @@ def main():
     test_validator_rejects_missing_make_gate_aliases()
     test_validator_rejects_missing_build_product_info_plist_string_type_guard()
     test_validator_rejects_missing_build_product_blank_info_plist_guard()
+    test_validator_rejects_missing_build_product_untrimmed_info_plist_guard()
     test_validator_rejects_missing_build_product_blank_cmio_guard()
+    test_validator_rejects_missing_build_product_cmio_string_type_guard()
+    test_validator_rejects_missing_build_product_untrimmed_cmio_guard()
     test_validator_rejects_missing_packaged_file_byte_count_verifier()
     print("Project validator tests passed.")
     return 0

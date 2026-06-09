@@ -90,8 +90,10 @@ import sys
 with open(sys.argv[1], "rb") as info_file:
     value = plistlib.load(info_file).get(sys.argv[2], "")
 
-if isinstance(value, str) and value.strip():
-    print(value)
+if isinstance(value, str):
+    trimmed_value = value.strip()
+    if trimmed_value and trimmed_value == value:
+        print(value)
 PY
 }
 
@@ -138,8 +140,10 @@ if not isinstance(cmio_extension, dict):
     sys.exit(0)
 
 mach_service_name = cmio_extension.get("CMIOExtensionMachServiceName", "")
-if isinstance(mach_service_name, str) and mach_service_name.strip():
-    print(mach_service_name)
+if isinstance(mach_service_name, str):
+    trimmed_mach_service_name = mach_service_name.strip()
+    if trimmed_mach_service_name and trimmed_mach_service_name == mach_service_name:
+        print(mach_service_name)
 PY
 }
 

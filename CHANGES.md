@@ -25,6 +25,8 @@
 - Reported unknown video checksums instead of aborting runtime diagnostics when
   checksum commands cannot read a file.
 - Rejected whitespace-padded Info.plist string metadata in runtime diagnostics.
+- Rejected whitespace-padded Info.plist and CMIO metadata in build-product
+  verification.
 - Rejected numeric non-boolean signed entitlement values in host readiness
   checks.
 - Rejected non-string Info.plist bundle metadata in runtime diagnostics.

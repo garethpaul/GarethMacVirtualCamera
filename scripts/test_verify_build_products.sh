@@ -1147,6 +1147,21 @@ if ! grep -q "Missing Debug app CFBundleDisplayName" "$TMP_DIR/blank-display.err
   exit 1
 fi
 
+UNTRIMMED_DISPLAY_PRODUCTS="$TMP_DIR/untrimmed-display/Products"
+write_product_fixture "$UNTRIMMED_DISPLAY_PRODUCTS" Debug
+set_info_plist_key "$UNTRIMMED_DISPLAY_PRODUCTS/Debug/GarethVideoCam.app" "CFBundleDisplayName" " Gareth Video Cam "
+
+if PRODUCTS_PATH="$UNTRIMMED_DISPLAY_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/untrimmed-display.out" 2>"$TMP_DIR/untrimmed-display.err"; then
+  printf 'Expected verifier to reject an untrimmed app display name.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug app CFBundleDisplayName" "$TMP_DIR/untrimmed-display.err"; then
+  printf 'Verifier failure did not explain the untrimmed app display name.\n' >&2
+  cat "$TMP_DIR/untrimmed-display.err" >&2
+  exit 1
+fi
+
 WRONG_DISPLAY_PRODUCTS="$TMP_DIR/wrong-display/Products"
 write_product_fixture "$WRONG_DISPLAY_PRODUCTS" Debug
 set_info_plist_key "$WRONG_DISPLAY_PRODUCTS/Debug/GarethVideoCam.app" "CFBundleDisplayName" "GarethVideoCam"
@@ -1217,6 +1232,20 @@ fi
 if ! grep -q "Missing Debug extension CMIOExtensionMachServiceName" "$TMP_DIR/blank-cmio.err"; then
   printf 'Verifier failure did not explain the blank CMIO extension metadata.\n' >&2
   cat "$TMP_DIR/blank-cmio.err" >&2
+  exit 1
+fi
+
+UNTRIMMED_CMIO_PRODUCTS="$TMP_DIR/untrimmed-cmio/Products"
+write_product_fixture "$UNTRIMMED_CMIO_PRODUCTS" Debug "$EXTENSION_ID" " $EXTENSION_ID "
+
+if PRODUCTS_PATH="$UNTRIMMED_CMIO_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/untrimmed-cmio.out" 2>"$TMP_DIR/untrimmed-cmio.err"; then
+  printf 'Expected verifier to reject untrimmed CMIO extension metadata.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug extension CMIOExtensionMachServiceName" "$TMP_DIR/untrimmed-cmio.err"; then
+  printf 'Verifier failure did not explain the untrimmed CMIO extension metadata.\n' >&2
+  cat "$TMP_DIR/untrimmed-cmio.err" >&2
   exit 1
 fi
 
