@@ -227,28 +227,51 @@ verify_app_diagnostics_resources() {
     "Diagnostics parser available: yes"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "readiness-rollup" "readiness-rollup" \
+    "Ready fixture: yes" \
+    "Blocked fixture: no" \
+    "Unknown fixture: unknown" \
     "Runtime readiness result: blocked" \
     "Runtime readiness checks ready: 1/3" \
+    "Runtime readiness checks blocked: 1" \
+    "Runtime readiness checks unknown: 1" \
     "Runtime readiness next action: resolve Blocked fixture"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "readiness-rollup-unknown" "readiness-rollup-unknown" \
+    "Ready fixture: yes" \
+    "Unknown fixture: unknown" \
     "Runtime readiness result: incomplete" \
     "Runtime readiness checks ready: 1/2" \
+    "Runtime readiness checks blocked: 0" \
+    "Runtime readiness checks unknown: 1" \
     "Runtime readiness next action: inspect Unknown fixture"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "readiness-rollup-ready" "readiness-rollup-ready" \
+    "Ready fixture: yes" \
     "Runtime readiness result: ready" \
     "Runtime readiness checks ready: 1/1" \
+    "Runtime readiness checks blocked: 0" \
+    "Runtime readiness checks unknown: 0" \
     "Runtime readiness next action: submit the system extension request"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "missing-runtime-bundles" "missing-runtime-bundles" \
     "Application location ready: no" \
     "App bundle identifier ready: no" \
+    "App signature ready: no" \
+    "App System Extension entitlement ready: no" \
+    "App executable ready: no" \
     "Extension bundle identifier ready: no" \
+    "Extension signature ready: no" \
+    "Extension host-only entitlement absent: no" \
+    "Extension executable ready: no" \
+    "Extension CMIO Mach service ready: no" \
     "Bundle versions match ready: no" \
     "Signing Team match ready: no" \
     "Application group match ready: no" \
+    "Bundled video ready: no" \
+    "Bundled video metadata ready: no" \
+    "Runtime readiness result: blocked" \
     "Runtime readiness checks ready: 0/15" \
+    "Runtime readiness checks blocked: 15" \
     "Runtime readiness checks unknown: 0" \
     "Runtime readiness next action: resolve Application location ready"
 
