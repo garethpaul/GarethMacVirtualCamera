@@ -105,6 +105,12 @@ passing_outputs = {
         "Runtime readiness checks ready: 1/1",
         "Runtime readiness next action: submit the system extension request",
     ],
+    "bundle-version-match": [
+        "Bundle version match fixture: yes",
+        "Bundle version short mismatch fixture: no",
+        "Bundle version build mismatch fixture: no",
+        "Bundle version missing fixture: no",
+    ],
     "executable-readiness": [
         "Executable ready fixture: yes",
         "Executable non-executable fixture: no",
@@ -172,6 +178,12 @@ stale_outputs = {
     "executable-readiness": [
         "Executable ready fixture: no",
         "Executable non-executable fixture: yes",
+    ],
+    "bundle-version-match": [
+        "Bundle version match fixture: no",
+        "Bundle version short mismatch fixture: yes",
+        "Bundle version build mismatch fixture: yes",
+        "Bundle version missing fixture: yes",
     ],
     "team-id": [
         "Team ID match fixture: no",
@@ -270,6 +282,12 @@ write_stale_executable_readiness_diagnostics_fixture() {
   local products_path="$1"
   local configuration="$2"
   write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "executable-readiness"
+}
+
+write_stale_bundle_version_diagnostics_fixture() {
+  local products_path="$1"
+  local configuration="$2"
+  write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "bundle-version-match"
 }
 
 write_stale_application_identity_diagnostics_fixture() {
@@ -488,6 +506,7 @@ fi
 
 assert_stale_diagnostics_rejected "stale-resource-discovery-diagnostics" write_stale_resource_discovery_diagnostics_fixture "resource" "resource-discovery"
 assert_stale_diagnostics_rejected "stale-readiness-rollup-diagnostics" write_stale_readiness_rollup_diagnostics_fixture "readiness-rollup" "readiness-rollup"
+assert_stale_diagnostics_rejected "stale-bundle-version-diagnostics" write_stale_bundle_version_diagnostics_fixture "bundle-version" "bundle-version-match"
 assert_stale_diagnostics_rejected "stale-executable-readiness-diagnostics" write_stale_executable_readiness_diagnostics_fixture "executable-readiness" "executable-readiness"
 assert_stale_diagnostics_rejected "stale-team-id-diagnostics" write_stale_team_id_diagnostics_fixture "Team ID" "Team ID"
 assert_stale_diagnostics_rejected "stale-application-identity-diagnostics" write_stale_application_identity_diagnostics_fixture "application-identity" "application-identity"

@@ -241,6 +241,12 @@ verify_app_diagnostics_resources() {
     "Runtime readiness checks ready: 1/1" \
     "Runtime readiness next action: submit the system extension request"
 
+  verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "bundle-version-match" "bundle-version" \
+    "Bundle version match fixture: yes" \
+    "Bundle version short mismatch fixture: no" \
+    "Bundle version build mismatch fixture: no" \
+    "Bundle version missing fixture: no"
+
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "executable-readiness" "executable-readiness" \
     "Executable ready fixture: yes" \
     "Executable non-executable fixture: no"
