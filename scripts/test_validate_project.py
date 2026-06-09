@@ -707,6 +707,21 @@ def test_validator_rejects_bare_application_group_acceptance():
     )
 
 
+def test_validator_rejects_untrimmed_signed_app_group_values():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        """            let trimmedGroupIdentifier = groupIdentifier.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmedGroupIdentifier.isEmpty,
+                  trimmedGroupIdentifier == groupIdentifier else {
+                return []
+            }
+
+""",
+        "",
+        "host app should reject untrimmed signed app-group entitlement values",
+    )
+
+
 def test_validator_rejects_missing_extension_load_failure_detail_row():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",

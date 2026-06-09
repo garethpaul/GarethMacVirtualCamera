@@ -2645,7 +2645,13 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         var identifiers: Set<String> = []
         for value in groupIdentifiers {
-            guard let groupIdentifier = value as? String, !groupIdentifier.isEmpty else {
+            guard let groupIdentifier = value as? String else {
+                return []
+            }
+
+            let trimmedGroupIdentifier = groupIdentifier.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmedGroupIdentifier.isEmpty,
+                  trimmedGroupIdentifier == groupIdentifier else {
                 return []
             }
 

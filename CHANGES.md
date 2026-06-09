@@ -15,6 +15,8 @@
 - Rejected non-string Info.plist bundle metadata in runtime diagnostics.
 - Reused trimmed string metadata reads for embedded extension executable and
   CMIO Mach-service readiness.
+- Rejected untrimmed signed app-group entitlement values in host readiness
+  checks.
 - Rejected invalid expected bundled-video metadata inputs in build-product
   verification before resolving Python or product paths.
 - Rejected scalar app-group entitlements in the runtime diagnostics PlistBuddy
