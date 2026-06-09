@@ -424,6 +424,23 @@ def test_validator_rejects_missing_non_finite_sample_time_guard():
     )
 
 
+def test_validator_rejects_missing_adjusted_decode_time_guard():
+    assert_validator_rejects_mutation(
+        "Extension/ExtensionProvider.swift",
+        """            let decodeOffset = CMTimeSubtract(timing.decodeTimeStamp, originalPresentationTime)
+            let adjustedDecodeTime = CMTimeAdd(adjustedPresentationTime, decodeOffset)
+            guard Self.isFiniteTime(adjustedDecodeTime) else {
+                logger.error("Skipping sample buffer with non-finite adjusted decode timestamp")
+                return nil
+            }
+
+            timing.decodeTimeStamp = adjustedDecodeTime""",
+        """            let decodeOffset = CMTimeSubtract(timing.decodeTimeStamp, originalPresentationTime)
+            timing.decodeTimeStamp = CMTimeAdd(adjustedPresentationTime, decodeOffset)""",
+        "extension should reject non-finite sample and host times before retiming",
+    )
+
+
 def test_validator_rejects_missing_host_time_sample_retiming():
     assert_validator_rejects_mutation(
         "Extension/ExtensionProvider.swift",
@@ -907,6 +924,7 @@ def main():
     test_tracked_fixture_validates()
     test_validator_rejects_missing_indefinite_stream_duration_guard()
     test_validator_rejects_missing_non_finite_sample_time_guard()
+    test_validator_rejects_missing_adjusted_decode_time_guard()
     test_validator_rejects_missing_host_time_sample_retiming()
     test_validator_rejects_missing_unknown_signature_state()
     test_validator_rejects_missing_all_architecture_signature_validation()

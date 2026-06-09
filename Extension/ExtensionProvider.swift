@@ -531,7 +531,13 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
             }
 
             let decodeOffset = CMTimeSubtract(timing.decodeTimeStamp, originalPresentationTime)
-            timing.decodeTimeStamp = CMTimeAdd(adjustedPresentationTime, decodeOffset)
+            let adjustedDecodeTime = CMTimeAdd(adjustedPresentationTime, decodeOffset)
+            guard Self.isFiniteTime(adjustedDecodeTime) else {
+                logger.error("Skipping sample buffer with non-finite adjusted decode timestamp")
+                return nil
+            }
+
+            timing.decodeTimeStamp = adjustedDecodeTime
         }
 
         var copiedSampleBuffer: CMSampleBuffer?

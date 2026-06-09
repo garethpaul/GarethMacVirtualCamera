@@ -8,6 +8,8 @@
   has the expected gate targets in addition to `make check`.
 - Retimed emitted camera-extension sample buffers into the advertised host-time
   clock domain and rejected non-finite CoreMedia sample timing before send.
+- Rejected non-finite adjusted decode timestamps while retiming emitted sample
+  buffers.
 - Rejected numeric non-boolean signed entitlement values in host readiness
   checks.
 - Rejected non-string Info.plist bundle metadata in runtime diagnostics.

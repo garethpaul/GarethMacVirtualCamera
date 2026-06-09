@@ -589,7 +589,7 @@ def main():
     require("CVPixelBufferGetWidth(imageBuffer)" in extension_source and "CVPixelBufferGetHeight(imageBuffer)" in extension_source and "Skipping sample buffer with unexpected pixel buffer dimensions" in extension_source,
             "extension should skip sample buffers whose dimensions do not match the advertised stream dimensions",
             failures)
-    require("private static func isFiniteTime(_ time: CMTime) -> Bool" in extension_source and "return time.isNumeric" in extension_source and "guard Self.isFiniteTime(presentationTime)" in extension_source and "guard Self.isFiniteTime(timing.decodeTimeStamp)" in extension_source and "guard Self.isFiniteTime(hostTime)" in extension_source,
+    require("private static func isFiniteTime(_ time: CMTime) -> Bool" in extension_source and "return time.isNumeric" in extension_source and "guard Self.isFiniteTime(presentationTime)" in extension_source and "guard Self.isFiniteTime(timing.decodeTimeStamp)" in extension_source and "guard Self.isFiniteTime(adjustedDecodeTime)" in extension_source and "Skipping sample buffer with non-finite adjusted decode timestamp" in extension_source and "guard Self.isFiniteTime(hostTime)" in extension_source,
             "extension should reject non-finite sample and host times before retiming",
             failures)
     require("CMTimeConvertScale(hostTime" in extension_source and "CMTimeGetSeconds(hostTime)" not in extension_source,
