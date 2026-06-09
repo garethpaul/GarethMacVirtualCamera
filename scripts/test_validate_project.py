@@ -408,6 +408,35 @@ def test_validator_rejects_loose_team_id_prefix_lengths():
     )
 
 
+def test_validator_rejects_bare_application_group_acceptance():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        """    private static func isExpectedApplicationGroupIdentifier(_ groupIdentifier: String, baseIdentifier: String) -> Bool {
+        let escapedBaseIdentifier = NSRegularExpression.escapedPattern(for: baseIdentifier)
+""",
+        """    private static func isExpectedApplicationGroupIdentifier(_ groupIdentifier: String, baseIdentifier: String) -> Bool {
+        if groupIdentifier == baseIdentifier {
+            return true
+        }
+
+        let escapedBaseIdentifier = NSRegularExpression.escapedPattern(for: baseIdentifier)
+""",
+        "host app should require Team-ID-prefixed app-group identifiers rather than bare group names",
+    )
+    assert_validator_rejects_mutation(
+        "scripts/collect_runtime_diagnostics.sh",
+        """  if [[ "$application_group" == *"$team_prefixed_suffix" ]]; then
+""",
+        """  if [ "$application_group" = "$APP_GROUP_BASE_ID" ]; then
+    return 0
+  fi
+
+  if [[ "$application_group" == *"$team_prefixed_suffix" ]]; then
+""",
+        "runtime diagnostics should require Team-ID-prefixed app-group identifiers rather than bare group names",
+    )
+
+
 def test_validator_rejects_missing_extension_load_failure_detail_row():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",
@@ -546,6 +575,7 @@ def main():
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_entitlements()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_application_groups()
     test_validator_rejects_loose_team_id_prefix_lengths()
+    test_validator_rejects_bare_application_group_acceptance()
     test_validator_rejects_missing_extension_load_failure_detail_row()
     test_validator_rejects_missing_unsigned_build_configuration_guard()
     test_validator_rejects_missing_host_mp4_sample_count_guard()

@@ -206,7 +206,7 @@ passing_outputs = {
         "File byte count fixture: 5",
     ],
     "application-group": [
-        "Application group direct fixture ready: yes",
+        "Application group direct fixture ready: no",
         "Application group shared fixture ready: yes",
         "Application group missing fixture ready: no",
         "Application group mismatched fixture ready: no",

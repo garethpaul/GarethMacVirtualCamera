@@ -1095,7 +1095,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
 
         if let applicationGroupReadinessDetail {
-            return "Sign the app and embedded system extension with the same \(applicationGroupsEntitlement) value ending in \(requiredApplicationGroupBaseIdentifier). \(applicationGroupReadinessDetail)"
+            return "Sign the app and embedded system extension with the same Team ID-prefixed \(applicationGroupsEntitlement) value ending in \(requiredApplicationGroupBaseIdentifier). \(applicationGroupReadinessDetail)"
         }
 
         if let signingTeamReadinessDetail {
@@ -2415,13 +2415,13 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         let appExpectedGroups = Self.expectedApplicationGroups(appGroups,
                                                                baseIdentifier: requiredApplicationGroupBaseIdentifier)
         guard !appExpectedGroups.isEmpty else {
-            return "The app signature does not include an application group ending in \(requiredApplicationGroupBaseIdentifier); signed groups are \(Self.displayApplicationGroups(appGroups))."
+            return "The app signature does not include a Team ID-prefixed application group ending in \(requiredApplicationGroupBaseIdentifier); signed groups are \(Self.displayApplicationGroups(appGroups))."
         }
 
         let extensionExpectedGroups = Self.expectedApplicationGroups(extensionGroups,
                                                                      baseIdentifier: requiredApplicationGroupBaseIdentifier)
         guard !extensionExpectedGroups.isEmpty else {
-            return "The embedded system extension signature does not include an application group ending in \(requiredApplicationGroupBaseIdentifier); signed groups are \(Self.displayApplicationGroups(extensionGroups))."
+            return "The embedded system extension signature does not include a Team ID-prefixed application group ending in \(requiredApplicationGroupBaseIdentifier); signed groups are \(Self.displayApplicationGroups(extensionGroups))."
         }
 
         let sharedGroups = Self.expectedSharedApplicationGroups(appGroups,
@@ -2645,10 +2645,6 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     private static func isExpectedApplicationGroupIdentifier(_ groupIdentifier: String, baseIdentifier: String) -> Bool {
-        if groupIdentifier == baseIdentifier {
-            return true
-        }
-
         let escapedBaseIdentifier = NSRegularExpression.escapedPattern(for: baseIdentifier)
         let teamPrefixedPattern = "^[A-Za-z0-9]{10}\\.\(escapedBaseIdentifier)$"
         return groupIdentifier.range(of: teamPrefixedPattern, options: .regularExpression) != nil

@@ -570,10 +570,6 @@ application_group_matches_expected_identifier() {
   local team_prefixed_suffix=".$APP_GROUP_BASE_ID"
   local team_prefix
 
-  if [ "$application_group" = "$APP_GROUP_BASE_ID" ]; then
-    return 0
-  fi
-
   if [[ "$application_group" == *"$team_prefixed_suffix" ]]; then
     team_prefix="${application_group%"$team_prefixed_suffix"}"
     if [[ "$team_prefix" =~ ^[[:alnum:]]{10}$ ]]; then

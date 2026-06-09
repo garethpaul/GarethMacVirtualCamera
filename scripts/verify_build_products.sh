@@ -378,7 +378,7 @@ verify_app_diagnostics_resources() {
     "File byte count fixture: 5"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "application-group" "application-group" \
-    "Application group direct fixture ready: yes" \
+    "Application group direct fixture ready: no" \
     "Application group shared fixture ready: yes" \
     "Application group missing fixture ready: no" \
     "Application group mismatched fixture ready: no" \
