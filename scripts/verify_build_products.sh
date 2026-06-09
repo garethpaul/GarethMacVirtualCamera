@@ -409,7 +409,8 @@ verify_app_diagnostics_resources() {
     "Video metadata negative duration fixture: no"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "file-byte-count" "file-byte-count" \
-    "File byte count fixture: 5"
+    "File byte count fixture: 5" \
+    "Video SHA-256: unknown"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "application-group" "application-group" \
     "Application group direct fixture ready: no" \

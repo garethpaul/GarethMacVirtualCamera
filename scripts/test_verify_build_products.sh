@@ -254,6 +254,7 @@ passing_outputs = {
     ],
     "file-byte-count": [
         "File byte count fixture: 5",
+        "Video SHA-256: unknown",
     ],
     "application-group": [
         "Application group direct fixture ready: no",

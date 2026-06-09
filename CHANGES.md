@@ -29,6 +29,8 @@
   verification.
 - Added MP4 parser guard coverage for non-integer sample timing so frame-rate
   metadata is not rounded into readiness.
+- Required packaged build-product diagnostics to preserve the unknown checksum
+  fallback self-test output.
 - Rejected numeric non-boolean signed entitlement values in host readiness
   checks.
 - Rejected non-string Info.plist bundle metadata in runtime diagnostics.

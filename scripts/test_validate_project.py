@@ -1266,7 +1266,8 @@ def test_validator_rejects_missing_packaged_file_byte_count_verifier():
     assert_validator_rejects_mutation(
         "scripts/verify_build_products.sh",
         """  verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "file-byte-count" "file-byte-count" \\
-    "File byte count fixture: 5"
+    "File byte count fixture: 5" \\
+    "Video SHA-256: unknown"
 
 """,
         "",
