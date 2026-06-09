@@ -99,3 +99,4 @@
 - Clarified the change-log maintenance window across June 8-9, 2026.
 - Scanned any captured Xcode build logs in CI, including partial logs from failed build steps.
 - Covered the partial CI build-log scan workflow guard in validator mutation tests.
+- Reported selected developer directory, Swift, and macOS SDK evidence in runtime diagnostics.

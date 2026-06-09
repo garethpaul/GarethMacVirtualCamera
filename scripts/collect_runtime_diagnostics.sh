@@ -1382,7 +1382,11 @@ section "Host"
 printf 'Log window: %s\n' "$LOG_WINDOW"
 run_if_available sw_vers
 run_if_available uname -a
+run_if_available xcode-select -p
 run_if_available xcodebuild -version
+run_if_available swift --version
+run_if_available xcrun --sdk macosx --show-sdk-version
+run_if_available xcrun --sdk macosx --show-sdk-path
 
 section "Diagnostics Resources"
 print_diagnostics_resources
