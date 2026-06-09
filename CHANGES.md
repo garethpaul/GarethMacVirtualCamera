@@ -2,6 +2,8 @@
 
 ## 2026-06-08 to 2026-06-09
 
+- Required app icon catalog scale metadata to use the expected `x` suffix before
+  validating PNG dimensions.
 - Kept the ignored AppIntents metadata warning from hiding additional actionable
   failures on the same Xcode log line.
 - Covered non-file bundled runtime diagnostics script and parser resources in
