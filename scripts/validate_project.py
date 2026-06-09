@@ -1012,6 +1012,9 @@ def main():
     require("Application group all architectures common fixture: ABCDE12345.com.garethpaul.GarethVideoCam" in runtime_diagnostics_test_source and "Application group missing architecture common fixture: none" in runtime_diagnostics_test_source,
             "runtime diagnostics test should cover all-architecture application-group comparisons",
             failures)
+    require("is_unsigned_integer" in runtime_diagnostics_source and "stat -f %z" in runtime_diagnostics_source and "stat -c %s" in runtime_diagnostics_source and "run_file_byte_count_self_test" in runtime_diagnostics_source and "file-byte-count" in runtime_diagnostics_source and "File byte count fixture: %s" in runtime_diagnostics_source and "GARETH_DIAGNOSTICS_SELF_TEST=file-byte-count" in runtime_diagnostics_test_source and "File byte count fixture: 5" in runtime_diagnostics_test_source,
+            "runtime diagnostics should report clean numeric bundled-video byte counts across BSD and GNU stat variants",
+            failures)
     require(runtime_diagnostics_test_path.stat().st_mode & 0o111,
             "runtime diagnostics test script should be executable",
             failures)

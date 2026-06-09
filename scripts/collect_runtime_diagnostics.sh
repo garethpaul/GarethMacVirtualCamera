@@ -713,10 +713,24 @@ extension_registration_activated_enabled_value() {
   fi
 }
 
+is_unsigned_integer() {
+  local value="$1"
+
+  [[ "$value" =~ ^[0-9]+$ ]]
+}
+
 file_byte_count() {
   local file_path="$1"
+  local byte_count
 
-  /usr/bin/stat -f %z "$file_path" 2>/dev/null || /usr/bin/stat -c %s "$file_path" 2>/dev/null || true
+  if byte_count="$(/usr/bin/stat -f %z "$file_path" 2>/dev/null)" && is_unsigned_integer "$byte_count"; then
+    printf '%s\n' "$byte_count"
+    return
+  fi
+
+  if byte_count="$(/usr/bin/stat -c %s "$file_path" 2>/dev/null)" && is_unsigned_integer "$byte_count"; then
+    printf '%s\n' "$byte_count"
+  fi
 }
 
 mdls_metadata_value() {
@@ -1230,6 +1244,19 @@ run_video_metadata_self_test() {
   printf 'Video metadata negative duration fixture: %s\n' "$(video_metadata_readiness_value "1280" "720" "24" "-1")"
 }
 
+run_file_byte_count_self_test() {
+  local temp_dir
+  local fixture_path
+
+  temp_dir="$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/gareth-byte-count.XXXXXX")" || return 1
+  fixture_path="$temp_dir/video.bin"
+
+  printf 'abcde' >"$fixture_path"
+  printf 'File byte count fixture: %s\n' "$(file_byte_count "$fixture_path")"
+
+  /bin/rm -rf "$temp_dir"
+}
+
 run_video_parser_self_test() {
   local video_fixture="${GARETH_DIAGNOSTICS_VIDEO_FIXTURE:-$VIDEO_PATH}"
   local parser_output
@@ -1340,6 +1367,10 @@ case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
     ;;
   video-metadata)
     run_video_metadata_self_test
+    exit 0
+    ;;
+  file-byte-count)
+    run_file_byte_count_self_test
     exit 0
     ;;
   video-parser)
