@@ -6,6 +6,8 @@
   numbers before validating icon PNG dimensions.
 - Made build-product executable-name validation reject blank names inside the
   shared helper before checking packaged app and extension executables.
+- Kept the ignored AppIntents metadata warning from hiding a second actionable
+  warning on the same Xcode log line.
 - Rejected whitespace-padded app icon size and scale metadata before validating
   icon PNG dimensions.
 - Required app icon catalog scale metadata to use the expected `x` suffix before

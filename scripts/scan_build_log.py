@@ -9,7 +9,7 @@ ACTIONABLE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 IGNORED_LINE_DISQUALIFYING_PATTERN = re.compile(
-    r"error:|failed with a nonzero exit code|the following build commands failed:|testing failed:|\*\* BUILD FAILED \*\*|\*\* ARCHIVE FAILED \*\*|\*\* ANALYZE FAILED \*\*|\*\* CLEAN FAILED \*\*|\*\* TEST FAILED \*\*",
+    r"warning:.*warning:|error:|failed with a nonzero exit code|the following build commands failed:|testing failed:|\*\* BUILD FAILED \*\*|\*\* ARCHIVE FAILED \*\*|\*\* ANALYZE FAILED \*\*|\*\* CLEAN FAILED \*\*|\*\* TEST FAILED \*\*",
     re.IGNORECASE,
 )
 IGNORED_LINE_TOKEN_GROUPS = (

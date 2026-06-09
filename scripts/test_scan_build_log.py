@@ -77,6 +77,15 @@ def test_fails_on_appintents_warning_with_embedded_error():
     require("real source error" in result.stdout, result.stdout)
 
 
+def test_fails_on_appintents_warning_with_embedded_warning():
+    result = run_scanner(
+        "appintentsmetadataprocessor warning: Metadata extraction skipped. "
+        "No AppIntents.framework dependency found. SwiftCompile warning: real source warning\n"
+    )
+    require(result.returncode == 1, result.stdout + result.stderr)
+    require("real source warning" in result.stdout, result.stdout)
+
+
 def test_fails_on_actionable_error():
     result = run_scanner("SwiftCompile error: real source error\n")
     require(result.returncode == 1, result.stdout + result.stderr)
@@ -220,6 +229,7 @@ def main():
     test_fails_on_other_appintents_warning()
     test_fails_on_appintents_error_notice()
     test_fails_on_appintents_warning_with_embedded_error()
+    test_fails_on_appintents_warning_with_embedded_warning()
     test_fails_on_actionable_error()
     test_fails_on_nonzero_command_failure()
     test_fails_on_build_commands_failed_summary()

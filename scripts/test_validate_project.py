@@ -1348,7 +1348,16 @@ def test_validator_rejects_missing_appintents_ignore_disqualifier():
 
 """,
         "",
-        "build-log scanner should not hide additional failures on ignored AppIntents warning lines",
+        "build-log scanner should not hide additional warnings or failures on ignored AppIntents warning lines",
+    )
+
+
+def test_validator_rejects_missing_appintents_same_line_warning_disqualifier():
+    assert_validator_rejects_mutation(
+        "scripts/scan_build_log.py",
+        r"""    r"warning:.*warning:|error:|failed with a nonzero exit code|the following build commands failed:|testing failed:|\*\* BUILD FAILED \*\*|\*\* ARCHIVE FAILED \*\*|\*\* ANALYZE FAILED \*\*|\*\* CLEAN FAILED \*\*|\*\* TEST FAILED \*\*",""",
+        r"""    r"error:|failed with a nonzero exit code|the following build commands failed:|testing failed:|\*\* BUILD FAILED \*\*|\*\* ARCHIVE FAILED \*\*|\*\* ANALYZE FAILED \*\*|\*\* CLEAN FAILED \*\*|\*\* TEST FAILED \*\*",""",
+        "build-log scanner should not hide additional warnings or failures on ignored AppIntents warning lines",
     )
 
 
@@ -1658,6 +1667,7 @@ def main():
     test_validator_rejects_missing_host_mp4_video_track_dimension_gate()
     test_validator_rejects_broad_appintents_log_ignore()
     test_validator_rejects_missing_appintents_ignore_disqualifier()
+    test_validator_rejects_missing_appintents_same_line_warning_disqualifier()
     test_validator_rejects_missing_partial_ci_log_scan()
     test_validator_rejects_missing_unreadable_build_log_guard()
     test_validator_rejects_root_level_unsigned_build_logs()
