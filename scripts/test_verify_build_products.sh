@@ -225,8 +225,10 @@ passing_outputs = {
         "Bundle identifier missing fixture: no",
         "Info.plist string metadata fixture: com.example.StringMetadata",
         "Info.plist scalar metadata fixture: missing",
+        "Info.plist blank string metadata fixture: missing",
         "Info.plist nested string metadata fixture: com.example.StringMetadata.Extension",
         "Info.plist nested scalar metadata fixture: missing",
+        "Info.plist nested blank string metadata fixture: missing",
     ],
     "video-metadata": [
         "Video metadata parsed width fixture: 1280",

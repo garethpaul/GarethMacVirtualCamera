@@ -66,7 +66,10 @@ plist_xml_string_value() {
       value = $0
       sub(/^[[:space:]]*<string>/, "", value)
       sub(/<\/string>[[:space:]]*$/, "", value)
-      if (value != "") {
+      trimmed_value = value
+      sub(/^[[:space:]]+/, "", trimmed_value)
+      sub(/[[:space:]]+$/, "", trimmed_value)
+      if (trimmed_value != "") {
         print value
       }
       saw_value = 1
@@ -106,7 +109,7 @@ for key in sys.argv[2].split("."):
         break
     value = value.get(key)
 
-if isinstance(value, str) and value:
+if isinstance(value, str) and value.strip():
     print(value)
 PY
     return 0
@@ -1295,6 +1298,9 @@ run_executable_readiness_self_test() {
 run_application_identity_self_test() {
   local temp_dir
   local existing_app_path
+  local blank_app_path
+  local blank_info_value
+  local blank_mach_service_value
   local scalar_app_path
   local scalar_info_value
   local scalar_mach_service_value
@@ -1306,8 +1312,9 @@ run_application_identity_self_test() {
   existing_app_path="$temp_dir/GarethVideoCam.app"
   string_app_path="$temp_dir/StringMetadata.app"
   scalar_app_path="$temp_dir/ScalarMetadata.app"
+  blank_app_path="$temp_dir/BlankMetadata.app"
   /bin/mkdir -p "$existing_app_path"
-  /bin/mkdir -p "$string_app_path/Contents" "$scalar_app_path/Contents"
+  /bin/mkdir -p "$string_app_path/Contents" "$scalar_app_path/Contents" "$blank_app_path/Contents"
 
   cat >"$string_app_path/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -1341,6 +1348,22 @@ PLIST
 </plist>
 PLIST
 
+  cat >"$blank_app_path/Contents/Info.plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleIdentifier</key>
+  <string>   </string>
+  <key>CMIOExtension</key>
+  <dict>
+    <key>CMIOExtensionMachServiceName</key>
+    <string>   </string>
+  </dict>
+</dict>
+</plist>
+PLIST
+
   printf 'App path match fixture: %s\n' "$(path_matches_expected_value "/Applications/GarethVideoCam.app" "/Applications/GarethVideoCam.app")"
   printf 'App path mismatch fixture: %s\n' "$(path_matches_expected_value "/Users/example/GarethVideoCam.app" "/Applications/GarethVideoCam.app")"
   printf 'Application location existing fixture: %s\n' "$(application_location_readiness_value "$existing_app_path" "$existing_app_path")"
@@ -1351,14 +1374,19 @@ PLIST
   printf 'Bundle identifier missing fixture: %s\n' "$(bundle_identifier_matches_expected_value "" "$APP_ID")"
   string_info_value="$(read_info_plist_value "$string_app_path" CFBundleIdentifier)"
   scalar_info_value="$(read_info_plist_value "$scalar_app_path" CFBundleIdentifier)"
+  blank_info_value="$(read_info_plist_value "$blank_app_path" CFBundleIdentifier)"
   local EXTENSION_INFO_PLIST="$string_app_path/Contents/Info.plist"
   string_mach_service_value="$(read_extension_mach_service_name)"
   EXTENSION_INFO_PLIST="$scalar_app_path/Contents/Info.plist"
   scalar_mach_service_value="$(read_extension_mach_service_name)"
+  EXTENSION_INFO_PLIST="$blank_app_path/Contents/Info.plist"
+  blank_mach_service_value="$(read_extension_mach_service_name)"
   printf 'Info.plist string metadata fixture: %s\n' "${string_info_value:-missing}"
   printf 'Info.plist scalar metadata fixture: %s\n' "${scalar_info_value:-missing}"
+  printf 'Info.plist blank string metadata fixture: %s\n' "${blank_info_value:-missing}"
   printf 'Info.plist nested string metadata fixture: %s\n' "${string_mach_service_value:-missing}"
   printf 'Info.plist nested scalar metadata fixture: %s\n' "${scalar_mach_service_value:-missing}"
+  printf 'Info.plist nested blank string metadata fixture: %s\n' "${blank_mach_service_value:-missing}"
 
   /bin/rm -rf "$temp_dir"
 }

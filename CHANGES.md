@@ -19,6 +19,7 @@
 - Rejected untrimmed signed app-group entitlement values in host readiness
   checks.
 - Rejected untrimmed app-group entitlement strings in runtime diagnostics.
+- Treated blank Info.plist string metadata as missing in runtime diagnostics.
 - Rejected invalid expected bundled-video metadata inputs in build-product
   verification before resolving Python or product paths.
 - Rejected scalar app-group entitlements in the runtime diagnostics PlistBuddy
