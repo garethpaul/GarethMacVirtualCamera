@@ -374,6 +374,9 @@ verify_app_diagnostics_resources() {
     "Video metadata zero duration fixture: no" \
     "Video metadata negative duration fixture: no"
 
+  verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "file-byte-count" "file-byte-count" \
+    "File byte count fixture: 5"
+
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "application-group" "application-group" \
     "Application group direct fixture ready: yes" \
     "Application group shared fixture ready: yes" \

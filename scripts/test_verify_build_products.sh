@@ -202,6 +202,9 @@ passing_outputs = {
         "Video metadata zero duration fixture: no",
         "Video metadata negative duration fixture: no",
     ],
+    "file-byte-count": [
+        "File byte count fixture: 5",
+    ],
     "application-group": [
         "Application group direct fixture ready: yes",
         "Application group shared fixture ready: yes",
@@ -360,6 +363,9 @@ stale_outputs = {
         "Video metadata zero duration fixture: yes",
         "Video metadata negative duration fixture: yes",
     ],
+    "file-byte-count": [
+        "File byte count fixture: 4",
+    ],
     "application-group": [
         "Application group direct fixture ready: no",
         "Application group shared fixture ready: no",
@@ -493,6 +499,12 @@ write_stale_video_metadata_diagnostics_fixture() {
   local products_path="$1"
   local configuration="$2"
   write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "video-metadata"
+}
+
+write_stale_file_byte_count_diagnostics_fixture() {
+  local products_path="$1"
+  local configuration="$2"
+  write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "file-byte-count"
 }
 
 write_stale_application_group_diagnostics_fixture() {
@@ -743,6 +755,7 @@ assert_stale_diagnostics_rejected "stale-team-id-diagnostics" write_stale_team_i
 assert_stale_diagnostics_rejected "stale-extension-host-entitlement-diagnostics" write_stale_extension_host_entitlement_diagnostics_fixture "extension-host-entitlement" "extension-host-entitlement"
 assert_stale_diagnostics_rejected "stale-application-identity-diagnostics" write_stale_application_identity_diagnostics_fixture "application-identity" "application-identity"
 assert_stale_diagnostics_rejected "stale-video-metadata-diagnostics" write_stale_video_metadata_diagnostics_fixture "video-metadata" "video-metadata"
+assert_stale_diagnostics_rejected "stale-file-byte-count-diagnostics" write_stale_file_byte_count_diagnostics_fixture "file-byte-count" "file-byte-count"
 assert_stale_diagnostics_rejected "stale-application-group-diagnostics" write_stale_application_group_diagnostics_fixture "application-group" "application-group"
 assert_stale_diagnostics_rejected "stale-mach-service-diagnostics" write_stale_mach_service_diagnostics_fixture "mach-service" "mach-service"
 assert_stale_diagnostics_rejected "stale-camera-device-diagnostics" write_stale_camera_device_diagnostics_fixture "camera-device" "camera-device"
