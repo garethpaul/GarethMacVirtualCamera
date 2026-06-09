@@ -863,6 +863,22 @@ if ! grep -q "Missing or empty Debug bundled video resource" "$TMP_DIR/missing-v
   exit 1
 fi
 
+DIRECTORY_VIDEO_PRODUCTS="$TMP_DIR/directory-video/Products"
+write_product_fixture "$DIRECTORY_VIDEO_PRODUCTS" Debug
+rm "$DIRECTORY_VIDEO_PRODUCTS/Debug/GarethVideoCam.app/Contents/Library/SystemExtensions/$EXTENSION_NAME/Contents/Resources/video.mp4"
+mkdir "$DIRECTORY_VIDEO_PRODUCTS/Debug/GarethVideoCam.app/Contents/Library/SystemExtensions/$EXTENSION_NAME/Contents/Resources/video.mp4"
+
+if PRODUCTS_PATH="$DIRECTORY_VIDEO_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/directory-video.out" 2>"$TMP_DIR/directory-video.err"; then
+  printf 'Expected verifier to reject a directory bundled video resource.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing or empty Debug bundled video resource" "$TMP_DIR/directory-video.err"; then
+  printf 'Verifier failure did not explain the directory bundled video resource.\n' >&2
+  cat "$TMP_DIR/directory-video.err" >&2
+  exit 1
+fi
+
 MISSING_DIAGNOSTICS_PRODUCTS="$TMP_DIR/missing-diagnostics/Products"
 write_product_fixture "$MISSING_DIAGNOSTICS_PRODUCTS" Debug
 rm "$MISSING_DIAGNOSTICS_PRODUCTS/Debug/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh"

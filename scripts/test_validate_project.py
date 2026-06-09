@@ -424,6 +424,37 @@ def test_tracked_fixture_validates():
         raise AssertionError(f"Tracked fixture should validate cleanly.\n{output}")
 
 
+def test_directory_video_fixture_reports_validation_failure():
+    with tracked_fixture_repo() as fixture_root:
+        video_path = fixture_root / "Extension" / "video.mp4"
+        video_path.unlink()
+        video_path.mkdir()
+        status, output = run_validator(fixture_root)
+
+    if status == 0:
+        raise AssertionError("Validator accepted a directory in place of Extension/video.mp4.")
+
+    if "Extension/video.mp4 is missing, empty, or not a file" not in output:
+        raise AssertionError(f"Validator did not report the non-file video fixture cleanly.\n{output}")
+
+
+def test_validator_rejects_missing_source_video_file_guard():
+    assert_validator_rejects_mutation(
+        "scripts/validate_project.py",
+        """    require(video_path.is_file() and video_path.stat().st_size > 0,
+            "Extension/video.mp4 is missing, empty, or not a file",
+            failures)
+    video_metadata = mp4_video_metadata(video_path) if video_path.is_file() else {}
+""",
+        """    require(video_path.exists() and video_path.stat().st_size > 0,
+            "Extension/video.mp4 is missing or empty",
+            failures)
+    video_metadata = mp4_video_metadata(video_path) if video_path.exists() else {}
+""",
+        "project validator should reject non-file source video fixtures without a traceback",
+    )
+
+
 def test_validator_rejects_missing_indefinite_stream_duration_guard():
     assert_validator_rejects_mutation(
         "Extension/ExtensionProvider.swift",
@@ -1268,6 +1299,21 @@ def test_validator_rejects_directory_only_embedded_extension_count():
     )
 
 
+def test_validator_rejects_missing_build_product_video_file_guard():
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
+        """  if [ ! -f "$video_path" ] || [ ! -s "$video_path" ]; then
+    printf 'Missing or empty %s bundled video resource: %s\\n' "$configuration" "$video_path" >&2
+    exit 1
+  fi""",
+        """  if [ ! -s "$video_path" ]; then
+    printf 'Missing or empty %s bundled video resource: %s\\n' "$configuration" "$video_path" >&2
+    exit 1
+  fi""",
+        "build-product verifier should reject non-file bundled video resources before parsing metadata",
+    )
+
+
 def test_validator_rejects_missing_make_gate_aliases():
     assert_validator_rejects_mutation(
         "Makefile",
@@ -1366,6 +1412,8 @@ def main():
     test_non_ihdr_png_header_does_not_report_dimensions()
     test_malformed_icon_size_metadata_does_not_raise()
     test_tracked_fixture_validates()
+    test_directory_video_fixture_reports_validation_failure()
+    test_validator_rejects_missing_source_video_file_guard()
     test_validator_rejects_missing_indefinite_stream_duration_guard()
     test_validator_rejects_missing_non_finite_stream_duration_guard()
     test_validator_rejects_missing_non_finite_asset_duration_guard()
@@ -1423,6 +1471,7 @@ def main():
     test_validator_rejects_missing_build_product_expected_video_metadata_guard()
     test_validator_rejects_missing_build_product_duplicate_extension_guard()
     test_validator_rejects_directory_only_embedded_extension_count()
+    test_validator_rejects_missing_build_product_video_file_guard()
     test_validator_rejects_missing_make_gate_aliases()
     test_validator_rejects_missing_build_product_info_plist_string_type_guard()
     test_validator_rejects_missing_build_product_blank_info_plist_guard()

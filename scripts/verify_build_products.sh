@@ -641,7 +641,7 @@ for configuration in "${configurations[@]}"; do
   verify_info_plist_value "$configuration" "extension" "$extension_path" "NSSystemExtensionUsageDescription" "$EXTENSION_SYSTEM_EXTENSION_USAGE_DESCRIPTION"
   verify_extension_cmio_metadata "$configuration" "$extension_path"
 
-  if [ ! -s "$video_path" ]; then
+  if [ ! -f "$video_path" ] || [ ! -s "$video_path" ]; then
     printf 'Missing or empty %s bundled video resource: %s\n' "$configuration" "$video_path" >&2
     exit 1
   fi
