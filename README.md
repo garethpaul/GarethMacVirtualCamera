@@ -37,6 +37,8 @@ make check
 
 The check script runs project metadata validation, validator mutation tests for recent runtime-readiness guardrails, build-log scanner tests, unsigned build script tests, runtime diagnostics tests, build-product verifier tests, shell syntax checks, and whitespace checks. The build-product verifier checks bundle identifiers, aligned bundle versions, declared executables, display metadata, product-specific privacy usage strings, bundled runtime diagnostics self-tests, resolved CoreMediaIO extension metadata, and bundled-video resource metadata. The validator also checks exact host and extension entitlement keys, shared app-group values, Xcode entitlement file bindings, the bundled `Extension/video.mp4` for parseable dimensions, frame rate, and positive video duration, and the extension's decoded pixel-buffer guards so resource and stream-format regressions fail before runtime activation.
 
+The build-product verifier prefers `/usr/bin/python3` for plist and bundled-video metadata parsing and accepts `PYTHON3_BIN` when CI or a local runner needs an explicit interpreter path.
+
 For a CI-equivalent unsigned compile on macOS with Xcode installed:
 
 ```sh

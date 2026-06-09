@@ -609,6 +609,25 @@ done
 
 PRODUCTS_PATH="$GOOD_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" >/dev/null
 
+BAD_PYTHON_PRODUCTS="$TMP_DIR/bad-python/Products"
+write_product_fixture "$BAD_PYTHON_PRODUCTS" Debug
+
+set +e
+PYTHON3_BIN="$TMP_DIR/missing-python3" PRODUCTS_PATH="$BAD_PYTHON_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/bad-python.out" 2>"$TMP_DIR/bad-python.err"
+bad_python_status=$?
+set -e
+
+if [ "$bad_python_status" -eq 0 ]; then
+  printf 'Expected verifier to reject a missing configured Python interpreter.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Configured PYTHON3_BIN is not executable or not found" "$TMP_DIR/bad-python.err"; then
+  printf 'Verifier failure did not explain the missing configured Python interpreter.\n' >&2
+  cat "$TMP_DIR/bad-python.err" >&2
+  exit 1
+fi
+
 MISSING_APP_PRODUCTS="$TMP_DIR/missing-app/Products"
 mkdir -p "$MISSING_APP_PRODUCTS/Debug"
 

@@ -225,6 +225,15 @@ def test_validator_rejects_missing_partial_ci_log_scan():
     )
 
 
+def test_validator_rejects_missing_build_product_python_resolver():
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
+        'PYTHON3_BIN="$(python3_command)"',
+        'PYTHON3_BIN=python3',
+        "build-product verifier should resolve one explicit Python 3 interpreter before parsing plists or bundled-video metadata",
+    )
+
+
 def main():
     test_malformed_mdhd_atom_does_not_raise()
     test_tracked_fixture_validates()
@@ -237,6 +246,7 @@ def main():
     test_validator_rejects_missing_extension_load_failure_detail_row()
     test_validator_rejects_missing_unsigned_build_configuration_guard()
     test_validator_rejects_missing_partial_ci_log_scan()
+    test_validator_rejects_missing_build_product_python_resolver()
     print("Project validator tests passed.")
     return 0
 

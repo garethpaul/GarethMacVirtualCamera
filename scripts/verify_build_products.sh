@@ -18,6 +18,29 @@ EXPECTED_VIDEO_WIDTH="${EXPECTED_VIDEO_WIDTH:-1280}"
 EXPECTED_VIDEO_HEIGHT="${EXPECTED_VIDEO_HEIGHT:-720}"
 EXPECTED_VIDEO_FRAME_RATE="${EXPECTED_VIDEO_FRAME_RATE:-24}"
 
+python3_command() {
+  if [ -n "${PYTHON3_BIN:-}" ]; then
+    if command -v "$PYTHON3_BIN" >/dev/null 2>&1; then
+      command -v "$PYTHON3_BIN"
+      return
+    fi
+
+    printf 'Configured PYTHON3_BIN is not executable or not found: %s\n' "$PYTHON3_BIN" >&2
+    exit 1
+  fi
+
+  if [ -x /usr/bin/python3 ]; then
+    printf '/usr/bin/python3\n'
+  elif command -v python3 >/dev/null 2>&1; then
+    command -v python3
+  else
+    printf 'python3 is required to verify build products.\n' >&2
+    exit 1
+  fi
+}
+
+PYTHON3_BIN="$(python3_command)"
+
 if [ "$#" -gt 0 ]; then
   configurations=("$@")
 else
@@ -33,7 +56,7 @@ read_info_plist_string() {
     return
   fi
 
-  python3 - "$info_plist" "$key" 2>/dev/null <<'PY' || true
+  "$PYTHON3_BIN" - "$info_plist" "$key" 2>/dev/null <<'PY' || true
 import plistlib
 import sys
 
@@ -77,7 +100,7 @@ read_extension_mach_service_name() {
     return
   fi
 
-  python3 - "$info_plist" 2>/dev/null <<'PY' || true
+  "$PYTHON3_BIN" - "$info_plist" 2>/dev/null <<'PY' || true
 import plistlib
 import sys
 
@@ -424,7 +447,7 @@ verify_bundled_video_metadata() {
   local configuration="$1"
   local video_path="$2"
 
-  python3 - "$ROOT/scripts/validate_project.py" "$video_path" "$EXPECTED_VIDEO_WIDTH" "$EXPECTED_VIDEO_HEIGHT" "$EXPECTED_VIDEO_FRAME_RATE" "$configuration" <<'PY'
+  "$PYTHON3_BIN" - "$ROOT/scripts/validate_project.py" "$video_path" "$EXPECTED_VIDEO_WIDTH" "$EXPECTED_VIDEO_HEIGHT" "$EXPECTED_VIDEO_FRAME_RATE" "$configuration" <<'PY'
 import importlib.util
 import sys
 from pathlib import Path
