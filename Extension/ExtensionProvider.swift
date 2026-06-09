@@ -294,7 +294,8 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
                                preferredTransform: preferredTransform,
                                nominalFrameRate: nominalFrameRate)
 
-        guard duration.flags.contains(.valid),
+        guard duration.isNumeric,
+              duration.flags.contains(.valid),
               !duration.flags.contains(.indefinite),
               CMTimeCompare(duration, .zero) > 0 else {
             throw CameraExtensionError.invalidVideoDuration

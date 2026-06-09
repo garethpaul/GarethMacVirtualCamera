@@ -427,6 +427,20 @@ def test_validator_rejects_missing_non_finite_stream_duration_guard():
     )
 
 
+def test_validator_rejects_missing_non_finite_asset_duration_guard():
+    assert_validator_rejects_mutation(
+        "Extension/ExtensionProvider.swift",
+        """        guard duration.isNumeric,
+              duration.flags.contains(.valid),
+              !duration.flags.contains(.indefinite),
+              CMTimeCompare(duration, .zero) > 0 else {""",
+        """        guard duration.flags.contains(.valid),
+              !duration.flags.contains(.indefinite),
+              CMTimeCompare(duration, .zero) > 0 else {""",
+        "extension should reject non-finite bundled-video durations before loop scheduling",
+    )
+
+
 def test_validator_rejects_missing_non_finite_sample_time_guard():
     assert_validator_rejects_mutation(
         "Extension/ExtensionProvider.swift",
@@ -1058,6 +1072,7 @@ def main():
     test_tracked_fixture_validates()
     test_validator_rejects_missing_indefinite_stream_duration_guard()
     test_validator_rejects_missing_non_finite_stream_duration_guard()
+    test_validator_rejects_missing_non_finite_asset_duration_guard()
     test_validator_rejects_missing_non_finite_sample_time_guard()
     test_validator_rejects_missing_adjusted_decode_time_guard()
     test_validator_rejects_missing_host_time_sample_retiming()
