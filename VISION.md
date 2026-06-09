@@ -19,6 +19,7 @@ Priority:
 - Keep build-product, entitlement, signing, and bundled-video validation strong
 - Maintain local checks and CI-equivalent unsigned build paths
 - Keep build-log scanning strict for warnings, errors, and failed Xcode commands
+- Keep unsigned build script inputs constrained before log files are written
 - Keep `make check` aligned with `./scripts/check_project.sh`
 - Make runtime activation blockers clear to users
 

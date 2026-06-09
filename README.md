@@ -44,7 +44,10 @@ For a CI-equivalent unsigned compile on macOS with Xcode installed:
 ./scripts/scan_build_log.py build-Debug.log build-Release.log
 ```
 
-The unsigned build script writes Xcode build products and intermediates to `.build/Xcode` by default; set `BUILD_OUTPUT_PATH` to override it.
+The unsigned build script writes Xcode build products and intermediates to
+`.build/Xcode` by default; set `BUILD_OUTPUT_PATH` to override it.
+Configuration names passed to the script are validated before build log paths
+are created.
 
 Pushes and pull requests to `main` also run `.github/workflows/macos-build.yml` on GitHub's `macos-26` runner. That workflow runs `make check`, performs unsigned Debug and Release target builds, verifies the built app products contain the embedded system extension, aligned bundle versions, declared executables, display metadata, product-specific privacy usage strings, bundled runtime diagnostics self-tests, resolved CoreMediaIO extension metadata, and bundled-video metadata, captures the Xcode logs, and fails on source warnings, errors, build-failed banners, build command failure summaries, or nonzero Xcode command failures. Xcode 26.5 currently emits an AppIntents metadata processor notice for targets without AppIntents; CI filters only that known tool notice.
 

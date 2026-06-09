@@ -133,4 +133,33 @@ fi
 
 require_file_contains "$FAIL_WORK_DIR/build-Debug.log" "xcodebuild fixture failure for Debug"
 
+INVALID_WORK_DIR="$TMP_DIR/invalid-work"
+INVALID_CALL_LOG="$TMP_DIR/xcodebuild-invalid-calls.log"
+mkdir -p "$INVALID_WORK_DIR"
+
+set +e
+(
+  cd "$INVALID_WORK_DIR"
+  PATH="$FAKE_BIN:$PATH" \
+    XCODEBUILD_CALL_LOG="$INVALID_CALL_LOG" \
+    "$ROOT/scripts/build_unsigned.sh" "../Release" >"$TMP_DIR/build-unsigned-invalid.out" 2>"$TMP_DIR/build-unsigned-invalid.err"
+)
+invalid_status=$?
+set -e
+
+if [ "$invalid_status" -ne 2 ]; then
+  printf 'Expected unsigned build script to reject path-like configuration names with exit 2, got %s.\n' "$invalid_status" >&2
+  cat "$TMP_DIR/build-unsigned-invalid.out" >&2
+  cat "$TMP_DIR/build-unsigned-invalid.err" >&2
+  exit 1
+fi
+
+if [ -f "$INVALID_CALL_LOG" ]; then
+  printf 'Expected invalid configuration to be rejected before xcodebuild is invoked.\n' >&2
+  cat "$INVALID_CALL_LOG" >&2
+  exit 1
+fi
+
+require_file_contains "$TMP_DIR/build-unsigned-invalid.err" "Invalid Xcode configuration name: ../Release"
+
 printf 'Unsigned build script tests passed.\n'

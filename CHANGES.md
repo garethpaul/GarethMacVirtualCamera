@@ -80,5 +80,7 @@
 - Verified packaged resource-discovery diagnostics cover bundled script and parser paths.
 - Verified packaged MP4 parser diagnostics cover expected parsed duration.
 - Flagged Xcode build command failure summaries in the build-log scanner.
+- Rejected path-like unsigned build configuration names before creating build
+  logs or invoking `xcodebuild`.
 - Validated host and runtime diagnostics code-signing checks across all architecture slices.
 - Covered all-architecture signature validation in validator mutation tests.

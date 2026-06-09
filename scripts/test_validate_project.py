@@ -165,6 +165,15 @@ def test_validator_rejects_missing_extension_load_failure_detail_row():
     )
 
 
+def test_validator_rejects_missing_unsigned_build_configuration_guard():
+    assert_validator_rejects_mutation(
+        "scripts/build_unsigned.sh",
+        '  validate_configuration_name "$configuration"\n\n',
+        "",
+        "unsigned build script should perform Debug and Release app target builds without code signing",
+    )
+
+
 def main():
     test_malformed_mdhd_atom_does_not_raise()
     test_tracked_fixture_validates()
@@ -172,6 +181,7 @@ def main():
     test_validator_rejects_missing_unknown_signature_state()
     test_validator_rejects_missing_all_architecture_signature_validation()
     test_validator_rejects_missing_extension_load_failure_detail_row()
+    test_validator_rejects_missing_unsigned_build_configuration_guard()
     print("Project validator tests passed.")
     return 0
 
