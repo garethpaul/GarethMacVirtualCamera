@@ -471,6 +471,18 @@ def test_validator_rejects_missing_finite_video_dimension_guard():
     )
 
 
+def test_validator_rejects_missing_non_finite_video_frame_rate_guard():
+    assert_validator_rejects_mutation(
+        "Extension/ExtensionProvider.swift",
+        """        guard nominalFrameRate.isFinite,
+              nominalFrameRate > 0,
+              abs(nominalFrameRate - Float(CameraExtensionConfiguration.frameRate)) < 0.01 else {""",
+        """        guard nominalFrameRate > 0,
+              abs(nominalFrameRate - Float(CameraExtensionConfiguration.frameRate)) < 0.01 else {""",
+        "extension should reject non-finite bundled-video frame rates before streaming",
+    )
+
+
 def test_validator_rejects_missing_non_finite_sample_time_guard():
     assert_validator_rejects_mutation(
         "Extension/ExtensionProvider.swift",
@@ -1105,6 +1117,7 @@ def main():
     test_validator_rejects_missing_non_finite_asset_duration_guard()
     test_validator_rejects_missing_video_dimension_unwrap_guard()
     test_validator_rejects_missing_finite_video_dimension_guard()
+    test_validator_rejects_missing_non_finite_video_frame_rate_guard()
     test_validator_rejects_missing_non_finite_sample_time_guard()
     test_validator_rejects_missing_adjusted_decode_time_guard()
     test_validator_rejects_missing_host_time_sample_retiming()

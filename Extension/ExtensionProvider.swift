@@ -322,7 +322,8 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
             throw CameraExtensionError.unexpectedVideoDimensions(displayDimensions.width, displayDimensions.height)
         }
 
-        guard nominalFrameRate > 0,
+        guard nominalFrameRate.isFinite,
+              nominalFrameRate > 0,
               abs(nominalFrameRate - Float(CameraExtensionConfiguration.frameRate)) < 0.01 else {
             throw CameraExtensionError.unexpectedVideoFrameRate(nominalFrameRate)
         }
