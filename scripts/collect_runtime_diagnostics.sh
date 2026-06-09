@@ -197,11 +197,20 @@ bundle_identifier_matches_expected_value() {
   fi
 }
 
+is_executable_name() {
+  local executable_name="$1"
+
+  [ -n "$executable_name" ] \
+    && [ "$executable_name" != "." ] \
+    && [ "$executable_name" != ".." ] \
+    && [[ "$executable_name" != */* ]]
+}
+
 executable_readiness_value() {
   local executable_name="$1"
   local executable_path="$2"
 
-  if [ -n "$executable_name" ] && [ -f "$executable_path" ] && [ -x "$executable_path" ]; then
+  if is_executable_name "$executable_name" && [ -f "$executable_path" ] && [ -x "$executable_path" ]; then
     printf 'yes\n'
   else
     printf 'no\n'
@@ -213,7 +222,7 @@ bundle_executable_path() {
   local executable_name
 
   executable_name="$(read_info_plist_value "$bundle_path" CFBundleExecutable)"
-  if [ -n "$executable_name" ]; then
+  if is_executable_name "$executable_name"; then
     printf '%s\n' "${bundle_path}/Contents/MacOS/${executable_name}"
   fi
 }
@@ -1298,6 +1307,7 @@ run_executable_readiness_self_test() {
 
   /bin/chmod 0755 "$executable_path"
   printf 'Executable ready fixture: %s\n' "$(executable_readiness_value "Runner" "$executable_path")"
+  printf 'Executable path-like name fixture: %s\n' "$(executable_readiness_value "../Runner" "$executable_path")"
 
   /bin/rm -rf "$temp_dir"
 }
@@ -1900,11 +1910,11 @@ fi
 section "Application Runtime Metadata"
 if [ -d "$APP_PATH" ]; then
   app_executable="$(read_info_plist_value "$APP_PATH" CFBundleExecutable)"
-  app_executable_path="${APP_PATH}/Contents/MacOS/${app_executable}"
+  app_executable_path="$(bundle_executable_path "$APP_PATH")"
   app_executable_architectures="$(bundle_executable_architectures "$APP_PATH")"
 
   printf 'App CFBundleExecutable: %s\n' "${app_executable:-unknown}"
-  if [ -n "$app_executable" ]; then
+  if [ -n "$app_executable_path" ]; then
     printf 'App executable path: %s\n' "$app_executable_path"
     if [ -f "$app_executable_path" ]; then
       printf 'App executable exists: yes\n'
@@ -1952,12 +1962,12 @@ section "Embedded Extension Runtime Metadata"
 printf 'Extension Info.plist path: %s\n' "$EXTENSION_INFO_PLIST"
 if [ -d "$EXTENSION_PATH" ]; then
   extension_executable="$(read_info_plist_value "$EXTENSION_PATH" CFBundleExecutable)"
-  extension_executable_path="${EXTENSION_PATH}/Contents/MacOS/${extension_executable}"
+  extension_executable_path="$(bundle_executable_path "$EXTENSION_PATH")"
   extension_executable_architectures="$(bundle_executable_architectures "$EXTENSION_PATH")"
   extension_mach_service_name="$(read_extension_mach_service_name)"
 
   printf 'Extension CFBundleExecutable: %s\n' "${extension_executable:-unknown}"
-  if [ -n "$extension_executable" ]; then
+  if [ -n "$extension_executable_path" ]; then
     printf 'Extension executable path: %s\n' "$extension_executable_path"
     if [ -f "$extension_executable_path" ]; then
       printf 'Extension executable exists: yes\n'
@@ -2207,7 +2217,8 @@ if [ -d "$APP_PATH" ]; then
   fi
 
   app_executable="$(read_info_plist_value "$APP_PATH" CFBundleExecutable)"
-  print_readiness_check "App executable ready" "$(executable_readiness_value "$app_executable" "${APP_PATH}/Contents/MacOS/${app_executable}")"
+  app_executable_path="$(bundle_executable_path "$APP_PATH")"
+  print_readiness_check "App executable ready" "$(executable_readiness_value "$app_executable" "$app_executable_path")"
 else
   print_missing_app_readiness_checks
 fi
@@ -2215,6 +2226,7 @@ fi
 if [ -d "$EXTENSION_PATH" ]; then
   extension_bundle_identifier="$(read_bundle_identifier "$EXTENSION_PATH")"
   extension_executable="$(read_info_plist_value "$EXTENSION_PATH" CFBundleExecutable)"
+  extension_executable_path="$(bundle_executable_path "$EXTENSION_PATH")"
   extension_mach_service_name="$(read_extension_mach_service_name)"
   extension_signature_ready="no"
   extension_host_only_entitlement_present="no"
@@ -2228,7 +2240,7 @@ if [ -d "$EXTENSION_PATH" ]; then
   extension_host_only_entitlement_present="$(boolean_entitlement_value "$EXTENSION_PATH" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT")"
   print_readiness_check "Extension host-only entitlement absent" "$(extension_host_only_entitlement_absent_readiness_value "$extension_signature_ready" "$extension_host_only_entitlement_present")"
 
-  print_readiness_check "Extension executable ready" "$(executable_readiness_value "$extension_executable" "${EXTENSION_PATH}/Contents/MacOS/${extension_executable}")"
+  print_readiness_check "Extension executable ready" "$(executable_readiness_value "$extension_executable" "$extension_executable_path")"
 
   print_readiness_check "Extension CMIO Mach service ready" "$(mach_service_readiness_value "$extension_mach_service_name" "$EXTENSION_ID")"
 else

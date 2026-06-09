@@ -190,6 +190,7 @@ passing_outputs = {
         "Executable missing file fixture: no",
         "Executable ready fixture: yes",
         "Executable non-executable fixture: no",
+        "Executable path-like name fixture: no",
     ],
     "team-id": [
         "Team ID match fixture: yes",
@@ -369,6 +370,7 @@ stale_outputs = {
         "Executable missing file fixture: yes",
         "Executable ready fixture: no",
         "Executable non-executable fixture: yes",
+        "Executable path-like name fixture: yes",
     ],
     "bundle-version-match": [
         "Bundle version match fixture: no",

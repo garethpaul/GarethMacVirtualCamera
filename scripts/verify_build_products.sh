@@ -358,7 +358,8 @@ verify_app_diagnostics_resources() {
     "Executable missing name fixture: no" \
     "Executable missing file fixture: no" \
     "Executable ready fixture: yes" \
-    "Executable non-executable fixture: no"
+    "Executable non-executable fixture: no" \
+    "Executable path-like name fixture: no"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "team-id" "Team ID" \
     "Team ID match fixture: yes" \

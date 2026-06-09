@@ -106,6 +106,7 @@ require_output "$executable_readiness_output" "Executable missing name fixture: 
 require_output "$executable_readiness_output" "Executable missing file fixture: no"
 require_output "$executable_readiness_output" "Executable non-executable fixture: no"
 require_output "$executable_readiness_output" "Executable ready fixture: yes"
+require_output "$executable_readiness_output" "Executable path-like name fixture: no"
 
 require_output "$application_identity_output" "App path match fixture: yes"
 require_output "$application_identity_output" "App path mismatch fixture: no"

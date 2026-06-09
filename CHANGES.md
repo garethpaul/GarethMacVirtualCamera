@@ -2,6 +2,8 @@
 
 ## 2026-06-08 to 2026-06-09
 
+- Rejected path-like `CFBundleExecutable` values in runtime diagnostics
+  readiness and path reporting.
 - Hardened the MP4 metadata parser against malformed empty `mdhd` atoms and
   added validator unit coverage to `make check`.
 - Flagged Xcode analyze-failed and clean-failed banners in the build-log

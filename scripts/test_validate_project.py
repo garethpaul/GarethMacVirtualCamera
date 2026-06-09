@@ -798,6 +798,27 @@ def test_validator_rejects_missing_runtime_diagnostics_all_architecture_entitlem
     )
 
 
+def test_validator_rejects_missing_runtime_diagnostics_executable_name_guard():
+    assert_validator_rejects_mutation(
+        "scripts/collect_runtime_diagnostics.sh",
+        """  if is_executable_name "$executable_name" && [ -f "$executable_path" ] && [ -x "$executable_path" ]; then
+""",
+        """  if [ -n "$executable_name" ] && [ -f "$executable_path" ] && [ -x "$executable_path" ]; then
+""",
+        "runtime diagnostics should reject path-like executable names before readiness and path reporting",
+    )
+    assert_validator_rejects_mutation(
+        "scripts/collect_runtime_diagnostics.sh",
+        """  if is_executable_name "$executable_name"; then
+    printf '%s\\n' "${bundle_path}/Contents/MacOS/${executable_name}"
+  fi""",
+        """  if [ -n "$executable_name" ]; then
+    printf '%s\\n' "${bundle_path}/Contents/MacOS/${executable_name}"
+  fi""",
+        "runtime diagnostics should reject path-like executable names before readiness and path reporting",
+    )
+
+
 def test_validator_rejects_missing_runtime_diagnostics_scalar_boolean_entitlement_guard():
     assert_validator_rejects_mutation(
         "scripts/collect_runtime_diagnostics.sh",
@@ -1492,6 +1513,7 @@ def main():
     test_validator_rejects_numeric_boolean_entitlement_acceptance()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_details()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_entitlements()
+    test_validator_rejects_missing_runtime_diagnostics_executable_name_guard()
     test_validator_rejects_missing_runtime_diagnostics_scalar_boolean_entitlement_guard()
     test_validator_rejects_missing_runtime_diagnostics_info_plist_string_guard()
     test_validator_rejects_missing_runtime_diagnostics_blank_info_plist_guard()
