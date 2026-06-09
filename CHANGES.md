@@ -120,3 +120,4 @@
 - Verified packaged malformed app-group entitlement diagnostics self-tests.
 - Reported unreadable host signing metadata as an unknown signing state.
 - Rejected short Team-ID prefixes in CMIO Mach-service and app-group readiness checks.
+- Flagged Xcode archive-failed banners in the build-log scanner.
