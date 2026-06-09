@@ -292,8 +292,14 @@ verify_app_diagnostics_resources() {
     "Video metadata negative duration fixture: no"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "application-group" "application-group" \
+    "Application group direct fixture ready: yes" \
     "Application group shared fixture ready: yes" \
+    "Application group missing fixture ready: no" \
+    "Application group mismatched fixture ready: no" \
+    "Application group wrong suffix fixture ready: no" \
     "Application group dotted-prefix fixture ready: no" \
+    "Application group unresolved fixture ready: no" \
+    "Application group empty format fixture: none" \
     "Application group list format fixture: ABCDE12345.com.garethpaul.GarethVideoCam, ZYXWV98765.com.garethpaul.GarethVideoCam"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "mach-service" "mach-service" \

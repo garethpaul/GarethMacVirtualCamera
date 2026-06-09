@@ -156,8 +156,14 @@ passing_outputs = {
         "Video metadata negative duration fixture: no",
     ],
     "application-group": [
+        "Application group direct fixture ready: yes",
         "Application group shared fixture ready: yes",
+        "Application group missing fixture ready: no",
+        "Application group mismatched fixture ready: no",
+        "Application group wrong suffix fixture ready: no",
         "Application group dotted-prefix fixture ready: no",
+        "Application group unresolved fixture ready: no",
+        "Application group empty format fixture: none",
         "Application group list format fixture: ABCDE12345.com.garethpaul.GarethVideoCam, ZYXWV98765.com.garethpaul.GarethVideoCam",
     ],
     "mach-service": [
@@ -262,8 +268,14 @@ stale_outputs = {
         "Video metadata negative duration fixture: yes",
     ],
     "application-group": [
+        "Application group direct fixture ready: no",
         "Application group shared fixture ready: no",
+        "Application group missing fixture ready: yes",
+        "Application group mismatched fixture ready: yes",
+        "Application group wrong suffix fixture ready: yes",
         "Application group dotted-prefix fixture ready: yes",
+        "Application group unresolved fixture ready: yes",
+        "Application group empty format fixture: value",
         "Application group list format fixture: none",
     ],
     "mach-service": [
