@@ -408,6 +408,8 @@ def test_malformed_icon_size_metadata_does_not_raise():
         {"size": "16x32", "scale": "1x"},
         {"size": "16x16", "scale": "0x"},
         {"size": "16x16", "scale": "1"},
+        {"size": " 16x16", "scale": "1x"},
+        {"size": "16x16", "scale": " 1x"},
         {"size": 16, "scale": "1x"},
     ]
 
@@ -1253,6 +1255,18 @@ def test_validator_rejects_missing_icon_scale_suffix_guard():
     )
 
 
+def test_validator_rejects_untrimmed_icon_size_metadata():
+    assert_validator_rejects_mutation(
+        "scripts/validate_project.py",
+        """    if size.strip() != size or scale_value.strip() != scale_value:
+        return None
+
+""",
+        "",
+        "app icon validator should reject malformed icon catalog size metadata without raising",
+    )
+
+
 def test_validator_rejects_missing_host_mp4_mdhd_version_guard():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",
@@ -1612,6 +1626,7 @@ def main():
     test_validator_rejects_missing_png_ihdr_guard()
     test_validator_rejects_missing_icon_size_metadata_guard()
     test_validator_rejects_missing_icon_scale_suffix_guard()
+    test_validator_rejects_untrimmed_icon_size_metadata()
     test_validator_rejects_missing_host_mp4_mdhd_version_guard()
     test_validator_rejects_missing_host_mp4_full_box_version_guards()
     test_validator_rejects_missing_host_mp4_video_track_dimension_gate()
