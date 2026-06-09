@@ -880,7 +880,7 @@ def main():
     require('"bundle-version-match"' in verify_build_products_source and "Bundle version match fixture: yes" in verify_build_products_source and "Bundle version short mismatch fixture: no" in verify_build_products_source and "Bundle version build mismatch fixture: no" in verify_build_products_source and "Bundle version missing fixture: no" in verify_build_products_source,
             "build-product verifier should run the bundled runtime diagnostics bundle-version self-test",
             failures)
-    require('"executable-readiness"' in verify_build_products_source and "Executable ready fixture: yes" in verify_build_products_source and "Executable non-executable fixture: no" in verify_build_products_source,
+    require('"executable-readiness"' in verify_build_products_source and "Executable missing name fixture: no" in verify_build_products_source and "Executable missing file fixture: no" in verify_build_products_source and "Executable ready fixture: yes" in verify_build_products_source and "Executable non-executable fixture: no" in verify_build_products_source,
             "build-product verifier should run the bundled runtime diagnostics executable-readiness self-test",
             failures)
     require('"team-id"' in verify_build_products_source and "Team ID match fixture: yes" in verify_build_products_source and "Team ID mismatch fixture: no" in verify_build_products_source and "Team ID missing app fixture: no" in verify_build_products_source and "Team ID missing extension fixture: no" in verify_build_products_source,

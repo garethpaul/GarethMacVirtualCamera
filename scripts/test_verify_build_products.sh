@@ -123,6 +123,8 @@ passing_outputs = {
         "Bundle version missing fixture: no",
     ],
     "executable-readiness": [
+        "Executable missing name fixture: no",
+        "Executable missing file fixture: no",
         "Executable ready fixture: yes",
         "Executable non-executable fixture: no",
     ],
@@ -211,6 +213,8 @@ stale_outputs = {
         "Runtime readiness next action: inspect App bundle identifier ready",
     ],
     "executable-readiness": [
+        "Executable missing name fixture: yes",
+        "Executable missing file fixture: yes",
         "Executable ready fixture: no",
         "Executable non-executable fixture: yes",
     ],

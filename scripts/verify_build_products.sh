@@ -259,6 +259,8 @@ verify_app_diagnostics_resources() {
     "Bundle version missing fixture: no"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "executable-readiness" "executable-readiness" \
+    "Executable missing name fixture: no" \
+    "Executable missing file fixture: no" \
     "Executable ready fixture: yes" \
     "Executable non-executable fixture: no"
 
