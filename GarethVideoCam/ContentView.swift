@@ -638,7 +638,13 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return nil
         }
 
-        return FileManager.default.fileExists(atPath: scriptURL.path) ? scriptURL.path : nil
+        var isDirectory = ObjCBool(false)
+        guard FileManager.default.fileExists(atPath: scriptURL.path, isDirectory: &isDirectory),
+              !isDirectory.boolValue else {
+            return nil
+        }
+
+        return scriptURL.path
     }
 
     private static func shellQuoted(_ value: String) -> String {

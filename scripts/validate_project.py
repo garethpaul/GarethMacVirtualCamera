@@ -816,6 +816,9 @@ def main():
     require("runtimeDiagnosticsCommand" in host_source and "runtimeDiagnosticsCommandSource" in host_source and "Bundled app resource" in host_source and "Repository fallback" in host_source and "Runtime Diagnostics Command Source:" in host_source and "Runtime Command Source" in host_source and "copyRuntimeDiagnosticsCommand" in host_source and "bundledRuntimeDiagnosticsScriptPath" in host_source and "Bundle.main.url(forResource: \"collect_runtime_diagnostics\"" in host_source and "shellQuoted" in host_source and "/bin/bash \\(Self.shellQuoted(scriptPath)) \\(Self.shellQuoted(expectedApplicationPath)) 1h" in host_source and "Diagnostics Command Copied" in host_source and "Diagnostics Command Copy Failed" in host_source and "Copy Command" in host_source,
             "host app should expose a copyable bundled runtime diagnostics command with its source",
             failures)
+    require("bundledRuntimeDiagnosticsScriptPath" in host_source and "fileExists(atPath: scriptURL.path, isDirectory: &isDirectory)" in host_source and "!isDirectory.boolValue" in host_source and "test_validator_rejects_directory_runtime_diagnostics_script_resource" in validate_project_test_source,
+            "host app should only expose a bundled runtime diagnostics command for a file resource",
+            failures)
     require("copyRuntimeEvidenceExpectedDiagnostics" in host_source and "Expected Evidence Copied" in host_source and "Expected Evidence Copy Failed" in host_source and "Copy Expected Lines" in host_source and "Copy the expected signed-host diagnostics lines." in host_source,
             "host app should expose a copyable expected runtime evidence lines action",
             failures)

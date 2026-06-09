@@ -2,6 +2,8 @@
 
 ## 2026-06-08 to 2026-06-09
 
+- Rejected non-file bundled runtime diagnostics script resources before
+  exposing the copied signed-host command.
 - Rejected path-like `CFBundleExecutable` values in runtime diagnostics
   readiness and path reporting.
 - Hardened the MP4 metadata parser against malformed empty `mdhd` atoms and

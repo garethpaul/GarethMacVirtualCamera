@@ -1097,6 +1097,23 @@ def test_validator_rejects_missing_host_duplicate_extension_guard():
     )
 
 
+def test_validator_rejects_directory_runtime_diagnostics_script_resource():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        """        var isDirectory = ObjCBool(false)
+        guard FileManager.default.fileExists(atPath: scriptURL.path, isDirectory: &isDirectory),
+              !isDirectory.boolValue else {
+            return nil
+        }
+
+        return scriptURL.path
+""",
+        """        return FileManager.default.fileExists(atPath: scriptURL.path) ? scriptURL.path : nil
+""",
+        "host app should only expose a bundled runtime diagnostics command for a file resource",
+    )
+
+
 def test_validator_rejects_untrimmed_host_info_plist_metadata():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",
@@ -1530,6 +1547,7 @@ def main():
     test_validator_rejects_missing_extension_load_failure_detail_row()
     test_validator_rejects_missing_unsigned_build_configuration_guard()
     test_validator_rejects_missing_host_duplicate_extension_guard()
+    test_validator_rejects_directory_runtime_diagnostics_script_resource()
     test_validator_rejects_raw_extension_executable_metadata()
     test_validator_rejects_missing_host_executable_name_shape_guard()
     test_validator_rejects_untrimmed_host_info_plist_metadata()
