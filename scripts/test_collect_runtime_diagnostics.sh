@@ -158,6 +158,7 @@ require_output "$video_metadata_output" "Video metadata negative duration fixtur
 require_output "$video_parser_output" "Video parser pixel width fixture: 1280"
 require_output "$video_parser_output" "Video parser pixel height fixture: 720"
 require_output "$video_parser_output" "Video parser frame rate fixture: 24"
+require_output "$video_parser_output" "Video parser duration fixture: 3.0833333333333335"
 require_output "$video_parser_output" "Video parser metadata ready fixture: yes"
 
 require_output "$registration_output" "Registration active fixture present: yes"

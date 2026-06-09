@@ -78,3 +78,4 @@
 - Verified packaged MP4 parser diagnostics cover expected parsed dimensions and frame rate.
 - Verified packaged readiness-rollup diagnostics cover blocked, unknown, ready, and missing-bundle counts.
 - Verified packaged resource-discovery diagnostics cover bundled script and parser paths.
+- Verified packaged MP4 parser diagnostics cover expected parsed duration.

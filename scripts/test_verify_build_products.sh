@@ -250,6 +250,7 @@ passing_outputs = {
         "Video parser pixel width fixture: 1280",
         "Video parser pixel height fixture: 720",
         "Video parser frame rate fixture: 24",
+        "Video parser duration fixture: 3.0833333333333335",
         "Video parser metadata ready fixture: yes",
     ],
 }
@@ -392,6 +393,7 @@ stale_outputs = {
         "Video parser pixel width fixture: 640",
         "Video parser pixel height fixture: 360",
         "Video parser frame rate fixture: 30",
+        "Video parser duration fixture: 0",
         "Video parser metadata ready fixture: no",
     ],
 }
