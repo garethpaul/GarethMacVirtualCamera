@@ -10,6 +10,8 @@
   checks.
 - Rejected scalar app-group entitlements in the runtime diagnostics PlistBuddy
   fallback parser.
+- Rejected non-string app-group array members in the runtime diagnostics
+  PlistBuddy fallback parser.
 - Rejected scalar boolean signed entitlement values in runtime diagnostics.
 - Added `make check` as the conventional local validation entry point.
 - Documented the Makefile baseline and recorded the completed plan under `docs/plans/`.

@@ -498,34 +498,23 @@ def test_validator_rejects_missing_runtime_diagnostics_all_architecture_applicat
     )
 
 
+def test_validator_rejects_missing_runtime_diagnostics_non_string_app_group_guard():
+    assert_validator_rejects_mutation(
+        "scripts/collect_runtime_diagnostics.sh",
+        """    if not isinstance(group, str):
+        sys.exit(1)
+""",
+        "",
+        "runtime diagnostics should reject non-string app-group entitlement array members",
+    )
+
+
 def test_validator_rejects_missing_runtime_diagnostics_fallback_scalar_app_group_guard():
     assert_validator_rejects_mutation(
         "scripts/collect_runtime_diagnostics.sh",
-        """    plistbuddy_output="$(/usr/libexec/PlistBuddy -c "Print :${APP_GROUP_ENTITLEMENT}" "$entitlements_file" 2>/dev/null)" || return 1
-    printf '%s\\n' "$plistbuddy_output" | /usr/bin/awk '
-        /^[[:space:]]*Array[[:space:]]*\\{/ { saw_array = 1; next }
-        /^[[:space:]]*\\}/ { next }
-        NF {
-          if (!saw_array) {
-            exit 1
-          }
-          sub(/^[[:space:]]+/, "")
-          print
-        }
-        END {
-          if (!saw_array) {
-            exit 1
-          }
-        }'
-""",
-        """    /usr/libexec/PlistBuddy -c "Print :${APP_GROUP_ENTITLEMENT}" "$entitlements_file" 2>/dev/null \\
-      | /usr/bin/awk '
-        /^[[:space:]]*Array[[:space:]]*\\{/ { next }
-        /^[[:space:]]*\\}/ { next }
-        NF { sub(/^[[:space:]]+/, ""); print }
-      ' || true
-""",
-        "runtime diagnostics should reject scalar app-group entitlements in the PlistBuddy fallback parser",
+        '    if ! plistbuddy_output="$(/usr/libexec/PlistBuddy -x -c "Print :${APP_GROUP_ENTITLEMENT}" "$entitlements_file" 2>/dev/null)"; then',
+        '    if ! plistbuddy_output="$(/usr/libexec/PlistBuddy -c "Print :${APP_GROUP_ENTITLEMENT}" "$entitlements_file" 2>/dev/null)"; then',
+        "runtime diagnostics should reject non-array or non-string app-group entitlements in the PlistBuddy fallback parser",
     )
 
 
@@ -723,6 +712,7 @@ def main():
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_entitlements()
     test_validator_rejects_missing_runtime_diagnostics_scalar_boolean_entitlement_guard()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_application_groups()
+    test_validator_rejects_missing_runtime_diagnostics_non_string_app_group_guard()
     test_validator_rejects_missing_runtime_diagnostics_fallback_scalar_app_group_guard()
     test_validator_rejects_loose_team_id_prefix_lengths()
     test_validator_rejects_bare_application_group_acceptance()

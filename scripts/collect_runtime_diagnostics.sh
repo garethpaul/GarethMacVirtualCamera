@@ -584,19 +584,39 @@ PY
       /usr/bin/plutil -lint "$entitlements_file" >/dev/null 2>/dev/null || return 1
     fi
 
-    plistbuddy_output="$(/usr/libexec/PlistBuddy -c "Print :${APP_GROUP_ENTITLEMENT}" "$entitlements_file" 2>/dev/null)" || return 1
+    if ! plistbuddy_output="$(/usr/libexec/PlistBuddy -x -c "Print :${APP_GROUP_ENTITLEMENT}" "$entitlements_file" 2>/dev/null)"; then
+      return
+    fi
+
     printf '%s\n' "$plistbuddy_output" | /usr/bin/awk '
-        /^[[:space:]]*Array[[:space:]]*\{/ { saw_array = 1; next }
-        /^[[:space:]]*\}/ { next }
-        NF {
-          if (!saw_array) {
-            exit 1
+        /^[[:space:]]*<\?xml/ { next }
+        /^[[:space:]]*<!DOCTYPE/ { next }
+        /^[[:space:]]*<plist/ { next }
+        /^[[:space:]]*<\/plist>/ { next }
+        /^[[:space:]]*<array>[[:space:]]*$/ {
+          if (saw_array) {
+            invalid = 1
           }
-          sub(/^[[:space:]]+/, "")
-          print
+          saw_array = 1
+          next
         }
+        /^[[:space:]]*<\/array>[[:space:]]*$/ { saw_end = 1; next }
+        /^[[:space:]]*<string>.*<\/string>[[:space:]]*$/ {
+          if (!saw_array || saw_end) {
+            invalid = 1
+            next
+          }
+          group = $0
+          sub(/^[[:space:]]*<string>/, "", group)
+          sub(/<\/string>[[:space:]]*$/, "", group)
+          if (group != "") {
+            print group
+          }
+          next
+        }
+        NF { invalid = 1 }
         END {
-          if (!saw_array) {
+          if (!saw_array || !saw_end || invalid) {
             exit 1
           }
         }'
@@ -1322,6 +1342,7 @@ run_application_group_self_test() {
   local missing_common_groups
   local temp_dir
   local malformed_entitlements
+  local non_string_entitlements
   local scalar_entitlements
   local malformed_entitlements_status
 
@@ -1373,6 +1394,29 @@ PLIST
   else
     printf 'Application group scalar entitlements readable fixture: no\n'
   fi
+  non_string_entitlements="$temp_dir/non-string-entitlements.plist"
+  cat >"$non_string_entitlements" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>${APP_GROUP_ENTITLEMENT}</key>
+  <array>
+    <string>ABCDE12345.${APP_GROUP_BASE_ID}</string>
+    <true/>
+  </array>
+</dict>
+</plist>
+PLIST
+  set +e
+  read_application_groups_from_entitlements_file "$non_string_entitlements" >/dev/null 2>/dev/null
+  malformed_entitlements_status=$?
+  set -e
+  if [ "$malformed_entitlements_status" -eq 0 ]; then
+    printf 'Application group non-string entitlements readable fixture: yes\n'
+  else
+    printf 'Application group non-string entitlements readable fixture: no\n'
+  fi
   set +e
   GARETH_DIAGNOSTICS_SKIP_PYTHON=1 read_application_groups_from_entitlements_file "$scalar_entitlements" >/dev/null 2>/dev/null
   malformed_entitlements_status=$?
@@ -1381,6 +1425,15 @@ PLIST
     printf 'Application group fallback scalar entitlements readable fixture: yes\n'
   else
     printf 'Application group fallback scalar entitlements readable fixture: no\n'
+  fi
+  set +e
+  GARETH_DIAGNOSTICS_SKIP_PYTHON=1 read_application_groups_from_entitlements_file "$non_string_entitlements" >/dev/null 2>/dev/null
+  malformed_entitlements_status=$?
+  set -e
+  if [ "$malformed_entitlements_status" -eq 0 ]; then
+    printf 'Application group fallback non-string entitlements readable fixture: yes\n'
+  else
+    printf 'Application group fallback non-string entitlements readable fixture: no\n'
   fi
   set +e
   GARETH_DIAGNOSTICS_SKIP_PYTHON=1 read_application_groups_from_entitlements_file "$malformed_entitlements" >/dev/null 2>/dev/null
