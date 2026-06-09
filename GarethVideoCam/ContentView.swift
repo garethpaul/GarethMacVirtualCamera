@@ -2576,13 +2576,21 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             || detail.localizedCaseInsensitiveContains("video metadata")
     }
 
+    private static func isBundledExtensionFailureDetail(_ detail: String) -> Bool {
+        return detail.localizedCaseInsensitiveContains("system extensions directory")
+            || detail.localizedCaseInsensitiveContains("bundled .systemextension")
+            || detail.localizedCaseInsensitiveContains("bundled extension at")
+            || detail.localizedCaseInsensitiveContains("Expected bundled extension")
+    }
+
     private static func isExtensionExecutableFailureDetail(_ detail: String) -> Bool {
         return detail.localizedCaseInsensitiveContains("CFBundleExecutable")
             || detail.localizedCaseInsensitiveContains("extension executable")
     }
 
     private static func isExtensionMetadataFailureDetail(_ detail: String) -> Bool {
-        return detail.localizedCaseInsensitiveContains("CMIOExtensionMachServiceName")
+        return isBundledExtensionFailureDetail(detail)
+            || detail.localizedCaseInsensitiveContains("CMIOExtensionMachServiceName")
             || detail.localizedCaseInsensitiveContains("extension metadata")
     }
 

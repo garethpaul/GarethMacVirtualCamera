@@ -53,3 +53,4 @@
 - Verified packaged runtime diagnostics bundle-version self-test in built app products.
 - Included expected signed-host evidence lines in copied diagnostics snapshots.
 - Reported missing installed app and embedded extension runtime-readiness gates as blocked instead of unknown.
+- Classified missing or unreadable bundled system-extension packages as extension metadata readiness blockers in the host app.
