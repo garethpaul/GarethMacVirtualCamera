@@ -1205,7 +1205,7 @@ section "Application"
 printf 'App path: %s\n' "$APP_PATH"
 if [ -d "$APP_PATH" ]; then
   /usr/bin/codesign --verify --all-architectures --deep --strict --verbose=2 "$APP_PATH" 2>&1 || true
-  /usr/bin/codesign -dv "$APP_PATH" 2>&1 || true
+  /usr/bin/codesign -d --all-architectures -v "$APP_PATH" 2>&1 || true
   /usr/bin/codesign -d --entitlements :- "$APP_PATH" 2>&1 || true
   run_if_available spctl --assess --type execute --verbose=4 "$APP_PATH"
   print_bundle_metadata "$APP_PATH"
@@ -1267,7 +1267,7 @@ section "Embedded System Extension"
 printf 'Extension path: %s\n' "$EXTENSION_PATH"
 if [ -d "$EXTENSION_PATH" ]; then
   /usr/bin/codesign --verify --all-architectures --strict --verbose=2 "$EXTENSION_PATH" 2>&1 || true
-  /usr/bin/codesign -dv "$EXTENSION_PATH" 2>&1 || true
+  /usr/bin/codesign -d --all-architectures -v "$EXTENSION_PATH" 2>&1 || true
   /usr/bin/codesign -d --entitlements :- "$EXTENSION_PATH" 2>&1 || true
   run_if_available spctl --assess --type execute --verbose=4 "$EXTENSION_PATH"
   print_bundle_metadata "$EXTENSION_PATH"

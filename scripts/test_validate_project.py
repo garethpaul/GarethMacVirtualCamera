@@ -162,6 +162,15 @@ def test_validator_rejects_missing_all_architecture_signature_validation():
     )
 
 
+def test_validator_rejects_missing_runtime_diagnostics_all_architecture_details():
+    assert_validator_rejects_mutation(
+        "scripts/collect_runtime_diagnostics.sh",
+        '  /usr/bin/codesign -d --all-architectures -v "$APP_PATH" 2>&1 || true',
+        '  /usr/bin/codesign -dv "$APP_PATH" 2>&1 || true',
+        "runtime diagnostics script should print signing details across all architecture slices",
+    )
+
+
 def test_validator_rejects_missing_extension_load_failure_detail_row():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",
@@ -186,6 +195,7 @@ def main():
     test_validator_rejects_missing_indefinite_stream_duration_guard()
     test_validator_rejects_missing_unknown_signature_state()
     test_validator_rejects_missing_all_architecture_signature_validation()
+    test_validator_rejects_missing_runtime_diagnostics_all_architecture_details()
     test_validator_rejects_missing_extension_load_failure_detail_row()
     test_validator_rejects_missing_unsigned_build_configuration_guard()
     print("Project validator tests passed.")

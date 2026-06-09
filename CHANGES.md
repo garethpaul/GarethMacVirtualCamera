@@ -86,3 +86,4 @@
 - Covered all-architecture signature validation in validator mutation tests.
 - Reported and blocked multiple architecture-slice Team IDs in runtime diagnostics.
 - Preserved detailed Security framework errors for invalid host or extension signatures.
+- Printed runtime diagnostics code-signing details across all architecture slices.
