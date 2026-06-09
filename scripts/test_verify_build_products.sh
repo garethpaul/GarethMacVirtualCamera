@@ -743,6 +743,27 @@ if ! grep -q "Invalid Xcode configuration name: .." "$TMP_DIR/dot-segment-config
   exit 1
 fi
 
+set +e
+PYTHON3_BIN="$TMP_DIR/missing-python3" \
+  PRODUCTS_PATH="$GOOD_PRODUCTS" \
+  EXPECTED_VIDEO_WIDTH="wide" \
+  "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/invalid-expected-video.out" 2>"$TMP_DIR/invalid-expected-video.err"
+invalid_expected_video_status=$?
+set -e
+
+if [ "$invalid_expected_video_status" -ne 2 ]; then
+  printf 'Expected verifier to reject invalid expected video metadata before resolving Python, got %s.\n' "$invalid_expected_video_status" >&2
+  cat "$TMP_DIR/invalid-expected-video.out" >&2
+  cat "$TMP_DIR/invalid-expected-video.err" >&2
+  exit 1
+fi
+
+if ! grep -q "Invalid expected video width: wide" "$TMP_DIR/invalid-expected-video.err"; then
+  printf 'Verifier failure did not explain the invalid expected video metadata.\n' >&2
+  cat "$TMP_DIR/invalid-expected-video.err" >&2
+  exit 1
+fi
+
 MISSING_APP_PRODUCTS="$TMP_DIR/missing-app/Products"
 mkdir -p "$MISSING_APP_PRODUCTS/Debug"
 

@@ -11,6 +11,8 @@
 - Rejected numeric non-boolean signed entitlement values in host readiness
   checks.
 - Rejected non-string Info.plist bundle metadata in runtime diagnostics.
+- Rejected invalid expected bundled-video metadata inputs in build-product
+  verification before resolving Python or product paths.
 - Rejected scalar app-group entitlements in the runtime diagnostics PlistBuddy
   fallback parser.
 - Rejected non-string app-group array members in the runtime diagnostics

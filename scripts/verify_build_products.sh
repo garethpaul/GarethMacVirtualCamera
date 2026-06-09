@@ -48,6 +48,16 @@ validate_configuration_name() {
   fi
 }
 
+validate_positive_integer() {
+  local label="$1"
+  local value="$2"
+
+  if [[ ! "$value" =~ ^[1-9][0-9]*$ ]]; then
+    printf 'Invalid expected video %s: %s\n' "$label" "$value" >&2
+    exit 2
+  fi
+}
+
 if [ "$#" -gt 0 ]; then
   configurations=("$@")
 else
@@ -57,6 +67,10 @@ fi
 for configuration in "${configurations[@]}"; do
   validate_configuration_name "$configuration"
 done
+
+validate_positive_integer "width" "$EXPECTED_VIDEO_WIDTH"
+validate_positive_integer "height" "$EXPECTED_VIDEO_HEIGHT"
+validate_positive_integer "frame rate" "$EXPECTED_VIDEO_FRAME_RATE"
 
 PYTHON3_BIN="$(python3_command)"
 

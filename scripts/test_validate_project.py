@@ -848,6 +848,19 @@ done
     )
 
 
+def test_validator_rejects_missing_build_product_expected_video_metadata_guard():
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
+        """validate_positive_integer "width" "$EXPECTED_VIDEO_WIDTH"
+validate_positive_integer "height" "$EXPECTED_VIDEO_HEIGHT"
+validate_positive_integer "frame rate" "$EXPECTED_VIDEO_FRAME_RATE"
+
+""",
+        "",
+        "build-product verifier should reject invalid expected video metadata before resolving Python or product paths",
+    )
+
+
 def test_validator_rejects_missing_make_gate_aliases():
     assert_validator_rejects_mutation(
         "Makefile",
@@ -923,6 +936,7 @@ def main():
     test_validator_rejects_root_level_unsigned_build_logs()
     test_validator_rejects_missing_build_product_python_resolver()
     test_validator_rejects_missing_build_product_configuration_guard()
+    test_validator_rejects_missing_build_product_expected_video_metadata_guard()
     test_validator_rejects_missing_make_gate_aliases()
     test_validator_rejects_missing_build_product_info_plist_string_type_guard()
     test_validator_rejects_missing_packaged_file_byte_count_verifier()
