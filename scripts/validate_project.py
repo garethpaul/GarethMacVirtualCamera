@@ -494,7 +494,7 @@ def main():
         "Stable CI toolchain: Xcode 26.5 with the macOS 26.5 SDK",
         "Stable macOS compatibility reference: macOS Tahoe 26.5.1",
         "Deployment target: macOS 14.0 or later",
-        "Pre-release watch items as of June 9, 2026: Xcode 26.6 beta, macOS 26.6 beta (25G5028f), Xcode 27 beta (27A5194q), and macOS 27 beta (26A5353q)",
+        "Pre-release watch items as of June 9, 2026: Xcode 26.6 beta, macOS 26.6 beta (25G5028f), Xcode 27 beta (27A5194q, Swift 6.4, macOS 27 SDK, Apple silicon-only installer), and macOS Golden Gate 27 beta (26A5353q)",
         "keep CI on stable Xcode 26.5 until those prerelease toolchains are stable and available on GitHub-hosted runners",
     )
     require("## Current Target" in readme_text and all(fragment in readme_text for fragment in required_readme_target_fragments),
