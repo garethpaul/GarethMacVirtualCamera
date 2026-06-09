@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 
-ACTIONABLE_PATTERN = re.compile(r"warning:|error:", re.IGNORECASE)
+ACTIONABLE_PATTERN = re.compile(r"warning:|error:|failed with a nonzero exit code", re.IGNORECASE)
 IGNORED_LINE_TOKEN_GROUPS = (
     (
         "appintentsmetadataprocessor",

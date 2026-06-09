@@ -23,6 +23,7 @@
 - Covered wrong host and extension System Extension usage descriptions in build-product verifier fixtures.
 - Added native keyboard shortcuts for copying the runtime diagnostics command and expected runtime evidence.
 - Covered build-log scanner usage failures when no build log path is provided.
+- Covered Xcode nonzero command failure lines in the build-log scanner.
 - Documented Camera menu shortcuts for repeated signed-host evidence collection.
 - Covered missing host and extension camera usage descriptions in build-product verifier fixtures.
 - Covered unsigned build script default Debug and Release configuration behavior.
