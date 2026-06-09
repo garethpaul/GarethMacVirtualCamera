@@ -27,6 +27,8 @@
 - Rejected whitespace-padded Info.plist string metadata in runtime diagnostics.
 - Rejected whitespace-padded Info.plist and CMIO metadata in build-product
   verification.
+- Added MP4 parser guard coverage for non-integer sample timing so frame-rate
+  metadata is not rounded into readiness.
 - Rejected numeric non-boolean signed entitlement values in host readiness
   checks.
 - Rejected non-string Info.plist bundle metadata in runtime diagnostics.

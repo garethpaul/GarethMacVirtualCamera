@@ -286,6 +286,35 @@ def test_zero_sample_count_stts_does_not_report_frame_rate():
         raise AssertionError(f"Unexpected frame rate for zero-sample stts entry: {metadata}")
 
 
+def test_non_integer_stts_rate_does_not_report_frame_rate():
+    validator = load_validator()
+    mdhd_payload = b"\0\0\0\0" + b"\0" * 8 + struct.pack(">II", 24_000, 24_000)
+    hdlr_payload = b"\0" * 8 + b"vide"
+    stts_payload = b"\0\0\0\0" + struct.pack(">I", 1) + struct.pack(">II", 24, 1_001)
+    minimal_mp4 = atom(
+        "moov",
+        atom(
+            "trak",
+            atom(
+                "mdia",
+                atom("mdhd", mdhd_payload)
+                + atom("hdlr", hdlr_payload)
+                + atom("minf", atom("stbl", atom("stts", stts_payload))),
+            ),
+        ),
+    )
+
+    fixture_path = write_metadata_fixture(minimal_mp4)
+
+    try:
+        metadata = validator.mp4_video_metadata(fixture_path)
+    finally:
+        fixture_path.unlink(missing_ok=True)
+
+    if metadata["frame_rate"] is not None:
+        raise AssertionError(f"Unexpected frame rate for non-integer stts timing: {metadata}")
+
+
 def test_truncated_stts_entry_count_does_not_report_frame_rate():
     validator = load_validator()
     mdhd_payload = b"\0\0\0\0" + b"\0" * 8 + struct.pack(">II", 24_000, 24_000)
@@ -979,6 +1008,21 @@ def test_validator_rejects_missing_host_mp4_sample_count_guard():
     )
 
 
+def test_validator_rejects_missing_host_mp4_integer_frame_rate_guard():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        "if sampleCount > 0, sampleDelta > 0, timescale % sampleDelta == 0",
+        "if sampleCount > 0, sampleDelta > 0",
+        "host app should only report MP4 frame rates with exact integer sample timing",
+    )
+    assert_validator_rejects_mutation(
+        "scripts/validate_project.py",
+        "if sample_count and sample_delta and timescale % sample_delta == 0:",
+        "if sample_count and sample_delta:",
+        "host app should only report MP4 frame rates with exact integer sample timing",
+    )
+
+
 def test_validator_rejects_missing_host_mp4_complete_stts_entry_guard():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",
@@ -1238,6 +1282,7 @@ def main():
     test_unsupported_stsd_version_does_not_report_dimensions()
     test_non_video_track_stsd_does_not_report_dimensions()
     test_zero_sample_count_stts_does_not_report_frame_rate()
+    test_non_integer_stts_rate_does_not_report_frame_rate()
     test_truncated_stts_entry_count_does_not_report_frame_rate()
     test_zero_stsd_entry_count_does_not_report_dimensions()
     test_truncated_png_signature_does_not_raise()
@@ -1280,6 +1325,7 @@ def main():
     test_validator_rejects_raw_extension_cmio_metadata()
     test_validator_rejects_untrimmed_host_cmio_metadata()
     test_validator_rejects_missing_host_mp4_sample_count_guard()
+    test_validator_rejects_missing_host_mp4_integer_frame_rate_guard()
     test_validator_rejects_missing_host_mp4_complete_stts_entry_guard()
     test_validator_rejects_missing_host_mp4_stsd_entry_count_guard()
     test_validator_rejects_missing_png_ihdr_guard()
