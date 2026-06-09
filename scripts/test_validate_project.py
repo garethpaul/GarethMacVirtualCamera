@@ -415,6 +415,31 @@ def test_validator_rejects_missing_host_team_identifier_shape_guard():
     )
 
 
+def test_validator_rejects_numeric_boolean_entitlement_acceptance():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        """        return Set(entitlementDictionary.compactMap { key, value in
+            guard let isEnabled = value as? Bool else {
+                return nil
+            }
+
+            return isEnabled ? key : nil
+        })""",
+        """        return Set(entitlementDictionary.compactMap { key, value in
+            if let isEnabled = value as? Bool {
+                return isEnabled ? key : nil
+            }
+
+            if let number = value as? NSNumber {
+                return number.boolValue ? key : nil
+            }
+
+            return nil
+        })""",
+        "host app should only accept boolean signed entitlement values",
+    )
+
+
 def test_validator_rejects_missing_runtime_diagnostics_all_architecture_details():
     assert_validator_rejects_mutation(
         "scripts/collect_runtime_diagnostics.sh",
@@ -639,6 +664,7 @@ def main():
     test_validator_rejects_missing_all_architecture_signature_validation()
     test_validator_rejects_missing_signing_information_unknown_guard()
     test_validator_rejects_missing_host_team_identifier_shape_guard()
+    test_validator_rejects_numeric_boolean_entitlement_acceptance()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_details()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_entitlements()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_application_groups()

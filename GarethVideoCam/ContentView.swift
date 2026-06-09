@@ -2604,15 +2604,11 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
 
         return Set(entitlementDictionary.compactMap { key, value in
-            if let isEnabled = value as? Bool {
-                return isEnabled ? key : nil
+            guard let isEnabled = value as? Bool else {
+                return nil
             }
 
-            if let number = value as? NSNumber {
-                return number.boolValue ? key : nil
-            }
-
-            return nil
+            return isEnabled ? key : nil
         })
     }
 

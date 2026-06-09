@@ -6,6 +6,8 @@
   added validator unit coverage to `make check`.
 - Retimed emitted camera-extension sample buffers into the advertised host-time
   clock domain and rejected non-finite CoreMedia sample timing before send.
+- Rejected numeric non-boolean signed entitlement values in host readiness
+  checks.
 - Added `make check` as the conventional local validation entry point.
 - Documented the Makefile baseline and recorded the completed plan under `docs/plans/`.
 - Extended project validation so the Makefile, plan, README, VISION, and change log stay aligned.
