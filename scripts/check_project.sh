@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ./scripts/validate_project.py
+PYTHONDONTWRITEBYTECODE=1 ./scripts/test_validate_project.py
 ./scripts/test_scan_build_log.py
 ./scripts/test_build_unsigned.sh
 ./scripts/test_collect_runtime_diagnostics.sh

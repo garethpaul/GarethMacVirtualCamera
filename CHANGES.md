@@ -2,6 +2,8 @@
 
 ## 2026-06-08
 
+- Hardened the MP4 metadata parser against malformed empty `mdhd` atoms and
+  added validator unit coverage to `make check`.
 - Added `make check` as the conventional local validation entry point.
 - Documented the Makefile baseline and recorded the completed plan under `docs/plans/`.
 - Extended project validation so the Makefile, plan, README, VISION, and change log stay aligned.
