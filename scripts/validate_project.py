@@ -333,7 +333,10 @@ def main():
     project_text = (ROOT / "GarethVideoCam.xcodeproj/project.pbxproj").read_text()
     app_entry_source = (ROOT / "GarethVideoCam/GarethVideoCam.swift").read_text()
     host_source = (ROOT / "GarethVideoCam/ContentView.swift").read_text()
+    header_view_source = ""
     details_actions_source = ""
+    if "private struct HeaderView" in host_source and "private struct ActionPanel" in host_source:
+        header_view_source = host_source.split("private struct HeaderView", 1)[1].split("private struct ActionPanel", 1)[0]
     if "private struct DetailsActions" in host_source and "private struct ActivityPanel" in host_source:
         details_actions_source = host_source.split("private struct DetailsActions", 1)[1].split("private struct ActivityPanel", 1)[0]
     extension_source = (ROOT / "Extension/ExtensionProvider.swift").read_text()
@@ -718,8 +721,8 @@ def main():
     require("case needsBundleVersion" in host_source and "Version Mismatch" in host_source and "bundleVersionReadinessDetail" in host_source and "Bundle Version Match" in host_source and "Bundle Version Check:" in host_source and "Version Match Required" in host_source and "recordReadinessBlock(state: .needsBundleVersion" in host_source and "bundleVersionStatus" in host_source and "applicationShortVersionValue" in host_source and "applicationBuildVersionValue" in host_source and "shortVersion: String?" in host_source and "buildVersion: String?" in host_source and "Bundle Short Version Match" in host_source and "Bundle Build Version Match" in host_source,
             "host app should verify, show, and copy app and embedded extension short/build bundle version alignment before submitting requests",
             failures)
-    require("HeaderView(manager: manager)" in host_source and 'Text(manager.requestReadinessDetail ?? "System extension requests can be submitted.")' in host_source and "private var headerActions" in host_source and "headerActionButtons" in host_source and 'Label("Refresh", systemImage: "arrow.clockwise")' in host_source and 'Label("Copy Diagnostics", systemImage: "doc.on.doc")' in host_source and "test_validator_rejects_missing_header_action_buttons" in validate_project_test_source,
-            "host app header should surface the current request readiness detail and primary refresh/copy actions",
+    require("HeaderView(manager: manager)" in host_source and 'Text(manager.requestReadinessDetail ?? "System extension requests can be submitted.")' in host_source and "private var headerActions" in header_view_source and "headerActionButtons" in header_view_source and 'Button(action: manager.refreshStatus)' in header_view_source and 'Label("Refresh", systemImage: "arrow.clockwise")' in header_view_source and 'Button(action: manager.copyActivationChecklist)' in header_view_source and 'Label("Copy Checklist", systemImage: "checklist")' in header_view_source and 'Button(action: manager.copyDiagnostics)' in header_view_source and 'Label("Copy Diagnostics", systemImage: "doc.on.doc")' in header_view_source and "test_validator_rejects_missing_header_action_buttons" in validate_project_test_source,
+            "host app header should surface the current request readiness detail and primary refresh, checklist, and diagnostics actions",
             failures)
     require("struct ReadinessCheck" in host_source and "readinessChecks" in host_source and "readinessProgressSummary" in host_source and "summaryParts" in host_source and "joined(separator: \", \")" in host_source and "requestReadinessNextAction" in host_source and "ReadinessPanel(manager: manager)" in host_source and "ReadinessRow" in host_source and "Team ID Match" in host_source and "Bundle Version Match" in host_source and "App Executable" in host_source and "Extension Executable" in host_source and "Extension Host Entitlement" in host_source and "Application Group" in host_source and "Extension Metadata" in host_source and "Bundled Video" in host_source and "Readiness Summary:" in host_source and "Readiness Checks:" in host_source,
             "host app should show and copy a compact readiness summary with ready, blocked, and pending counts, next action, and checklist for activation gates",

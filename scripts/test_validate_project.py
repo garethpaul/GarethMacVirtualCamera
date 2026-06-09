@@ -1084,6 +1084,12 @@ def test_validator_rejects_missing_header_action_buttons():
         .buttonStyle(.bordered)
         .help("Refresh app, extension, signing, and readiness status.")
 
+        Button(action: manager.copyActivationChecklist) {
+            Label("Copy Checklist", systemImage: "checklist")
+        }
+        .buttonStyle(.bordered)
+        .help("Copy the signed runtime activation checklist.")
+
         Button(action: manager.copyDiagnostics) {
             Label("Copy Diagnostics", systemImage: "doc.on.doc")
         }
@@ -1092,7 +1098,7 @@ def test_validator_rejects_missing_header_action_buttons():
     }
 """,
         "",
-        "host app header should surface the current request readiness detail and primary refresh/copy actions",
+        "host app header should surface the current request readiness detail and primary refresh, checklist, and diagnostics actions",
     )
 
 

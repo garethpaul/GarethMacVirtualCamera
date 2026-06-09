@@ -16,6 +16,8 @@
   keep the Activity view bounded.
 - Rejected multiline signed app-group entitlement strings before runtime
   diagnostics compare host and extension groups.
+- Added a first-viewport header action for copying the signed runtime activation
+  checklist.
 - Rejected whitespace-padded app icon size and scale metadata before validating
   icon PNG dimensions.
 - Required app icon catalog scale metadata to use the expected `x` suffix before
