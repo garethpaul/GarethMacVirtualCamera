@@ -528,11 +528,13 @@ with open(sys.argv[1], "rb") as entitlements_file:
     entitlements = plistlib.load(entitlements_file)
 
 groups = entitlements.get(sys.argv[2], [])
-if isinstance(groups, str):
-    groups = [groups]
+if not isinstance(groups, list):
+    sys.exit(1)
 
 for group in groups:
-    if isinstance(group, str) and group:
+    if not isinstance(group, str):
+        sys.exit(1)
+    if group:
         print(group)
 PY
   elif [ -x /usr/libexec/PlistBuddy ]; then
@@ -1243,6 +1245,7 @@ run_application_group_self_test() {
   local missing_common_groups
   local temp_dir
   local malformed_entitlements
+  local scalar_entitlements
   local malformed_entitlements_status
 
   printf 'Application group direct fixture ready: %s\n' "$(application_groups_ready_value "$direct_group" "$direct_group")"
@@ -1272,6 +1275,26 @@ run_application_group_self_test() {
     printf 'Application group malformed entitlements readable fixture: yes\n'
   else
     printf 'Application group malformed entitlements readable fixture: no\n'
+  fi
+  scalar_entitlements="$temp_dir/scalar-entitlements.plist"
+  cat >"$scalar_entitlements" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>${APP_GROUP_ENTITLEMENT}</key>
+  <string>ABCDE12345.${APP_GROUP_BASE_ID}</string>
+</dict>
+</plist>
+PLIST
+  set +e
+  read_application_groups_from_entitlements_file "$scalar_entitlements" >/dev/null 2>/dev/null
+  malformed_entitlements_status=$?
+  set -e
+  if [ "$malformed_entitlements_status" -eq 0 ]; then
+    printf 'Application group scalar entitlements readable fixture: yes\n'
+  else
+    printf 'Application group scalar entitlements readable fixture: no\n'
   fi
   set +e
   GARETH_DIAGNOSTICS_SKIP_PYTHON=1 read_application_groups_from_entitlements_file "$malformed_entitlements" >/dev/null 2>/dev/null

@@ -126,3 +126,4 @@
 - Reported malformed boolean entitlement plists as unknown runtime evidence.
 - Rejected malformed Team IDs in runtime diagnostics comparisons.
 - Validated host-app signing Team IDs before readiness comparison.
+- Rejected scalar signed app-group entitlements during readiness checks.

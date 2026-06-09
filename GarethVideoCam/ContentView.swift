@@ -2623,25 +2623,20 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return []
         }
 
-        if let groupIdentifiers = entitlementValue as? [String] {
-            return Set(groupIdentifiers.filter { !$0.isEmpty })
+        guard let groupIdentifiers = entitlementValue as? [Any] else {
+            return []
         }
 
-        if let groupIdentifiers = entitlementValue as? [Any] {
-            return Set(groupIdentifiers.compactMap { value in
-                guard let groupIdentifier = value as? String, !groupIdentifier.isEmpty else {
-                    return nil
-                }
+        var identifiers: Set<String> = []
+        for value in groupIdentifiers {
+            guard let groupIdentifier = value as? String, !groupIdentifier.isEmpty else {
+                return []
+            }
 
-                return groupIdentifier
-            })
+            identifiers.insert(groupIdentifier)
         }
 
-        if let groupIdentifier = entitlementValue as? String, !groupIdentifier.isEmpty {
-            return [groupIdentifier]
-        }
-
-        return []
+        return identifiers
     }
 
     private static func displayApplicationGroups(_ groups: Set<String>) -> String {

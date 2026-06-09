@@ -394,6 +394,7 @@ verify_app_diagnostics_resources() {
     "Application group all architectures common fixture: ABCDE12345.com.garethpaul.GarethVideoCam" \
     "Application group missing architecture common fixture: none" \
     "Application group malformed entitlements readable fixture: no" \
+    "Application group scalar entitlements readable fixture: no" \
     "Application group fallback malformed entitlements readable fixture: no"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "mach-service" "mach-service" \
