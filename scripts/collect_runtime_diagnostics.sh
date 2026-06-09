@@ -1584,19 +1584,24 @@ camera_device_present="unknown"
 
 section "System Extension Registration"
 if [ -x /usr/bin/systemextensionsctl ]; then
-  registration_output="$(/usr/bin/systemextensionsctl list 2>&1 || true)"
-  registration_entries="$(extension_registration_entries "$registration_output" "$EXTENSION_ID")"
-  registration_present="$(extension_registration_present_value "$registration_output" "$EXTENSION_ID")"
-  registration_activated_enabled="$(extension_registration_activated_enabled_value "$registration_output" "$EXTENSION_ID")"
+  if registration_output="$(/usr/bin/systemextensionsctl list 2>&1)"; then
+    registration_entries="$(extension_registration_entries "$registration_output" "$EXTENSION_ID")"
+    registration_present="$(extension_registration_present_value "$registration_output" "$EXTENSION_ID")"
+    registration_activated_enabled="$(extension_registration_activated_enabled_value "$registration_output" "$EXTENSION_ID")"
 
-  print_yes_no_unknown "Extension registration entry present" "$registration_present"
-  print_yes_no_unknown "Extension registration activated enabled" "$registration_activated_enabled"
+    print_yes_no_unknown "Extension registration entry present" "$registration_present"
+    print_yes_no_unknown "Extension registration activated enabled" "$registration_activated_enabled"
 
-  printf 'Matching system extension registration entries:\n'
-  if [ -n "$registration_entries" ]; then
-    printf '%s\n' "$registration_entries"
+    printf 'Matching system extension registration entries:\n'
+    if [ -n "$registration_entries" ]; then
+      printf '%s\n' "$registration_entries"
+    else
+      printf 'No matching system extension registration entries.\n'
+    fi
   else
-    printf 'No matching system extension registration entries.\n'
+    printf 'systemextensionsctl list failed; registration evidence is unknown.\n'
+    print_yes_no_unknown "Extension registration entry present" "unknown"
+    print_yes_no_unknown "Extension registration activated enabled" "unknown"
   fi
 
   printf 'Full systemextensionsctl list output:\n'
@@ -1614,9 +1619,14 @@ fi
 section "Camera Devices"
 printf 'Expected virtual camera device: %s\n' "$EXPECTED_CAMERA_NAME"
 if command -v system_profiler >/dev/null 2>&1; then
-  camera_inventory="$(system_profiler SPCameraDataType 2>&1 || true)"
-  camera_device_present="$(camera_device_present_value "$camera_inventory" "$EXPECTED_CAMERA_NAME")"
-  print_yes_no_unknown "Expected virtual camera device present" "$camera_device_present"
+  if camera_inventory="$(system_profiler SPCameraDataType 2>&1)"; then
+    camera_device_present="$(camera_device_present_value "$camera_inventory" "$EXPECTED_CAMERA_NAME")"
+    print_yes_no_unknown "Expected virtual camera device present" "$camera_device_present"
+  else
+    printf 'system_profiler SPCameraDataType failed; camera evidence is unknown.\n'
+    print_yes_no_unknown "Expected virtual camera device present" "unknown"
+  fi
+
   printf 'Full system_profiler SPCameraDataType output:\n'
   if [ -n "$camera_inventory" ]; then
     printf '%s\n' "$camera_inventory"
