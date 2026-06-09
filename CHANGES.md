@@ -70,3 +70,4 @@
 - Added validator mutation tests for recent runtime-readiness guardrails.
 - Verified packaged registration diagnostics cover reversed status tokens and missing entries.
 - Verified packaged executable-readiness diagnostics cover missing executable declarations and files.
+- Verified packaged application-identity diagnostics cover path, location, and bundle-identifier mismatches.

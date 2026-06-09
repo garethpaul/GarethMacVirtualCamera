@@ -142,7 +142,12 @@ passing_outputs = {
     ],
     "application-identity": [
         "App path match fixture: yes",
+        "App path mismatch fixture: no",
+        "Application location existing fixture: yes",
         "Application location missing fixture: no",
+        "Application location mismatch fixture: no",
+        "Bundle identifier match fixture: yes",
+        "Bundle identifier mismatch fixture: no",
         "Bundle identifier missing fixture: no",
     ],
     "video-metadata": [
@@ -238,7 +243,12 @@ stale_outputs = {
     ],
     "application-identity": [
         "App path match fixture: no",
+        "App path mismatch fixture: yes",
+        "Application location existing fixture: no",
         "Application location missing fixture: yes",
+        "Application location mismatch fixture: yes",
+        "Bundle identifier match fixture: no",
+        "Bundle identifier mismatch fixture: yes",
         "Bundle identifier missing fixture: yes",
     ],
     "video-metadata": [

@@ -278,7 +278,12 @@ verify_app_diagnostics_resources() {
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "application-identity" "application-identity" \
     "App path match fixture: yes" \
+    "App path mismatch fixture: no" \
+    "Application location existing fixture: yes" \
     "Application location missing fixture: no" \
+    "Application location mismatch fixture: no" \
+    "Bundle identifier match fixture: yes" \
+    "Bundle identifier mismatch fixture: no" \
     "Bundle identifier missing fixture: no"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "video-metadata" "video-metadata" \
