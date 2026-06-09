@@ -44,7 +44,11 @@ jobs:
       - name: Show toolchain
         run: |
           sw_vers
+          xcode-select -p
           xcodebuild -version
+          swift --version
+          xcrun --sdk macosx --show-sdk-version
+          xcrun --sdk macosx --show-sdk-path
 
       - name: Run local validation baseline
         run: make check

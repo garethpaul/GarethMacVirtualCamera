@@ -1121,6 +1121,9 @@ def main():
         require("Xcode_26.5" in workflow_text,
                 "macOS build workflow should explicitly select Xcode 26.5",
                 failures)
+        require("sw_vers" in workflow_text and "xcode-select -p" in workflow_text and "xcodebuild -version" in workflow_text and "swift --version" in workflow_text and "xcrun --sdk macosx --show-sdk-version" in workflow_text and "xcrun --sdk macosx --show-sdk-path" in workflow_text,
+                "macOS build workflow should print selected macOS, Xcode, Swift, and SDK evidence",
+                failures)
         require("Run local validation baseline" in workflow_text and "make check" in workflow_text,
                 "macOS build workflow should run the conventional make check validation baseline",
                 failures)
