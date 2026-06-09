@@ -79,8 +79,8 @@ require_file_contains "$CALL_LOG" $'OBJROOT='"$TMP_DIR"$'/XcodeProducts/Intermed
 require_file_contains "$CALL_LOG" $'CODE_SIGNING_ALLOWED=NO'
 require_file_contains "$CALL_LOG" $'CODE_SIGNING_REQUIRED=NO'
 require_file_contains "$CALL_LOG" $'COMPILER_INDEX_STORE_ENABLE=NO'
-require_file_contains "$WORK_DIR/build-Debug.log" "xcodebuild fixture for Debug"
-require_file_contains "$WORK_DIR/build-Release.log" "xcodebuild fixture for Release"
+require_file_contains "$TMP_DIR/XcodeProducts/Logs/build-Debug.log" "xcodebuild fixture for Debug"
+require_file_contains "$TMP_DIR/XcodeProducts/Logs/build-Release.log" "xcodebuild fixture for Release"
 
 DEFAULT_WORK_DIR="$TMP_DIR/default-work"
 DEFAULT_CALL_LOG="$TMP_DIR/xcodebuild-default-calls.log"
@@ -101,8 +101,8 @@ fi
 
 require_file_contains "$DEFAULT_CALL_LOG" $'-configuration\tDebug'
 require_file_contains "$DEFAULT_CALL_LOG" $'-configuration\tRelease'
-require_file_contains "$DEFAULT_WORK_DIR/build-Debug.log" "xcodebuild fixture for Debug"
-require_file_contains "$DEFAULT_WORK_DIR/build-Release.log" "xcodebuild fixture for Release"
+require_file_contains "$DEFAULT_WORK_DIR/.build/Xcode/Logs/build-Debug.log" "xcodebuild fixture for Debug"
+require_file_contains "$DEFAULT_WORK_DIR/.build/Xcode/Logs/build-Release.log" "xcodebuild fixture for Release"
 
 FAIL_WORK_DIR="$TMP_DIR/failure-work"
 FAIL_CALL_LOG="$TMP_DIR/xcodebuild-failure-calls.log"
@@ -131,7 +131,7 @@ if [ "$failure_status" -ne 65 ]; then
   exit 1
 fi
 
-require_file_contains "$FAIL_WORK_DIR/build-Debug.log" "xcodebuild fixture failure for Debug"
+require_file_contains "$FAIL_WORK_DIR/.build/Xcode/Logs/build-Debug.log" "xcodebuild fixture failure for Debug"
 
 MISSING_XCODEBUILD_WORK_DIR="$TMP_DIR/missing-xcodebuild-work"
 MISSING_XCODEBUILD_BIN="$TMP_DIR/missing-xcodebuild-bin"

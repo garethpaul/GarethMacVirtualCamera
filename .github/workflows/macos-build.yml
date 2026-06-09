@@ -60,13 +60,13 @@ jobs:
         run: ./scripts/verify_build_products.sh
 
       - name: Scan Xcode logs for warnings and failures
-        if: always() && hashFiles('build-*.log') != ''
-        run: ./scripts/scan_build_log.py build-*.log
+        if: always() && hashFiles('.build/Xcode/Logs/build-*.log') != ''
+        run: ./scripts/scan_build_log.py .build/Xcode/Logs/build-*.log
 
       - name: Upload Xcode build logs
         if: always()
         uses: actions/upload-artifact@v7.0.1
         with:
           name: xcode-build-logs
-          path: build-*.log
+          path: .build/Xcode/Logs/build-*.log
           if-no-files-found: ignore

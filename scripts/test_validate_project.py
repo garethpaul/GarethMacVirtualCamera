@@ -222,10 +222,19 @@ done
 def test_validator_rejects_missing_partial_ci_log_scan():
     assert_validator_rejects_mutation(
         ".github/workflows/macos-build.yml",
-        """        if: always() && hashFiles('build-*.log') != ''
-        run: ./scripts/scan_build_log.py build-*.log""",
-        "        run: ./scripts/scan_build_log.py build-Debug.log build-Release.log",
+        """        if: always() && hashFiles('.build/Xcode/Logs/build-*.log') != ''
+        run: ./scripts/scan_build_log.py .build/Xcode/Logs/build-*.log""",
+        "        run: ./scripts/scan_build_log.py .build/Xcode/Logs/build-Debug.log .build/Xcode/Logs/build-Release.log",
         "macOS build workflow should scan any captured Debug or Release xcodebuild output even after failed build steps",
+    )
+
+
+def test_validator_rejects_root_level_unsigned_build_logs():
+    assert_validator_rejects_mutation(
+        "scripts/build_unsigned.sh",
+        'tee "$BUILD_LOG_PATH/build-${configuration}.log"',
+        'tee "build-${configuration}.log"',
+        "unsigned build script should capture Debug and Release logs under the configured build output path",
     )
 
 
@@ -263,6 +272,7 @@ def main():
     test_validator_rejects_missing_extension_load_failure_detail_row()
     test_validator_rejects_missing_unsigned_build_configuration_guard()
     test_validator_rejects_missing_partial_ci_log_scan()
+    test_validator_rejects_root_level_unsigned_build_logs()
     test_validator_rejects_missing_build_product_python_resolver()
     test_validator_rejects_missing_build_product_configuration_guard()
     print("Project validator tests passed.")

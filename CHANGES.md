@@ -107,3 +107,4 @@
 - Deferred unsigned-build architecture detection until after configuration-name validation.
 - Rejected invalid build-product verifier configuration names before resolving Python or product paths.
 - Covered the build-product verifier configuration guard in validator mutation tests.
+- Captured unsigned Xcode build logs under the configured build output path.

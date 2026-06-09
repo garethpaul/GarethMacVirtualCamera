@@ -5,6 +5,7 @@ PROJECT_PATH="${PROJECT_PATH:-GarethVideoCam.xcodeproj}"
 TARGET_NAME="${TARGET_NAME:-GarethVideoCam}"
 BUILD_ARCH="${BUILD_ARCH:-}"
 BUILD_OUTPUT_PATH="${BUILD_OUTPUT_PATH:-.build/Xcode}"
+BUILD_LOG_PATH="${BUILD_LOG_PATH:-$BUILD_OUTPUT_PATH/Logs}"
 
 if [ "$#" -gt 0 ]; then
   configurations=("$@")
@@ -34,6 +35,8 @@ if ! command -v xcodebuild >/dev/null 2>&1; then
   exit 127
 fi
 
+mkdir -p "$BUILD_LOG_PATH"
+
 for configuration in "${configurations[@]}"; do
   xcodebuild \
     -project "$PROJECT_PATH" \
@@ -48,5 +51,5 @@ for configuration in "${configurations[@]}"; do
     CODE_SIGN_IDENTITY="" \
     DEVELOPMENT_TEAM="" \
     COMPILER_INDEX_STORE_ENABLE=NO \
-    build 2>&1 | tee "build-${configuration}.log"
+    build 2>&1 | tee "$BUILD_LOG_PATH/build-${configuration}.log"
 done
