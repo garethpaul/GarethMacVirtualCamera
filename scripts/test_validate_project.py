@@ -1051,6 +1051,18 @@ def test_validator_rejects_raw_extension_executable_metadata():
     )
 
 
+def test_validator_rejects_missing_host_executable_name_shape_guard():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        """        guard Self.isExecutableName(executableName) else {
+            throw ExtensionRequestError.invalidExtensionExecutableName(executableName, extensionURL.path)
+        }
+""",
+        "",
+        "host app should reject path-like embedded extension executable names",
+    )
+
+
 def test_validator_rejects_missing_host_duplicate_extension_guard():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",
@@ -1345,6 +1357,20 @@ def test_validator_rejects_missing_build_product_video_file_guard():
     )
 
 
+def test_validator_rejects_missing_build_product_executable_name_guard():
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
+        """  if ! is_executable_name "$executable_name"; then
+    printf 'Invalid %s %s CFBundleExecutable: %s\\n' "$configuration" "$bundle_label" "$executable_name" >&2
+    exit 1
+  fi
+
+""",
+        "",
+        "build-product verifier should reject path-like CFBundleExecutable values",
+    )
+
+
 def test_validator_rejects_missing_make_gate_aliases():
     assert_validator_rejects_mutation(
         "Makefile",
@@ -1483,6 +1509,7 @@ def main():
     test_validator_rejects_missing_unsigned_build_configuration_guard()
     test_validator_rejects_missing_host_duplicate_extension_guard()
     test_validator_rejects_raw_extension_executable_metadata()
+    test_validator_rejects_missing_host_executable_name_shape_guard()
     test_validator_rejects_untrimmed_host_info_plist_metadata()
     test_validator_rejects_raw_extension_cmio_metadata()
     test_validator_rejects_untrimmed_host_cmio_metadata()
@@ -1505,6 +1532,7 @@ def main():
     test_validator_rejects_missing_build_product_duplicate_extension_guard()
     test_validator_rejects_directory_only_embedded_extension_count()
     test_validator_rejects_missing_build_product_video_file_guard()
+    test_validator_rejects_missing_build_product_executable_name_guard()
     test_validator_rejects_missing_make_gate_aliases()
     test_validator_rejects_missing_build_product_info_plist_string_type_guard()
     test_validator_rejects_missing_build_product_blank_info_plist_guard()

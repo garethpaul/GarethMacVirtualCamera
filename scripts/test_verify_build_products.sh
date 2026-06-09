@@ -986,6 +986,21 @@ if ! grep -q "Missing Debug extension CFBundleExecutable" "$TMP_DIR/missing-exte
   exit 1
 fi
 
+PATHLIKE_EXTENSION_EXECUTABLE_KEY_PRODUCTS="$TMP_DIR/pathlike-extension-executable-key/Products"
+write_product_fixture "$PATHLIKE_EXTENSION_EXECUTABLE_KEY_PRODUCTS" Debug
+set_info_plist_key "$PATHLIKE_EXTENSION_EXECUTABLE_KEY_PRODUCTS/Debug/GarethVideoCam.app/Contents/Library/SystemExtensions/$EXTENSION_NAME" "CFBundleExecutable" "../$EXTENSION_ID"
+
+if PRODUCTS_PATH="$PATHLIKE_EXTENSION_EXECUTABLE_KEY_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/pathlike-extension-executable-key.out" 2>"$TMP_DIR/pathlike-extension-executable-key.err"; then
+  printf 'Expected verifier to reject a path-like extension executable declaration.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Invalid Debug extension CFBundleExecutable" "$TMP_DIR/pathlike-extension-executable-key.err"; then
+  printf 'Verifier failure did not explain the path-like extension executable declaration.\n' >&2
+  cat "$TMP_DIR/pathlike-extension-executable-key.err" >&2
+  exit 1
+fi
+
 MISSING_APP_EXECUTABLE_PRODUCTS="$TMP_DIR/missing-app-executable/Products"
 write_product_fixture "$MISSING_APP_EXECUTABLE_PRODUCTS" Debug
 rm "$MISSING_APP_EXECUTABLE_PRODUCTS/Debug/GarethVideoCam.app/Contents/MacOS/GarethVideoCam"
@@ -1028,6 +1043,21 @@ fi
 if ! grep -q "Missing Debug app CFBundleExecutable" "$TMP_DIR/missing-app-executable-key.err"; then
   printf 'Verifier failure did not explain the missing app executable declaration.\n' >&2
   cat "$TMP_DIR/missing-app-executable-key.err" >&2
+  exit 1
+fi
+
+PATHLIKE_APP_EXECUTABLE_KEY_PRODUCTS="$TMP_DIR/pathlike-app-executable-key/Products"
+write_product_fixture "$PATHLIKE_APP_EXECUTABLE_KEY_PRODUCTS" Debug
+set_info_plist_key "$PATHLIKE_APP_EXECUTABLE_KEY_PRODUCTS/Debug/GarethVideoCam.app" "CFBundleExecutable" "../GarethVideoCam"
+
+if PRODUCTS_PATH="$PATHLIKE_APP_EXECUTABLE_KEY_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/pathlike-app-executable-key.out" 2>"$TMP_DIR/pathlike-app-executable-key.err"; then
+  printf 'Expected verifier to reject a path-like app executable declaration.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Invalid Debug app CFBundleExecutable" "$TMP_DIR/pathlike-app-executable-key.err"; then
+  printf 'Verifier failure did not explain the path-like app executable declaration.\n' >&2
+  cat "$TMP_DIR/pathlike-app-executable-key.err" >&2
   exit 1
 fi
 

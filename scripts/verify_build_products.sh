@@ -121,6 +121,14 @@ read_bundle_build_version() {
   read_info_plist_string "$bundle_path" CFBundleVersion
 }
 
+is_executable_name() {
+  local executable_name="$1"
+
+  [ "$executable_name" != "." ] \
+    && [ "$executable_name" != ".." ] \
+    && [[ "$executable_name" != */* ]]
+}
+
 read_extension_mach_service_name() {
   local bundle_path="$1"
   local info_plist="$bundle_path/Contents/Info.plist"
@@ -177,6 +185,11 @@ verify_bundle_executable() {
   executable_name="$(read_bundle_executable "$bundle_path")"
   if [ -z "$executable_name" ]; then
     printf 'Missing %s %s CFBundleExecutable.\n' "$configuration" "$bundle_label" >&2
+    exit 1
+  fi
+
+  if ! is_executable_name "$executable_name"; then
+    printf 'Invalid %s %s CFBundleExecutable: %s\n' "$configuration" "$bundle_label" "$executable_name" >&2
     exit 1
   fi
 

@@ -611,6 +611,12 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         return value
     }
 
+    private static func isExecutableName(_ executableName: String) -> Bool {
+        return executableName != "."
+            && executableName != ".."
+            && !executableName.contains("/")
+    }
+
     private static func extensionMachServiceName(in bundle: Bundle) -> String? {
         guard let cmioExtension = bundle.object(forInfoDictionaryKey: "CMIOExtension") as? [String: Any],
               let machServiceName = cmioExtension["CMIOExtensionMachServiceName"] as? String else {
@@ -1776,6 +1782,9 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         guard let executableName = Self.infoPlistString(in: extensionBundle, key: "CFBundleExecutable") else {
             throw ExtensionRequestError.missingExtensionExecutable(extensionURL.path)
         }
+        guard Self.isExecutableName(executableName) else {
+            throw ExtensionRequestError.invalidExtensionExecutableName(executableName, extensionURL.path)
+        }
         let executableURL = extensionURL
             .appendingPathComponent("Contents")
             .appendingPathComponent("MacOS")
@@ -2938,6 +2947,7 @@ enum ExtensionRequestError: LocalizedError {
     case unreadableExtensionBundle(String)
     case missingBundleIdentifier(String)
     case missingExtensionExecutable(String)
+    case invalidExtensionExecutableName(String, String)
     case invalidExtensionExecutable(String)
     case missingExtensionMachService(String)
     case missingBundledVideoResource(String)
@@ -2959,6 +2969,8 @@ enum ExtensionRequestError: LocalizedError {
             return "The bundled extension at \(path) does not declare a bundle identifier."
         case .missingExtensionExecutable(let path):
             return "The bundled extension at \(path) does not declare CFBundleExecutable."
+        case .invalidExtensionExecutableName(let executableName, let path):
+            return "The bundled extension at \(path) declares invalid CFBundleExecutable \(executableName)."
         case .invalidExtensionExecutable(let path):
             return "The bundled extension executable at \(path) is missing or is not executable."
         case .missingExtensionMachService(let path):
