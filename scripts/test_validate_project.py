@@ -142,7 +142,7 @@ def test_validator_rejects_missing_unknown_signature_state():
         case invalid(String)
 
 """,
-        "host app should distinguish unknown and invalid code-signing states before submitting system-extension requests",
+        "host app should distinguish unknown and invalid code-signing states and validate all architecture slices before submitting system-extension requests",
     )
 
 

@@ -1540,14 +1540,14 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     func refreshExtensionInfo() -> Bool {
         appQuarantineStatus = Self.quarantineStatus(for: Bundle.main.bundleURL)
         appCodeSigningStatus = Self.evaluateCodeSigningStatus(for: Bundle.main.bundleURL,
-                                                              validDetail: "The app bundle code signature is valid.")
+                                                              validDetail: "The app bundle code signature is valid across all architecture slices.")
 
         do {
             let loadedExtensionInfo = try loadBundledExtensionInfo()
             extensionInfo = loadedExtensionInfo
             extensionLoadFailureDetail = nil
             extensionCodeSigningStatus = Self.evaluateCodeSigningStatus(for: URL(fileURLWithPath: loadedExtensionInfo.bundlePath),
-                                                                        validDetail: "The embedded system extension code signature is valid.")
+                                                                        validDetail: "The embedded system extension code signature is valid across all architecture slices.")
             extensionQuarantineStatus = Self.quarantineStatus(for: URL(fileURLWithPath: loadedExtensionInfo.bundlePath))
 
             switch state {
@@ -2071,7 +2071,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     private func prepareForHostSystemExtensionRequest() -> Bool {
         appQuarantineStatus = Self.quarantineStatus(for: Bundle.main.bundleURL)
         appCodeSigningStatus = Self.evaluateCodeSigningStatus(for: Bundle.main.bundleURL,
-                                                              validDetail: "The app bundle code signature is valid.")
+                                                              validDetail: "The app bundle code signature is valid across all architecture slices.")
 
         if let applicationLocationReadinessDetail {
             recordReadinessBlock(state: .needsApplicationLocation,
@@ -2121,7 +2121,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             self.extensionInfo = extensionInfo
             extensionLoadFailureDetail = nil
             extensionCodeSigningStatus = Self.evaluateCodeSigningStatus(for: URL(fileURLWithPath: extensionInfo.bundlePath),
-                                                                        validDetail: "The embedded system extension code signature is valid.")
+                                                                        validDetail: "The embedded system extension code signature is valid across all architecture slices.")
             extensionQuarantineStatus = Self.quarantineStatus(for: URL(fileURLWithPath: extensionInfo.bundlePath))
         } catch {
             self.extensionInfo = nil
@@ -2504,7 +2504,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return .invalid(errorMessage(for: createStatus))
         }
 
-        let checkStatus = SecStaticCodeCheckValidityWithErrors(staticCode, SecCSFlags(), nil, nil)
+        let validationFlags = SecCSFlags(rawValue: kSecCSCheckAllArchitectures)
+        let checkStatus = SecStaticCodeCheckValidityWithErrors(staticCode, validationFlags, nil, nil)
         guard checkStatus == errSecSuccess else {
             return .invalid(errorMessage(for: checkStatus))
         }

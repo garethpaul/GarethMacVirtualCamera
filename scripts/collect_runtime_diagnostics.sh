@@ -1180,7 +1180,7 @@ print_diagnostics_resources
 section "Application"
 printf 'App path: %s\n' "$APP_PATH"
 if [ -d "$APP_PATH" ]; then
-  /usr/bin/codesign --verify --deep --strict --verbose=2 "$APP_PATH" 2>&1 || true
+  /usr/bin/codesign --verify --all-architectures --deep --strict --verbose=2 "$APP_PATH" 2>&1 || true
   /usr/bin/codesign -dv "$APP_PATH" 2>&1 || true
   /usr/bin/codesign -d --entitlements :- "$APP_PATH" 2>&1 || true
   run_if_available spctl --assess --type execute --verbose=4 "$APP_PATH"
@@ -1242,7 +1242,7 @@ print_quarantine_status "Extension" "$EXTENSION_PATH"
 section "Embedded System Extension"
 printf 'Extension path: %s\n' "$EXTENSION_PATH"
 if [ -d "$EXTENSION_PATH" ]; then
-  /usr/bin/codesign --verify --strict --verbose=2 "$EXTENSION_PATH" 2>&1 || true
+  /usr/bin/codesign --verify --all-architectures --strict --verbose=2 "$EXTENSION_PATH" 2>&1 || true
   /usr/bin/codesign -dv "$EXTENSION_PATH" 2>&1 || true
   /usr/bin/codesign -d --entitlements :- "$EXTENSION_PATH" 2>&1 || true
   run_if_available spctl --assess --type execute --verbose=4 "$EXTENSION_PATH"
@@ -1491,7 +1491,7 @@ if [ -d "$APP_PATH" ]; then
   app_bundle_identifier="$(read_bundle_identifier "$APP_PATH")"
   print_readiness_check "App bundle identifier ready" "$(bundle_identifier_matches_expected_value "$app_bundle_identifier" "$APP_ID")"
 
-  if /usr/bin/codesign --verify --deep --strict "$APP_PATH" >/dev/null 2>&1; then
+  if /usr/bin/codesign --verify --all-architectures --deep --strict "$APP_PATH" >/dev/null 2>&1; then
     print_readiness_check "App signature ready" "yes"
   else
     print_readiness_check "App signature ready" "no"
@@ -1517,7 +1517,7 @@ if [ -d "$EXTENSION_PATH" ]; then
   extension_host_only_entitlement_present="no"
   print_readiness_check "Extension bundle identifier ready" "$(bundle_identifier_matches_expected_value "$extension_bundle_identifier" "$EXTENSION_ID")"
 
-  if /usr/bin/codesign --verify --strict "$EXTENSION_PATH" >/dev/null 2>&1; then
+  if /usr/bin/codesign --verify --all-architectures --strict "$EXTENSION_PATH" >/dev/null 2>&1; then
     extension_signature_ready="yes"
   fi
   print_readiness_check "Extension signature ready" "$extension_signature_ready"
