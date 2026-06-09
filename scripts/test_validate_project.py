@@ -1295,6 +1295,18 @@ def test_validator_rejects_broad_appintents_log_ignore():
     )
 
 
+def test_validator_rejects_missing_appintents_ignore_disqualifier():
+    assert_validator_rejects_mutation(
+        "scripts/scan_build_log.py",
+        """    if IGNORED_LINE_DISQUALIFYING_PATTERN.search(line):
+        return False
+
+""",
+        "",
+        "build-log scanner should not hide additional failures on ignored AppIntents warning lines",
+    )
+
+
 def test_validator_rejects_missing_partial_ci_log_scan():
     assert_validator_rejects_mutation(
         ".github/workflows/macos-build.yml",
@@ -1590,6 +1602,7 @@ def main():
     test_validator_rejects_missing_host_mp4_full_box_version_guards()
     test_validator_rejects_missing_host_mp4_video_track_dimension_gate()
     test_validator_rejects_broad_appintents_log_ignore()
+    test_validator_rejects_missing_appintents_ignore_disqualifier()
     test_validator_rejects_missing_partial_ci_log_scan()
     test_validator_rejects_missing_unreadable_build_log_guard()
     test_validator_rejects_root_level_unsigned_build_logs()

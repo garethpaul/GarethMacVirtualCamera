@@ -8,6 +8,10 @@ ACTIONABLE_PATTERN = re.compile(
     r"warning:|error:|failed with a nonzero exit code|the following build commands failed:|testing failed:|\*\* BUILD FAILED \*\*|\*\* ARCHIVE FAILED \*\*|\*\* ANALYZE FAILED \*\*|\*\* CLEAN FAILED \*\*|\*\* TEST FAILED \*\*",
     re.IGNORECASE,
 )
+IGNORED_LINE_DISQUALIFYING_PATTERN = re.compile(
+    r"error:|failed with a nonzero exit code|the following build commands failed:|testing failed:|\*\* BUILD FAILED \*\*|\*\* ARCHIVE FAILED \*\*|\*\* ANALYZE FAILED \*\*|\*\* CLEAN FAILED \*\*|\*\* TEST FAILED \*\*",
+    re.IGNORECASE,
+)
 IGNORED_LINE_TOKEN_GROUPS = (
     (
         "appintentsmetadataprocessor",
@@ -25,6 +29,9 @@ class BuildLogReadError(Exception):
 
 
 def is_ignored(line):
+    if IGNORED_LINE_DISQUALIFYING_PATTERN.search(line):
+        return False
+
     normalized_line = line.lower()
     return any(
         all(token.lower() in normalized_line for token in token_group)

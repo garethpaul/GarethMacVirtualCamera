@@ -2,6 +2,8 @@
 
 ## 2026-06-08 to 2026-06-09
 
+- Kept the ignored AppIntents metadata warning from hiding additional actionable
+  failures on the same Xcode log line.
 - Covered non-file bundled runtime diagnostics script and parser resources in
   build-product verification.
 - Rejected non-file bundled runtime diagnostics script resources before
