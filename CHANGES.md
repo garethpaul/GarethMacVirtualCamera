@@ -47,3 +47,4 @@
 - Added stale packaged diagnostics rejection coverage for resource, executable, and parser self-tests.
 - Consolidated stale packaged diagnostics verifier assertions behind a shared test helper.
 - Aligned copied activation checklist wording with the full signed-host evidence list.
+- Used request-specific approval guidance when opening System Settings.

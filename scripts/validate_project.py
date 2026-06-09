@@ -785,8 +785,8 @@ def main():
     require("Submit a macOS system extension activation request." in host_source and "Refresh app, extension, signing, and readiness status." in host_source and "Copy the current readiness and diagnostics snapshot." in host_source and "Copy the signed runtime activation checklist." in host_source and "Copy the runtime diagnostics command." in host_source,
             "host app action buttons should expose concise hover help",
             failures)
-    require("openSystemSettings" in host_source and "System Settings" in host_source and "/System/Applications/System Settings.app" in host_source,
-            "host app should provide a System Settings shortcut for extension approval",
+    require("func openSystemSettings() {\n        let requestKind = pendingRequestKind ?? .activation" in host_source and "System Settings" in host_source and "/System/Applications/System Settings.app" in host_source and "detail: requestKind.approvalDetail" in host_source,
+            "host app should provide request-specific System Settings guidance for extension approval",
             failures)
     require("didOpenSettings" in host_source and "System Settings Unavailable" in host_source,
             "host app should report System Settings launch failures",

@@ -1600,13 +1600,14 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     func openSystemSettings() {
+        let requestKind = pendingRequestKind ?? .activation
         let settingsURL = URL(fileURLWithPath: "/System/Applications/System Settings.app")
         let didOpenSettings = NSWorkspace.shared.open(settingsURL)
 
         if didOpenSettings {
             appendActivity(level: .info,
                            title: "System Settings Opened",
-                           detail: "Approve the camera extension if macOS is waiting for user approval.")
+                           detail: requestKind.approvalDetail)
         } else {
             appendActivity(level: .error,
                            title: "System Settings Unavailable",
