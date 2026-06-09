@@ -212,6 +212,8 @@ passing_outputs = {
         "Application group unresolved fixture ready: no",
         "Application group empty format fixture: none",
         "Application group list format fixture: ABCDE12345.com.garethpaul.GarethVideoCam, ZYXWV98765.com.garethpaul.GarethVideoCam",
+        "Application group all architectures common fixture: ABCDE12345.com.garethpaul.GarethVideoCam",
+        "Application group missing architecture common fixture: none",
     ],
     "mach-service": [
         "Mach service direct fixture resolved: yes",
@@ -368,6 +370,8 @@ stale_outputs = {
         "Application group unresolved fixture ready: yes",
         "Application group empty format fixture: value",
         "Application group list format fixture: none",
+        "Application group all architectures common fixture: none",
+        "Application group missing architecture common fixture: value",
     ],
     "mach-service": [
         "Mach service direct fixture resolved: no",

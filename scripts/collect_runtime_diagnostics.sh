@@ -405,15 +405,55 @@ extension_host_only_entitlement_absent_readiness_value() {
 
 read_application_groups() {
   local bundle_path="$1"
+  local architectures
+  local architecture
+  local architecture_count=0
+  local architecture_groups=""
+  local groups
+
+  architectures="$(bundle_executable_architectures "$bundle_path")"
+  if [ -z "$architectures" ]; then
+    read_application_groups_for_architecture "$bundle_path" ""
+    return
+  fi
+
+  while IFS= read -r architecture; do
+    [ -n "$architecture" ] || continue
+    architecture_count=$((architecture_count + 1))
+    groups="$(read_application_groups_for_architecture "$bundle_path" "$architecture")" || return 1
+    architecture_groups="${architecture_groups}${groups}
+"
+  done <<EOF
+$architectures
+EOF
+
+  common_application_groups_for_architectures "$architecture_groups" "$architecture_count"
+}
+
+read_application_groups_for_architecture() {
+  local bundle_path="$1"
+  local architecture="$2"
   local entitlements_file
-  local python_bin=""
 
   entitlements_file="$(/usr/bin/mktemp -t gareth-entitlements.XXXXXX)" || return 1
 
-  if ! /usr/bin/codesign -d --entitlements :- "$bundle_path" >"$entitlements_file" 2>/dev/null; then
+  if [ -n "$architecture" ]; then
+    if ! /usr/bin/codesign -d --architecture "$architecture" --entitlements :- "$bundle_path" >"$entitlements_file" 2>/dev/null; then
+      /bin/rm -f "$entitlements_file"
+      return 1
+    fi
+  elif ! /usr/bin/codesign -d --entitlements :- "$bundle_path" >"$entitlements_file" 2>/dev/null; then
     /bin/rm -f "$entitlements_file"
     return 1
   fi
+
+  read_application_groups_from_entitlements_file "$entitlements_file" | /usr/bin/sort -u
+  /bin/rm -f "$entitlements_file"
+}
+
+read_application_groups_from_entitlements_file() {
+  local entitlements_file="$1"
+  local python_bin=""
 
   python_bin="$(python3_command)"
 
@@ -441,8 +481,27 @@ PY
         NF { sub(/^[[:space:]]+/, ""); print }
       ' || true
   fi
+}
 
-  /bin/rm -f "$entitlements_file"
+common_application_groups_for_architectures() {
+  local architecture_groups="$1"
+  local architecture_count="$2"
+
+  if [ "$architecture_count" -le 0 ]; then
+    return
+  fi
+
+  printf '%s\n' "$architecture_groups" | /usr/bin/awk -v architecture_count="$architecture_count" '
+    NF {
+      group_counts[$0] += 1
+    }
+    END {
+      for (application_group in group_counts) {
+        if (group_counts[application_group] == architecture_count) {
+          print application_group
+        }
+      }
+    }' | /usr/bin/sort
 }
 
 format_application_groups() {
@@ -1089,6 +1148,8 @@ run_application_group_self_test() {
   local wrong_group="ABCDE12345.com.example.Other"
   local dotted_prefix_group="com.example.$APP_GROUP_BASE_ID"
   local formatted_groups
+  local common_groups
+  local missing_common_groups
 
   printf 'Application group direct fixture ready: %s\n' "$(application_groups_ready_value "$direct_group" "$direct_group")"
   printf 'Application group shared fixture ready: %s\n' "$(application_groups_ready_value "$shared_group" "$shared_group")"
@@ -1100,6 +1161,10 @@ run_application_group_self_test() {
   printf 'Application group empty format fixture: %s\n' "$(format_application_groups "")"
   formatted_groups="$(format_application_groups "$shared_group"$'\n'"$other_team_group")"
   printf 'Application group list format fixture: %s\n' "$formatted_groups"
+  common_groups="$(common_application_groups_for_architectures "$shared_group"$'\n'"$other_team_group"$'\n'"$shared_group" 2)"
+  printf 'Application group all architectures common fixture: %s\n' "$(format_application_groups "$common_groups")"
+  missing_common_groups="$(common_application_groups_for_architectures "$shared_group"$'\n'"$other_team_group" 2)"
+  printf 'Application group missing architecture common fixture: %s\n' "$(format_application_groups "$missing_common_groups")"
 }
 
 run_camera_device_self_test() {

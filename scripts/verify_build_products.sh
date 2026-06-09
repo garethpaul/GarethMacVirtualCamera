@@ -347,7 +347,9 @@ verify_app_diagnostics_resources() {
     "Application group dotted-prefix fixture ready: no" \
     "Application group unresolved fixture ready: no" \
     "Application group empty format fixture: none" \
-    "Application group list format fixture: ABCDE12345.com.garethpaul.GarethVideoCam, ZYXWV98765.com.garethpaul.GarethVideoCam"
+    "Application group list format fixture: ABCDE12345.com.garethpaul.GarethVideoCam, ZYXWV98765.com.garethpaul.GarethVideoCam" \
+    "Application group all architectures common fixture: ABCDE12345.com.garethpaul.GarethVideoCam" \
+    "Application group missing architecture common fixture: none"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "mach-service" "mach-service" \
     "Mach service direct fixture resolved: yes" \

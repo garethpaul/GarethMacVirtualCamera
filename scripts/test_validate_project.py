@@ -174,9 +174,26 @@ def test_validator_rejects_missing_runtime_diagnostics_all_architecture_details(
 def test_validator_rejects_missing_runtime_diagnostics_all_architecture_entitlements():
     assert_validator_rejects_mutation(
         "scripts/collect_runtime_diagnostics.sh",
-        '    if ! /usr/bin/codesign -d --architecture "$architecture" --entitlements :- "$bundle_path" >"$entitlements_file" 2>/dev/null; then',
-        '    if ! /usr/bin/codesign -d --entitlements :- "$bundle_path" >"$entitlements_file" 2>/dev/null; then',
+        """    if ! /usr/bin/codesign -d --architecture "$architecture" --entitlements :- "$bundle_path" >"$entitlements_file" 2>/dev/null; then
+      /bin/rm -f "$entitlements_file"
+      printf 'unknown\\n'
+      return
+    fi""",
+        """    if ! /usr/bin/codesign -d --entitlements :- "$bundle_path" >"$entitlements_file" 2>/dev/null; then
+      /bin/rm -f "$entitlements_file"
+      printf 'unknown\\n'
+      return
+    fi""",
         "runtime diagnostics script should read boolean entitlements across all executable architecture slices",
+    )
+
+
+def test_validator_rejects_missing_runtime_diagnostics_all_architecture_application_groups():
+    assert_validator_rejects_mutation(
+        "scripts/collect_runtime_diagnostics.sh",
+        '  common_application_groups_for_architectures "$architecture_groups" "$architecture_count"',
+        '  printf \'%s\\n\' "$architecture_groups"',
+        "runtime diagnostics script should require app-group values across all executable architecture slices",
     )
 
 
@@ -206,6 +223,7 @@ def main():
     test_validator_rejects_missing_all_architecture_signature_validation()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_details()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_entitlements()
+    test_validator_rejects_missing_runtime_diagnostics_all_architecture_application_groups()
     test_validator_rejects_missing_extension_load_failure_detail_row()
     test_validator_rejects_missing_unsigned_build_configuration_guard()
     print("Project validator tests passed.")
