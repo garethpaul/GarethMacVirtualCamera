@@ -331,6 +331,8 @@ verify_app_diagnostics_resources() {
     "Team ID mismatch fixture: no" \
     "Team ID missing app fixture: no" \
     "Team ID missing extension fixture: no" \
+    "Team ID short fixture: no" \
+    "Team ID dotted fixture: no" \
     "Team ID multiple app fixture: no" \
     "Team ID multiple extension fixture: no"
 

@@ -263,7 +263,7 @@ read_team_identifier() {
       value = $2
       sub(/^[[:space:]]+/, "", value)
       sub(/[[:space:]]+$/, "", value)
-      if (value != "" && value != "not set") {
+      if (value ~ /^[[:alnum:]]{10}$/) {
         print value
       }
     }' | /usr/bin/sort -u)"
@@ -290,11 +290,19 @@ team_identifiers_match_value() {
 
   if [ "$app_team_identifier_count" = "1" ] \
     && [ "$extension_team_identifier_count" = "1" ] \
+    && team_identifier_is_valid "$app_team_identifier" \
+    && team_identifier_is_valid "$extension_team_identifier" \
     && [ "$app_team_identifier" = "$extension_team_identifier" ]; then
     printf 'yes\n'
   else
     printf 'no\n'
   fi
+}
+
+team_identifier_is_valid() {
+  local team_identifier="$1"
+
+  [[ "$team_identifier" =~ ^[[:alnum:]]{10}$ ]]
 }
 
 boolean_entitlement_value() {
@@ -1181,6 +1189,8 @@ run_team_identifier_self_test() {
   printf 'Team ID mismatch fixture: %s\n' "$(team_identifiers_match_value "ABCDE12345" "ZYXWV98765")"
   printf 'Team ID missing app fixture: %s\n' "$(team_identifiers_match_value "" "ABCDE12345")"
   printf 'Team ID missing extension fixture: %s\n' "$(team_identifiers_match_value "ABCDE12345" "")"
+  printf 'Team ID short fixture: %s\n' "$(team_identifiers_match_value "ABC123" "ABC123")"
+  printf 'Team ID dotted fixture: %s\n' "$(team_identifiers_match_value "ABCDE12345.com" "ABCDE12345.com")"
   printf 'Team ID multiple app fixture: %s\n' "$(team_identifiers_match_value "$multiple_team_identifiers" "ABCDE12345")"
   printf 'Team ID multiple extension fixture: %s\n' "$(team_identifiers_match_value "ABCDE12345" "$multiple_team_identifiers")"
 }

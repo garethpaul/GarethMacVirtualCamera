@@ -107,6 +107,8 @@ require_output "$team_id_output" "Team ID match fixture: yes"
 require_output "$team_id_output" "Team ID mismatch fixture: no"
 require_output "$team_id_output" "Team ID missing app fixture: no"
 require_output "$team_id_output" "Team ID missing extension fixture: no"
+require_output "$team_id_output" "Team ID short fixture: no"
+require_output "$team_id_output" "Team ID dotted fixture: no"
 require_output "$team_id_output" "Team ID multiple app fixture: no"
 require_output "$team_id_output" "Team ID multiple extension fixture: no"
 
