@@ -10,6 +10,7 @@
   checks.
 - Rejected scalar app-group entitlements in the runtime diagnostics PlistBuddy
   fallback parser.
+- Rejected scalar boolean signed entitlement values in runtime diagnostics.
 - Added `make check` as the conventional local validation entry point.
 - Documented the Makefile baseline and recorded the completed plan under `docs/plans/`.
 - Extended project validation so the Makefile, plan, README, VISION, and change log stay aligned.

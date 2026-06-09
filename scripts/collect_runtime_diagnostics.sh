@@ -367,22 +367,63 @@ read_boolean_entitlement_for_architecture() {
 read_boolean_entitlement_from_entitlements_file() {
   local entitlements_file="$1"
   local entitlement="$2"
-  local entitlement_value
+  local plistbuddy_output
+  local python_bin=""
 
-  if [ ! -x /usr/libexec/PlistBuddy ]; then
-    return 1
-  fi
+  python_bin="$(python3_command)"
 
-  if [ -x /usr/bin/plutil ]; then
-    /usr/bin/plutil -lint "$entitlements_file" >/dev/null 2>/dev/null || return 1
-  fi
+  if [ -n "$python_bin" ]; then
+    "$python_bin" - "$entitlements_file" "$entitlement" <<'PY'
+import plistlib
+import sys
 
-  entitlement_value="$(/usr/libexec/PlistBuddy -c "Print :${entitlement}" "$entitlements_file" 2>/dev/null || true)"
+with open(sys.argv[1], "rb") as entitlements_file:
+    entitlements = plistlib.load(entitlements_file)
 
-  if [ "$entitlement_value" = "true" ]; then
-    printf 'yes\n'
+value = entitlements.get(sys.argv[2], False)
+if not isinstance(value, bool):
+    sys.exit(1)
+
+print("yes" if value else "no")
+PY
+  elif [ -x /usr/libexec/PlistBuddy ]; then
+    if [ -x /usr/bin/plutil ]; then
+      /usr/bin/plutil -lint "$entitlements_file" >/dev/null 2>/dev/null || return 1
+    fi
+
+    if ! plistbuddy_output="$(/usr/libexec/PlistBuddy -x -c "Print :${entitlement}" "$entitlements_file" 2>/dev/null)"; then
+      printf 'no\n'
+      return
+    fi
+
+    printf '%s\n' "$plistbuddy_output" | /usr/bin/awk '
+        /^[[:space:]]*<\?xml/ { next }
+        /^[[:space:]]*<!DOCTYPE/ { next }
+        /^[[:space:]]*<plist/ { next }
+        /^[[:space:]]*<\/plist>/ { next }
+        /^[[:space:]]*<true\/>[[:space:]]*$/ {
+          if (value != "") {
+            invalid = 1
+          }
+          value = "yes"
+          next
+        }
+        /^[[:space:]]*<false\/>[[:space:]]*$/ {
+          if (value != "") {
+            invalid = 1
+          }
+          value = "no"
+          next
+        }
+        NF { invalid = 1 }
+        END {
+          if (invalid || value == "") {
+            exit 1
+          }
+          print value
+        }'
   else
-    printf 'no\n'
+    return 1
   fi
 }
 
@@ -1215,6 +1256,9 @@ run_extension_host_entitlement_self_test() {
   local temp_dir
   local malformed_entitlements
   local malformed_boolean_value
+  local scalar_entitlements
+  local scalar_boolean_status
+  local scalar_boolean_value
 
   printf 'Boolean entitlement all architectures present fixture: %s\n' "$(boolean_entitlement_all_architectures_value "$all_architectures_present")"
   printf 'Boolean entitlement missing architecture fixture: %s\n' "$(boolean_entitlement_all_architectures_value "$missing_architecture")"
@@ -1225,6 +1269,28 @@ run_extension_host_entitlement_self_test() {
   printf 'not a plist' >"$malformed_entitlements"
   malformed_boolean_value="$(read_boolean_entitlement_from_entitlements_file "$malformed_entitlements" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT" 2>/dev/null || printf 'unknown\n')"
   printf 'Boolean entitlement malformed plist fixture: %s\n' "$malformed_boolean_value"
+  scalar_entitlements="$temp_dir/scalar-entitlements.plist"
+  cat >"$scalar_entitlements" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>${HOST_SYSTEM_EXTENSION_ENTITLEMENT}</key>
+  <string>true</string>
+</dict>
+</plist>
+PLIST
+  scalar_boolean_value="$(read_boolean_entitlement_from_entitlements_file "$scalar_entitlements" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT" 2>/dev/null || printf 'unknown\n')"
+  printf 'Boolean entitlement scalar fixture: %s\n' "$scalar_boolean_value"
+  set +e
+  scalar_boolean_value="$(GARETH_DIAGNOSTICS_SKIP_PYTHON=1 read_boolean_entitlement_from_entitlements_file "$scalar_entitlements" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT" 2>/dev/null)"
+  scalar_boolean_status=$?
+  set -e
+  if [ "$scalar_boolean_status" -eq 0 ]; then
+    printf 'Boolean entitlement fallback scalar fixture: %s\n' "$scalar_boolean_value"
+  else
+    printf 'Boolean entitlement fallback scalar fixture: unknown\n'
+  fi
   /bin/rm -rf "$temp_dir"
   printf 'Extension host entitlement valid absent fixture: %s\n' "$(extension_host_only_entitlement_absent_readiness_value "yes" "no")"
   printf 'Extension host entitlement valid present fixture: %s\n' "$(extension_host_only_entitlement_absent_readiness_value "yes" "yes")"

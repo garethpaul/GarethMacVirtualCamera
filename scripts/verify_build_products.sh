@@ -342,6 +342,8 @@ verify_app_diagnostics_resources() {
     "Boolean entitlement unreadable architecture fixture: unknown" \
     "Boolean entitlement empty architecture fixture: unknown" \
     "Boolean entitlement malformed plist fixture: unknown" \
+    "Boolean entitlement scalar fixture: unknown" \
+    "Boolean entitlement fallback scalar fixture: unknown" \
     "Extension host entitlement valid absent fixture: yes" \
     "Extension host entitlement valid present fixture: no" \
     "Extension host entitlement invalid signature fixture: no" \

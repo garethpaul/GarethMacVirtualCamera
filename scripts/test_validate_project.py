@@ -466,6 +466,29 @@ def test_validator_rejects_missing_runtime_diagnostics_all_architecture_entitlem
     )
 
 
+def test_validator_rejects_missing_runtime_diagnostics_scalar_boolean_entitlement_guard():
+    assert_validator_rejects_mutation(
+        "scripts/collect_runtime_diagnostics.sh",
+        """value = entitlements.get(sys.argv[2], False)
+if not isinstance(value, bool):
+    sys.exit(1)
+
+print("yes" if value else "no")
+""",
+        """value = bool(entitlements.get(sys.argv[2], False))
+
+print("yes" if value else "no")
+""",
+        "runtime diagnostics should reject scalar boolean entitlement values",
+    )
+    assert_validator_rejects_mutation(
+        "scripts/collect_runtime_diagnostics.sh",
+        '    if ! plistbuddy_output="$(/usr/libexec/PlistBuddy -x -c "Print :${entitlement}" "$entitlements_file" 2>/dev/null)"; then',
+        '    if ! plistbuddy_output="$(/usr/libexec/PlistBuddy -c "Print :${entitlement}" "$entitlements_file" 2>/dev/null)"; then',
+        "runtime diagnostics should reject scalar boolean entitlement values",
+    )
+
+
 def test_validator_rejects_missing_runtime_diagnostics_all_architecture_application_groups():
     assert_validator_rejects_mutation(
         "scripts/collect_runtime_diagnostics.sh",
@@ -698,6 +721,7 @@ def main():
     test_validator_rejects_numeric_boolean_entitlement_acceptance()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_details()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_entitlements()
+    test_validator_rejects_missing_runtime_diagnostics_scalar_boolean_entitlement_guard()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_application_groups()
     test_validator_rejects_missing_runtime_diagnostics_fallback_scalar_app_group_guard()
     test_validator_rejects_loose_team_id_prefix_lengths()
