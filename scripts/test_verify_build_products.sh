@@ -83,6 +83,24 @@ with open(sys.argv[1], "wb") as info_file:
 PY
 }
 
+set_extension_mach_service_boolean() {
+  local bundle_path="$1"
+  local value="$2"
+
+  python3 - "$bundle_path/Contents/Info.plist" "$value" <<'PY'
+import plistlib
+import sys
+
+with open(sys.argv[1], "rb") as info_file:
+    info = plistlib.load(info_file)
+
+info.setdefault("CMIOExtension", {})["CMIOExtensionMachServiceName"] = sys.argv[2] == "true"
+
+with open(sys.argv[1], "wb") as info_file:
+    plistlib.dump(info, info_file)
+PY
+}
+
 write_executable_fixture() {
   local bundle_path="$1"
   local executable_name="$2"
@@ -1179,6 +1197,21 @@ fi
 if ! grep -q "Unexpected Debug extension CMIOExtensionMachServiceName" "$TMP_DIR/dotted-prefix-cmio.err"; then
   printf 'Verifier failure did not explain the dotted-prefix CMIO extension metadata.\n' >&2
   cat "$TMP_DIR/dotted-prefix-cmio.err" >&2
+  exit 1
+fi
+
+NON_STRING_CMIO_PRODUCTS="$TMP_DIR/non-string-cmio/Products"
+write_product_fixture "$NON_STRING_CMIO_PRODUCTS" Debug
+set_extension_mach_service_boolean "$NON_STRING_CMIO_PRODUCTS/Debug/GarethVideoCam.app/Contents/Library/SystemExtensions/$EXTENSION_NAME" true
+
+if PRODUCTS_PATH="$NON_STRING_CMIO_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/non-string-cmio.out" 2>"$TMP_DIR/non-string-cmio.err"; then
+  printf 'Expected verifier to reject non-string CMIO extension metadata.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug extension CMIOExtensionMachServiceName" "$TMP_DIR/non-string-cmio.err"; then
+  printf 'Verifier failure did not explain the non-string CMIO extension metadata.\n' >&2
+  cat "$TMP_DIR/non-string-cmio.err" >&2
   exit 1
 fi
 

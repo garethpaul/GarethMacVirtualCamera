@@ -120,8 +120,11 @@ import sys
 with open(sys.argv[1], "rb") as info_file:
     cmio_extension = plistlib.load(info_file).get("CMIOExtension", {})
 
+if not isinstance(cmio_extension, dict):
+    sys.exit(0)
+
 mach_service_name = cmio_extension.get("CMIOExtensionMachServiceName", "")
-if mach_service_name:
+if isinstance(mach_service_name, str) and mach_service_name:
     print(mach_service_name)
 PY
 }
