@@ -303,10 +303,12 @@ verify_app_diagnostics_resources() {
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "registration" "registration" \
     "Registration active fixture present: yes" \
     "Registration active fixture activated enabled: yes" \
+    "Registration reversed fixture activated enabled: yes" \
     "Registration waiting fixture activated enabled: no" \
     "Registration deactivated fixture activated enabled: no" \
     "Registration longer identifier fixture present: no" \
     "Registration longer identifier fixture activated enabled: no" \
+    "Registration missing fixture present: no" \
     "Registration empty fixture present: unknown"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "activation-evidence" "activation-evidence" \
