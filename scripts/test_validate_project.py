@@ -1007,6 +1007,19 @@ def test_validator_rejects_missing_runtime_diagnostics_fallback_untrimmed_app_gr
     )
 
 
+def test_validator_rejects_missing_runtime_diagnostics_fallback_encoded_multiline_app_group_guard():
+    assert_validator_rejects_mutation(
+        "scripts/collect_runtime_diagnostics.sh",
+        """          if (group ~ /&#([xX]0*[Aa]|0*10);/ || group ~ /&#([xX]0*[Dd]|0*13);/) {
+            invalid = 1
+            next
+          }
+""",
+        "",
+        "runtime diagnostics should reject encoded multiline app-group entitlement strings in the PlistBuddy fallback parser",
+    )
+
+
 def test_validator_rejects_loose_team_id_prefix_lengths():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",
@@ -1777,6 +1790,15 @@ def test_validator_rejects_missing_packaged_multiline_app_group_verifier():
     )
 
 
+def test_validator_rejects_missing_packaged_fallback_encoded_multiline_app_group_verifier():
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
+        '    "Application group fallback encoded multiline entitlements readable fixture: no" \\\n',
+        "",
+        "build-product verifier should run the bundled runtime diagnostics application-group self-test",
+    )
+
+
 def main():
     test_malformed_mdhd_atom_does_not_raise()
     test_unsupported_mdhd_version_does_not_report_duration()
@@ -1830,6 +1852,7 @@ def main():
     test_validator_rejects_missing_runtime_diagnostics_multiline_app_group_guard()
     test_validator_rejects_missing_runtime_diagnostics_fallback_scalar_app_group_guard()
     test_validator_rejects_missing_runtime_diagnostics_fallback_untrimmed_app_group_guard()
+    test_validator_rejects_missing_runtime_diagnostics_fallback_encoded_multiline_app_group_guard()
     test_validator_rejects_loose_team_id_prefix_lengths()
     test_validator_rejects_bare_application_group_acceptance()
     test_validator_rejects_untrimmed_signed_app_group_values()
@@ -1885,6 +1908,7 @@ def main():
     test_validator_rejects_missing_packaged_file_byte_count_verifier()
     test_validator_rejects_missing_packaged_multiline_info_plist_verifier()
     test_validator_rejects_missing_packaged_multiline_app_group_verifier()
+    test_validator_rejects_missing_packaged_fallback_encoded_multiline_app_group_verifier()
     print("Project validator tests passed.")
     return 0
 

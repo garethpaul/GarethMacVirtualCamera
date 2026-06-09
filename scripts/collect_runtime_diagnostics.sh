@@ -685,6 +685,10 @@ PY
             invalid = 1
             next
           }
+          if (group ~ /&#([xX]0*[Aa]|0*10);/ || group ~ /&#([xX]0*[Dd]|0*13);/) {
+            invalid = 1
+            next
+          }
           if (group != "") {
             print group
           }
@@ -1553,6 +1557,7 @@ run_application_group_self_test() {
   local non_string_entitlements
   local untrimmed_entitlements
   local multiline_entitlements
+  local encoded_multiline_entitlements
   local scalar_entitlements
   local malformed_entitlements_status
 
@@ -1672,6 +1677,19 @@ PLIST
   else
     printf 'Application group multiline entitlements readable fixture: no\n'
   fi
+  encoded_multiline_entitlements="$temp_dir/encoded-multiline-entitlements.plist"
+  cat >"$encoded_multiline_entitlements" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>${APP_GROUP_ENTITLEMENT}</key>
+  <array>
+    <string>ABCDE12345.${APP_GROUP_BASE_ID}&#10;suffix</string>
+  </array>
+</dict>
+</plist>
+PLIST
   set +e
   GARETH_DIAGNOSTICS_SKIP_PYTHON=1 read_application_groups_from_entitlements_file "$scalar_entitlements" >/dev/null 2>/dev/null
   malformed_entitlements_status=$?
@@ -1698,6 +1716,15 @@ PLIST
     printf 'Application group fallback untrimmed entitlements readable fixture: yes\n'
   else
     printf 'Application group fallback untrimmed entitlements readable fixture: no\n'
+  fi
+  set +e
+  GARETH_DIAGNOSTICS_SKIP_PYTHON=1 read_application_groups_from_entitlements_file "$encoded_multiline_entitlements" >/dev/null 2>/dev/null
+  malformed_entitlements_status=$?
+  set -e
+  if [ "$malformed_entitlements_status" -eq 0 ]; then
+    printf 'Application group fallback encoded multiline entitlements readable fixture: yes\n'
+  else
+    printf 'Application group fallback encoded multiline entitlements readable fixture: no\n'
   fi
   set +e
   GARETH_DIAGNOSTICS_SKIP_PYTHON=1 read_application_groups_from_entitlements_file "$malformed_entitlements" >/dev/null 2>/dev/null

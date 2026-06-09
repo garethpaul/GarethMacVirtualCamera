@@ -30,6 +30,8 @@
   executed the signed app-group mutation coverage in the validator suite.
 - Required host Team ID, app-group, and CMIO regex checks to match the whole
   string through a shared helper.
+- Rejected XML-encoded multiline app-group entitlement values in the runtime
+  diagnostics PlistBuddy fallback parser and packaged self-test verification.
 - Rejected whitespace-padded app icon size and scale metadata before validating
   icon PNG dimensions.
 - Required app icon catalog scale metadata to use the expected `x` suffix before
