@@ -19,7 +19,7 @@ Priority:
 - Keep build-product, entitlement, signing, and bundled-video validation strong
 - Maintain local checks and CI-equivalent unsigned build paths
 - Keep build-log scanning strict for warnings, errors, failed Xcode commands,
-  and build/archive/test failure banners
+  and build/archive/analyze/clean/test failure banners
 - Keep unsigned build script inputs constrained before log files are written
 - Keep `make lint`, `make test`, `make build`, and `make check` aligned with
   `./scripts/check_project.sh`

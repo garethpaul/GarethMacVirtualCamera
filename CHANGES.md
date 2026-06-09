@@ -4,6 +4,8 @@
 
 - Hardened the MP4 metadata parser against malformed empty `mdhd` atoms and
   added validator unit coverage to `make check`.
+- Flagged Xcode analyze-failed and clean-failed banners in the build-log
+  scanner.
 - Added `make lint`, `make test`, and `make build` aliases so local validation
   has the expected gate targets in addition to `make check`.
 - Rejected non-finite stream frame-duration writes in the camera extension.

@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 ACTIONABLE_PATTERN = re.compile(
-    r"warning:|error:|failed with a nonzero exit code|the following build commands failed:|testing failed:|\*\* BUILD FAILED \*\*|\*\* ARCHIVE FAILED \*\*|\*\* TEST FAILED \*\*",
+    r"warning:|error:|failed with a nonzero exit code|the following build commands failed:|testing failed:|\*\* BUILD FAILED \*\*|\*\* ARCHIVE FAILED \*\*|\*\* ANALYZE FAILED \*\*|\*\* CLEAN FAILED \*\*|\*\* TEST FAILED \*\*",
     re.IGNORECASE,
 )
 IGNORED_LINE_TOKEN_GROUPS = (

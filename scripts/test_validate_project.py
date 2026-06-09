@@ -992,7 +992,7 @@ def test_validator_rejects_broad_appintents_log_ignore():
         "Metadata extraction skipped. No AppIntents.framework dependency found.",
     ),
 """,
-        "build-log scanner should fail on warnings, errors, build/test-failed banners, build/test failure summaries, and nonzero Xcode command failures while narrowly ignoring known Xcode AppIntents metadata noise",
+        "build-log scanner should fail on warnings, errors, build/analyze/clean/test-failed banners, build/test failure summaries, and nonzero Xcode command failures while narrowly ignoring known Xcode AppIntents metadata noise",
     )
 
 

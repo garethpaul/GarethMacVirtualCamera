@@ -98,6 +98,18 @@ def test_fails_on_archive_failed_banner():
     require("** ARCHIVE FAILED **" in result.stdout, result.stdout)
 
 
+def test_fails_on_analyze_failed_banner():
+    result = run_scanner("** ANALYZE FAILED **\n")
+    require(result.returncode == 1, result.stdout + result.stderr)
+    require("** ANALYZE FAILED **" in result.stdout, result.stdout)
+
+
+def test_fails_on_clean_failed_banner():
+    result = run_scanner("** CLEAN FAILED **\n")
+    require(result.returncode == 1, result.stdout + result.stderr)
+    require("** CLEAN FAILED **" in result.stdout, result.stdout)
+
+
 def test_fails_on_testing_failed_summary():
     result = run_scanner("Testing failed:\n")
     require(result.returncode == 1, result.stdout + result.stderr)
@@ -203,6 +215,8 @@ def main():
     test_fails_on_build_commands_failed_summary()
     test_fails_on_build_failed_banner()
     test_fails_on_archive_failed_banner()
+    test_fails_on_analyze_failed_banner()
+    test_fails_on_clean_failed_banner()
     test_fails_on_testing_failed_summary()
     test_fails_on_test_failed_banner()
     test_scans_multiple_build_logs()
