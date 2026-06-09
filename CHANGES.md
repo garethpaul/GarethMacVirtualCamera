@@ -115,3 +115,4 @@
 - Rejected dot-segment Xcode configuration names before build or verifier path setup.
 - Rejected unsupported MP4 `mdhd` versions in bundled-video metadata parsers.
 - Rejected unsupported MP4 full-box versions for handler, timing, and sample descriptions.
+- Limited parsed MP4 sample-description dimensions to confirmed video tracks.

@@ -1832,6 +1832,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                     var timescale: UInt32?
                     var mediaDuration: UInt64?
                     var sampleDurations: [(sampleCount: UInt32, sampleDelta: UInt32)] = []
+                    var trackDimensions: VideoDimensions?
 
                     for nestedMediaAtom in atoms(in: videoData, start: mediaAtom.payloadStart, end: mediaAtom.payloadEnd) {
                         if nestedMediaAtom.type == "mdhd" {
@@ -1858,7 +1859,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                                     if let dimensions = parseStsdDimensions(in: videoData,
                                                                             payloadStart: stblAtom.payloadStart,
                                                                             payloadEnd: stblAtom.payloadEnd) {
-                                        videoMetadata.dimensions = dimensions
+                                        trackDimensions = dimensions
                                     }
                                 }
                             }
@@ -1867,6 +1868,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
                     guard handler == "vide" else {
                         continue
+                    }
+
+                    if let trackDimensions {
+                        videoMetadata.dimensions = trackDimensions
                     }
 
                     if let timescale, timescale > 0, let mediaDuration {

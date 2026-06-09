@@ -221,6 +221,36 @@ def test_unsupported_stsd_version_does_not_report_dimensions():
         raise AssertionError(f"Unexpected dimensions for unsupported stsd version: {metadata}")
 
 
+def test_non_video_track_stsd_does_not_report_dimensions():
+    validator = load_validator()
+    mdhd_payload = b"\0\0\0\0" + b"\0" * 8 + struct.pack(">II", 24_000, 24_000)
+    hdlr_payload = b"\0" * 8 + b"soun"
+    sample_description = atom("avc1", b"\0" * 24 + struct.pack(">HH", 1280, 720))
+    stsd_payload = b"\0\0\0\0" + struct.pack(">I", 1) + sample_description
+    minimal_mp4 = atom(
+        "moov",
+        atom(
+            "trak",
+            atom(
+                "mdia",
+                atom("mdhd", mdhd_payload)
+                + atom("hdlr", hdlr_payload)
+                + atom("minf", atom("stbl", atom("stsd", stsd_payload))),
+            ),
+        ),
+    )
+
+    fixture_path = write_metadata_fixture(minimal_mp4)
+
+    try:
+        metadata = validator.mp4_video_metadata(fixture_path)
+    finally:
+        fixture_path.unlink(missing_ok=True)
+
+    if metadata["dimensions"] is not None:
+        raise AssertionError(f"Unexpected dimensions for non-video track stsd: {metadata}")
+
+
 def test_zero_sample_count_stts_does_not_report_frame_rate():
     validator = load_validator()
     mdhd_payload = b"\0\0\0\0" + b"\0" * 8 + struct.pack(">II", 24_000, 24_000)
@@ -400,6 +430,15 @@ def test_validator_rejects_missing_host_mp4_full_box_version_guards():
     )
 
 
+def test_validator_rejects_missing_host_mp4_video_track_dimension_gate():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        "trackDimensions = dimensions",
+        "videoMetadata.dimensions = dimensions",
+        "host app should parse bundled MP4 video dimensions, frame rate, and duration for readiness",
+    )
+
+
 def test_validator_rejects_missing_partial_ci_log_scan():
     assert_validator_rejects_mutation(
         ".github/workflows/macos-build.yml",
@@ -459,6 +498,7 @@ def main():
     test_unsupported_hdlr_version_does_not_report_duration()
     test_unsupported_stts_version_does_not_report_frame_rate()
     test_unsupported_stsd_version_does_not_report_dimensions()
+    test_non_video_track_stsd_does_not_report_dimensions()
     test_zero_sample_count_stts_does_not_report_frame_rate()
     test_tracked_fixture_validates()
     test_validator_rejects_missing_indefinite_stream_duration_guard()
@@ -472,6 +512,7 @@ def main():
     test_validator_rejects_missing_host_mp4_sample_count_guard()
     test_validator_rejects_missing_host_mp4_mdhd_version_guard()
     test_validator_rejects_missing_host_mp4_full_box_version_guards()
+    test_validator_rejects_missing_host_mp4_video_track_dimension_gate()
     test_validator_rejects_missing_partial_ci_log_scan()
     test_validator_rejects_root_level_unsigned_build_logs()
     test_validator_rejects_missing_build_product_python_resolver()
