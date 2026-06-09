@@ -142,3 +142,4 @@
 - Rejected scalar signed app-group entitlements during readiness checks.
 - Rejected incomplete MP4 timing and sample-description tables in bundled-video metadata parsing.
 - Rejected malformed PNG headers during app-icon metadata validation.
+- Rejected malformed app-icon catalog size and scale metadata during validation.

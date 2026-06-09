@@ -372,6 +372,21 @@ def test_non_ihdr_png_header_does_not_report_dimensions():
         raise AssertionError(f"Unexpected dimensions for non-IHDR PNG header: {dimensions}")
 
 
+def test_malformed_icon_size_metadata_does_not_raise():
+    validator = load_validator()
+    malformed_entries = [
+        {"size": "large", "scale": "2x"},
+        {"size": "16x32", "scale": "1x"},
+        {"size": "16x16", "scale": "0x"},
+        {"size": 16, "scale": "1x"},
+    ]
+
+    for entry in malformed_entries:
+        expected_size = validator.expected_icon_pixel_size(entry)
+        if expected_size is not None:
+            raise AssertionError(f"Unexpected icon size for malformed metadata {entry}: {expected_size}")
+
+
 def test_tracked_fixture_validates():
     with tracked_fixture_repo() as fixture_root:
         status, output = run_validator(fixture_root)
@@ -733,6 +748,15 @@ def test_validator_rejects_missing_png_ihdr_guard():
     )
 
 
+def test_validator_rejects_missing_icon_size_metadata_guard():
+    assert_validator_rejects_mutation(
+        "scripts/validate_project.py",
+        "require(expected_size is not None and png_dimensions(icon_path) == (expected_size, expected_size),",
+        "require(png_dimensions(icon_path) == (expected_size, expected_size),",
+        "app icon validator should reject malformed icon catalog size metadata without raising",
+    )
+
+
 def test_validator_rejects_missing_host_mp4_mdhd_version_guard():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",
@@ -853,6 +877,7 @@ def main():
     test_zero_stsd_entry_count_does_not_report_dimensions()
     test_truncated_png_signature_does_not_raise()
     test_non_ihdr_png_header_does_not_report_dimensions()
+    test_malformed_icon_size_metadata_does_not_raise()
     test_tracked_fixture_validates()
     test_validator_rejects_missing_indefinite_stream_duration_guard()
     test_validator_rejects_missing_non_finite_sample_time_guard()
@@ -876,6 +901,7 @@ def main():
     test_validator_rejects_missing_host_mp4_complete_stts_entry_guard()
     test_validator_rejects_missing_host_mp4_stsd_entry_count_guard()
     test_validator_rejects_missing_png_ihdr_guard()
+    test_validator_rejects_missing_icon_size_metadata_guard()
     test_validator_rejects_missing_host_mp4_mdhd_version_guard()
     test_validator_rejects_missing_host_mp4_full_box_version_guards()
     test_validator_rejects_missing_host_mp4_video_track_dimension_gate()
