@@ -1006,6 +1006,17 @@ def test_validator_rejects_missing_partial_ci_log_scan():
     )
 
 
+def test_validator_rejects_missing_unreadable_build_log_guard():
+    assert_validator_rejects_mutation(
+        "scripts/scan_build_log.py",
+        """    except OSError as error:
+        raise BuildLogReadError(build_log_path, error) from error
+""",
+        "",
+        "build-log scanner should report unreadable log files without a traceback",
+    )
+
+
 def test_validator_rejects_root_level_unsigned_build_logs():
     assert_validator_rejects_mutation(
         "scripts/build_unsigned.sh",
@@ -1152,6 +1163,7 @@ def main():
     test_validator_rejects_missing_host_mp4_video_track_dimension_gate()
     test_validator_rejects_broad_appintents_log_ignore()
     test_validator_rejects_missing_partial_ci_log_scan()
+    test_validator_rejects_missing_unreadable_build_log_guard()
     test_validator_rejects_root_level_unsigned_build_logs()
     test_validator_rejects_missing_build_product_python_resolver()
     test_validator_rejects_missing_build_product_configuration_guard()

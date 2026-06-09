@@ -17,6 +17,13 @@ IGNORED_LINE_TOKEN_GROUPS = (
 )
 
 
+class BuildLogReadError(Exception):
+    def __init__(self, build_log_path, error):
+        self.build_log_path = build_log_path
+        self.error = error
+        super().__init__(f"{build_log_path}: {error}")
+
+
 def is_ignored(line):
     normalized_line = line.lower()
     return any(
@@ -27,10 +34,13 @@ def is_ignored(line):
 
 def actionable_lines_in(build_log_path):
     actionable_lines = []
-    with build_log_path.open("r", encoding="utf-8", errors="replace") as build_log:
-        for line_number, line in enumerate(build_log, start=1):
-            if ACTIONABLE_PATTERN.search(line) and not is_ignored(line):
-                actionable_lines.append((build_log_path, line_number, line.rstrip()))
+    try:
+        with build_log_path.open("r", encoding="utf-8", errors="replace") as build_log:
+            for line_number, line in enumerate(build_log, start=1):
+                if ACTIONABLE_PATTERN.search(line) and not is_ignored(line):
+                    actionable_lines.append((build_log_path, line_number, line.rstrip()))
+    except OSError as error:
+        raise BuildLogReadError(build_log_path, error) from error
 
     return actionable_lines
 
@@ -49,7 +59,12 @@ def main():
             print(f"Build log is not a regular file: {build_log_path}", file=sys.stderr)
             return 2
 
-        actionable_lines.extend(actionable_lines_in(build_log_path))
+        try:
+            actionable_lines.extend(actionable_lines_in(build_log_path))
+        except BuildLogReadError as error:
+            detail = error.error.strerror or str(error.error)
+            print(f"Build log is not readable: {error.build_log_path}: {detail}", file=sys.stderr)
+            return 2
 
     if actionable_lines:
         print("Actionable Xcode log warnings/errors/failures found:")

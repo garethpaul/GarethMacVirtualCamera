@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import subprocess
 import sys
 import tempfile
@@ -152,6 +153,33 @@ def test_fails_on_directory_build_log():
     require("Traceback" not in result.stderr, result.stderr)
 
 
+def test_fails_on_unreadable_build_log():
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
+        return
+
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", delete=False) as build_log:
+        build_log.write("SwiftCompile warning: hidden warning\n")
+        build_log_path = Path(build_log.name)
+
+    try:
+        build_log_path.chmod(0)
+
+        result = subprocess.run(
+            [sys.executable, str(SCANNER), str(build_log_path)],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+    finally:
+        build_log_path.chmod(0o600)
+        build_log_path.unlink(missing_ok=True)
+
+    require(result.returncode == 2, result.stdout + result.stderr)
+    require(f"Build log is not readable: {build_log_path}:" in result.stderr, result.stderr)
+    require("Traceback" not in result.stderr, result.stderr)
+
+
 def test_requires_build_log_argument():
     result = subprocess.run(
         [sys.executable, str(SCANNER)],
@@ -180,6 +208,7 @@ def main():
     test_scans_multiple_build_logs()
     test_fails_on_missing_build_log()
     test_fails_on_directory_build_log()
+    test_fails_on_unreadable_build_log()
     test_requires_build_log_argument()
     print("Build-log scanner tests passed.")
     return 0
