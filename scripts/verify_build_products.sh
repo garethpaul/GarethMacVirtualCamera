@@ -287,8 +287,23 @@ verify_app_diagnostics_resources() {
     "Bundle identifier missing fixture: no"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "video-metadata" "video-metadata" \
+    "Video metadata parsed width fixture: 1280" \
+    "Video metadata parsed height fixture: 720" \
+    "Video metadata parsed duration fixture: 12.5" \
     "Video metadata spaced width fixture: 1280" \
     "Video metadata quoted duration fixture: 12.5" \
+    "Video metadata preferred parser fixture: 1280" \
+    "Video metadata blank fallback fixture: 640" \
+    "Video metadata null fallback fixture: 640" \
+    "Video metadata parenthesized null fallback fixture: 640" \
+    "Video metadata ready fixture: yes" \
+    "Video metadata decimal fixture: yes" \
+    "Video metadata non-numeric width fixture: no" \
+    "Video metadata wrong width fixture: no" \
+    "Video metadata wrong frame rate fixture: no" \
+    "Video metadata missing frame rate fixture: unknown" \
+    "Video metadata missing duration fixture: unknown" \
+    "Video metadata zero duration fixture: no" \
     "Video metadata negative duration fixture: no"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "application-group" "application-group" \
