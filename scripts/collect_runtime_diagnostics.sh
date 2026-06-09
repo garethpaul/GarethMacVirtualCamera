@@ -974,10 +974,13 @@ if dimensions is None:
 else:
     width, height = dimensions
 
+def metadata_field_value(value):
+    return "" if value is None else value
+
 print(f"MP4 parser pixel width = {width}")
 print(f"MP4 parser pixel height = {height}")
-print(f"MP4 parser frame rate = {metadata.get('frame_rate') or ''}")
-print(f"MP4 parser duration seconds = {metadata.get('duration_seconds') or ''}")
+print(f"MP4 parser frame rate = {metadata_field_value(metadata.get('frame_rate'))}")
+print(f"MP4 parser duration seconds = {metadata_field_value(metadata.get('duration_seconds'))}")
 PY
 }
 

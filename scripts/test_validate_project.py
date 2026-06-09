@@ -713,6 +713,24 @@ def test_validator_rejects_missing_runtime_diagnostics_blank_info_plist_guard():
     )
 
 
+def test_validator_rejects_missing_runtime_diagnostics_zero_parser_metadata_guard():
+    assert_validator_rejects_mutation(
+        "scripts/collect_runtime_diagnostics.sh",
+        """def metadata_field_value(value):
+    return "" if value is None else value
+
+print(f"MP4 parser pixel width = {width}")
+print(f"MP4 parser pixel height = {height}")
+print(f"MP4 parser frame rate = {metadata_field_value(metadata.get('frame_rate'))}")
+print(f"MP4 parser duration seconds = {metadata_field_value(metadata.get('duration_seconds'))}")""",
+        """print(f"MP4 parser pixel width = {width}")
+print(f"MP4 parser pixel height = {height}")
+print(f"MP4 parser frame rate = {metadata.get('frame_rate') or ''}")
+print(f"MP4 parser duration seconds = {metadata.get('duration_seconds') or ''}")""",
+        "runtime diagnostics should preserve zero-valued parser video metadata instead of treating it as missing",
+    )
+
+
 def test_validator_rejects_missing_runtime_diagnostics_all_architecture_application_groups():
     assert_validator_rejects_mutation(
         "scripts/collect_runtime_diagnostics.sh",
@@ -1183,6 +1201,7 @@ def main():
     test_validator_rejects_missing_runtime_diagnostics_scalar_boolean_entitlement_guard()
     test_validator_rejects_missing_runtime_diagnostics_info_plist_string_guard()
     test_validator_rejects_missing_runtime_diagnostics_blank_info_plist_guard()
+    test_validator_rejects_missing_runtime_diagnostics_zero_parser_metadata_guard()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_application_groups()
     test_validator_rejects_missing_runtime_diagnostics_non_string_app_group_guard()
     test_validator_rejects_missing_runtime_diagnostics_untrimmed_app_group_guard()

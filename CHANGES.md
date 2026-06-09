@@ -20,6 +20,8 @@
 - Reported unreadable Xcode build logs without a Python traceback.
 - Rejected untrimmed embedded extension Info.plist and CMIO metadata in host
   readiness checks.
+- Preserved zero-duration MP4 parser diagnostics as blocked video metadata
+  instead of unknown.
 - Rejected numeric non-boolean signed entitlement values in host readiness
   checks.
 - Rejected non-string Info.plist bundle metadata in runtime diagnostics.

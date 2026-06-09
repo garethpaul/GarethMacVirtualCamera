@@ -2,6 +2,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
 
 require_output() {
   local output="$1"
@@ -30,6 +32,17 @@ camera_device_output="$(GARETH_DIAGNOSTICS_SELF_TEST=camera-device "$ROOT/script
 video_metadata_output="$(GARETH_DIAGNOSTICS_SELF_TEST=video-metadata "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 file_byte_count_output="$(GARETH_DIAGNOSTICS_SELF_TEST=file-byte-count "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 video_parser_output="$(GARETH_DIAGNOSTICS_SELF_TEST=video-parser GARETH_DIAGNOSTICS_VIDEO_FIXTURE="$ROOT/Extension/video.mp4" "$ROOT/scripts/collect_runtime_diagnostics.sh")"
+stub_parser_dir="$TMP_DIR/stub-parser/scripts"
+mkdir -p "$stub_parser_dir"
+cp "$ROOT/scripts/collect_runtime_diagnostics.sh" "$stub_parser_dir/collect_runtime_diagnostics.sh"
+chmod +x "$stub_parser_dir/collect_runtime_diagnostics.sh"
+cat >"$stub_parser_dir/validate_project.py" <<'PY'
+def mp4_video_metadata(path):
+    return {"dimensions": (1280, 720), "frame_rate": 24, "duration_seconds": 0}
+PY
+zero_duration_video_fixture="$TMP_DIR/zero-duration.mp4"
+: >"$zero_duration_video_fixture"
+zero_duration_video_parser_output="$(GARETH_DIAGNOSTICS_SELF_TEST=video-parser GARETH_DIAGNOSTICS_VIDEO_FIXTURE="$zero_duration_video_fixture" "$stub_parser_dir/collect_runtime_diagnostics.sh")"
 registration_output="$(GARETH_DIAGNOSTICS_SELF_TEST=registration "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 activation_evidence_output="$(GARETH_DIAGNOSTICS_SELF_TEST=activation-evidence "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 
@@ -192,6 +205,9 @@ require_output "$video_parser_output" "Video parser pixel height fixture: 720"
 require_output "$video_parser_output" "Video parser frame rate fixture: 24"
 require_output "$video_parser_output" "Video parser duration fixture: 3.0833333333333335"
 require_output "$video_parser_output" "Video parser metadata ready fixture: yes"
+require_output "$zero_duration_video_parser_output" "MP4 parser duration seconds = 0"
+require_output "$zero_duration_video_parser_output" "Video parser duration fixture: 0"
+require_output "$zero_duration_video_parser_output" "Video parser metadata ready fixture: no"
 
 require_output "$registration_output" "Registration active fixture present: yes"
 require_output "$registration_output" "Registration active fixture activated enabled: yes"
