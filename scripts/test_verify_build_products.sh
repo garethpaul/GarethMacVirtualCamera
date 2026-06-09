@@ -105,6 +105,17 @@ passing_outputs = {
         "Runtime readiness checks ready: 1/1",
         "Runtime readiness next action: submit the system extension request",
     ],
+    "missing-runtime-bundles": [
+        "Application location ready: no",
+        "App bundle identifier ready: no",
+        "Extension bundle identifier ready: no",
+        "Bundle versions match ready: no",
+        "Signing Team match ready: no",
+        "Application group match ready: no",
+        "Runtime readiness checks ready: 0/15",
+        "Runtime readiness checks unknown: 0",
+        "Runtime readiness next action: resolve Application location ready",
+    ],
     "bundle-version-match": [
         "Bundle version match fixture: yes",
         "Bundle version short mismatch fixture: no",
@@ -121,6 +132,7 @@ passing_outputs = {
     ],
     "application-identity": [
         "App path match fixture: yes",
+        "Application location missing fixture: no",
         "Bundle identifier missing fixture: no",
     ],
     "video-metadata": [
@@ -175,6 +187,17 @@ stale_outputs = {
         "Runtime readiness checks ready: 3/3",
         "Runtime readiness next action: none",
     ],
+    "missing-runtime-bundles": [
+        "Application location ready: yes",
+        "App bundle identifier ready: unknown",
+        "Extension bundle identifier ready: unknown",
+        "Bundle versions match ready: unknown",
+        "Signing Team match ready: unknown",
+        "Application group match ready: unknown",
+        "Runtime readiness checks ready: 1/15",
+        "Runtime readiness checks unknown: 12",
+        "Runtime readiness next action: inspect App bundle identifier ready",
+    ],
     "executable-readiness": [
         "Executable ready fixture: no",
         "Executable non-executable fixture: yes",
@@ -191,6 +214,7 @@ stale_outputs = {
     ],
     "application-identity": [
         "App path match fixture: no",
+        "Application location missing fixture: yes",
         "Bundle identifier missing fixture: yes",
     ],
     "video-metadata": [
@@ -276,6 +300,12 @@ write_stale_readiness_rollup_diagnostics_fixture() {
   local products_path="$1"
   local configuration="$2"
   write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "readiness-rollup"
+}
+
+write_stale_missing_runtime_bundles_diagnostics_fixture() {
+  local products_path="$1"
+  local configuration="$2"
+  write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "missing-runtime-bundles"
 }
 
 write_stale_executable_readiness_diagnostics_fixture() {
@@ -506,6 +536,7 @@ fi
 
 assert_stale_diagnostics_rejected "stale-resource-discovery-diagnostics" write_stale_resource_discovery_diagnostics_fixture "resource" "resource-discovery"
 assert_stale_diagnostics_rejected "stale-readiness-rollup-diagnostics" write_stale_readiness_rollup_diagnostics_fixture "readiness-rollup" "readiness-rollup"
+assert_stale_diagnostics_rejected "stale-missing-runtime-bundles-diagnostics" write_stale_missing_runtime_bundles_diagnostics_fixture "missing-runtime-bundles" "missing-runtime-bundles"
 assert_stale_diagnostics_rejected "stale-bundle-version-diagnostics" write_stale_bundle_version_diagnostics_fixture "bundle-version" "bundle-version-match"
 assert_stale_diagnostics_rejected "stale-executable-readiness-diagnostics" write_stale_executable_readiness_diagnostics_fixture "executable-readiness" "executable-readiness"
 assert_stale_diagnostics_rejected "stale-team-id-diagnostics" write_stale_team_id_diagnostics_fixture "Team ID" "Team ID"

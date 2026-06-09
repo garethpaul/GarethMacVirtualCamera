@@ -104,6 +104,17 @@ path_matches_expected_value() {
   fi
 }
 
+application_location_readiness_value() {
+  local actual_path="$1"
+  local expected_path="$2"
+
+  if [ -d "$actual_path" ] && [ "$(path_matches_expected_value "$actual_path" "$expected_path")" = "yes" ]; then
+    printf 'yes\n'
+  else
+    printf 'no\n'
+  fi
+}
+
 bundle_identifier_matches_expected_value() {
   local bundle_identifier="$1"
   local expected_identifier="$2"
@@ -708,6 +719,27 @@ print_readiness_check() {
   print_yes_no_unknown "$label" "$value"
 }
 
+print_missing_app_readiness_checks() {
+  print_readiness_check "App bundle identifier ready" "no"
+  print_readiness_check "App signature ready" "no"
+  print_readiness_check "App System Extension entitlement ready" "no"
+  print_readiness_check "App executable ready" "no"
+}
+
+print_missing_extension_readiness_checks() {
+  print_readiness_check "Extension bundle identifier ready" "no"
+  print_readiness_check "Extension signature ready" "no"
+  print_readiness_check "Extension host-only entitlement absent" "no"
+  print_readiness_check "Extension executable ready" "no"
+  print_readiness_check "Extension CMIO Mach service ready" "no"
+}
+
+print_missing_bundle_comparison_readiness_checks() {
+  print_readiness_check "Bundle versions match ready" "no"
+  print_readiness_check "Signing Team match ready" "no"
+  print_readiness_check "Application group match ready" "no"
+}
+
 print_readiness_rollup() {
   local readiness_result="ready"
 
@@ -822,6 +854,21 @@ run_readiness_rollup_ready_self_test() {
   print_readiness_rollup
 }
 
+run_missing_runtime_bundles_self_test() {
+  local missing_app_path="${TMPDIR:-/tmp}/gareth-runtime-missing-bundles-self-test-$$.app"
+
+  rm -rf "$missing_app_path"
+  reset_readiness_rollup_counters
+
+  print_readiness_check "Application location ready" "$(application_location_readiness_value "$missing_app_path" "$missing_app_path")"
+  print_missing_app_readiness_checks
+  print_missing_extension_readiness_checks
+  print_missing_bundle_comparison_readiness_checks
+  print_readiness_check "Bundled video ready" "no"
+  print_readiness_check "Bundled video metadata ready" "no"
+  print_readiness_rollup
+}
+
 run_bundle_version_match_self_test() {
   printf 'Bundle version match fixture: %s\n' "$(bundle_versions_match_readiness_value "1.0" "100" "1.0" "100")"
   printf 'Bundle version short mismatch fixture: %s\n' "$(bundle_versions_match_readiness_value "1.0" "100" "2.0" "100")"
@@ -850,11 +897,23 @@ run_executable_readiness_self_test() {
 }
 
 run_application_identity_self_test() {
+  local temp_dir
+  local existing_app_path
+
+  temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/gareth-app-location.XXXXXX")"
+  existing_app_path="$temp_dir/GarethVideoCam.app"
+  mkdir -p "$existing_app_path"
+
   printf 'App path match fixture: %s\n' "$(path_matches_expected_value "/Applications/GarethVideoCam.app" "/Applications/GarethVideoCam.app")"
   printf 'App path mismatch fixture: %s\n' "$(path_matches_expected_value "/Users/example/GarethVideoCam.app" "/Applications/GarethVideoCam.app")"
+  printf 'Application location existing fixture: %s\n' "$(application_location_readiness_value "$existing_app_path" "$existing_app_path")"
+  printf 'Application location missing fixture: %s\n' "$(application_location_readiness_value "$temp_dir/Missing.app" "$temp_dir/Missing.app")"
+  printf 'Application location mismatch fixture: %s\n' "$(application_location_readiness_value "$existing_app_path" "/Applications/GarethVideoCam.app")"
   printf 'Bundle identifier match fixture: %s\n' "$(bundle_identifier_matches_expected_value "$APP_ID" "$APP_ID")"
   printf 'Bundle identifier mismatch fixture: %s\n' "$(bundle_identifier_matches_expected_value "com.example.WrongApp" "$APP_ID")"
   printf 'Bundle identifier missing fixture: %s\n' "$(bundle_identifier_matches_expected_value "" "$APP_ID")"
+
+  rm -rf "$temp_dir"
 }
 
 run_team_identifier_self_test() {
@@ -1006,6 +1065,10 @@ case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
     ;;
   readiness-rollup-ready)
     run_readiness_rollup_ready_self_test
+    exit 0
+    ;;
+  missing-runtime-bundles)
+    run_missing_runtime_bundles_self_test
     exit 0
     ;;
   bundle-version-match)
@@ -1369,7 +1432,7 @@ fi
 
 section "Runtime Readiness Summary"
 reset_readiness_rollup_counters
-print_readiness_check "Application location ready" "$(path_matches_expected_value "$APP_PATH" "$EXPECTED_APP_PATH")"
+print_readiness_check "Application location ready" "$(application_location_readiness_value "$APP_PATH" "$EXPECTED_APP_PATH")"
 
 if [ -d "$APP_PATH" ]; then
   app_bundle_identifier="$(read_bundle_identifier "$APP_PATH")"
@@ -1390,10 +1453,7 @@ if [ -d "$APP_PATH" ]; then
   app_executable="$(read_info_plist_value "$APP_PATH" CFBundleExecutable)"
   print_readiness_check "App executable ready" "$(executable_readiness_value "$app_executable" "${APP_PATH}/Contents/MacOS/${app_executable}")"
 else
-  print_readiness_check "App bundle identifier ready" "unknown"
-  print_readiness_check "App signature ready" "unknown"
-  print_readiness_check "App System Extension entitlement ready" "unknown"
-  print_readiness_check "App executable ready" "unknown"
+  print_missing_app_readiness_checks
 fi
 
 if [ -d "$EXTENSION_PATH" ]; then
@@ -1418,11 +1478,7 @@ if [ -d "$EXTENSION_PATH" ]; then
 
   print_readiness_check "Extension CMIO Mach service ready" "$(mach_service_readiness_value "$extension_mach_service_name" "$EXTENSION_ID")"
 else
-  print_readiness_check "Extension bundle identifier ready" "unknown"
-  print_readiness_check "Extension signature ready" "unknown"
-  print_readiness_check "Extension host-only entitlement absent" "unknown"
-  print_readiness_check "Extension executable ready" "unknown"
-  print_readiness_check "Extension CMIO Mach service ready" "unknown"
+  print_missing_extension_readiness_checks
 fi
 
 if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
@@ -1432,7 +1488,7 @@ if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
   extension_build_version="$(read_info_plist_value "$EXTENSION_PATH" CFBundleVersion)"
   print_readiness_check "Bundle versions match ready" "$(bundle_versions_match_readiness_value "$app_short_version" "$app_build_version" "$extension_short_version" "$extension_build_version")"
 else
-  print_readiness_check "Bundle versions match ready" "unknown"
+  print_readiness_check "Bundle versions match ready" "no"
 fi
 
 if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
@@ -1440,7 +1496,7 @@ if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
   extension_team_identifier="$(read_team_identifier "$EXTENSION_PATH" || true)"
   print_readiness_check "Signing Team match ready" "$(team_identifiers_match_value "$app_team_identifier" "$extension_team_identifier")"
 else
-  print_readiness_check "Signing Team match ready" "unknown"
+  print_readiness_check "Signing Team match ready" "no"
 fi
 
 if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
@@ -1448,7 +1504,7 @@ if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
   extension_application_groups="$(read_application_groups "$EXTENSION_PATH" || true)"
   print_readiness_check "Application group match ready" "$(application_groups_ready_value "$app_application_groups" "$extension_application_groups")"
 else
-  print_readiness_check "Application group match ready" "unknown"
+  print_readiness_check "Application group match ready" "no"
 fi
 
 if [ -f "$VIDEO_PATH" ]; then

@@ -241,6 +241,17 @@ verify_app_diagnostics_resources() {
     "Runtime readiness checks ready: 1/1" \
     "Runtime readiness next action: submit the system extension request"
 
+  verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "missing-runtime-bundles" "missing-runtime-bundles" \
+    "Application location ready: no" \
+    "App bundle identifier ready: no" \
+    "Extension bundle identifier ready: no" \
+    "Bundle versions match ready: no" \
+    "Signing Team match ready: no" \
+    "Application group match ready: no" \
+    "Runtime readiness checks ready: 0/15" \
+    "Runtime readiness checks unknown: 0" \
+    "Runtime readiness next action: resolve Application location ready"
+
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "bundle-version-match" "bundle-version" \
     "Bundle version match fixture: yes" \
     "Bundle version short mismatch fixture: no" \
@@ -257,6 +268,7 @@ verify_app_diagnostics_resources() {
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "application-identity" "application-identity" \
     "App path match fixture: yes" \
+    "Application location missing fixture: no" \
     "Bundle identifier missing fixture: no"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "video-metadata" "video-metadata" \
