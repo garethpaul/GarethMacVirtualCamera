@@ -76,7 +76,7 @@ import sys
 with open(sys.argv[1], "rb") as info_file:
     value = plistlib.load(info_file).get(sys.argv[2], "")
 
-if value:
+if isinstance(value, str) and value:
     print(value)
 PY
 }

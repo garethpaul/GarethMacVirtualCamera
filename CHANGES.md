@@ -15,6 +15,8 @@
 - Rejected non-string app-group array members in the runtime diagnostics
   PlistBuddy fallback parser.
 - Rejected scalar boolean signed entitlement values in runtime diagnostics.
+- Rejected non-string Info.plist display and privacy metadata in build-product
+  verification.
 - Added `make check` as the conventional local validation entry point.
 - Documented the Makefile baseline and recorded the completed plan under `docs/plans/`.
 - Extended project validation so the Makefile, plan, README, VISION, and change log stay aligned.

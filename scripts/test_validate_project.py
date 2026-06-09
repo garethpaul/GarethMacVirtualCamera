@@ -688,6 +688,15 @@ def test_validator_rejects_missing_make_gate_aliases():
     )
 
 
+def test_validator_rejects_missing_build_product_info_plist_string_type_guard():
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
+        "if isinstance(value, str) and value:",
+        "if value:",
+        "build-product verifier should reject non-string Info.plist display and privacy strings",
+    )
+
+
 def test_validator_rejects_missing_packaged_file_byte_count_verifier():
     assert_validator_rejects_mutation(
         "scripts/verify_build_products.sh",
@@ -736,6 +745,7 @@ def main():
     test_validator_rejects_missing_build_product_python_resolver()
     test_validator_rejects_missing_build_product_configuration_guard()
     test_validator_rejects_missing_make_gate_aliases()
+    test_validator_rejects_missing_build_product_info_plist_string_type_guard()
     test_validator_rejects_missing_packaged_file_byte_count_verifier()
     print("Project validator tests passed.")
     return 0

@@ -64,6 +64,25 @@ with open(sys.argv[1], "wb") as info_file:
 PY
 }
 
+set_info_plist_boolean_key() {
+  local bundle_path="$1"
+  local key="$2"
+  local value="$3"
+
+  python3 - "$bundle_path/Contents/Info.plist" "$key" "$value" <<'PY'
+import plistlib
+import sys
+
+with open(sys.argv[1], "rb") as info_file:
+    info = plistlib.load(info_file)
+
+info[sys.argv[2]] = sys.argv[3] == "true"
+
+with open(sys.argv[1], "wb") as info_file:
+    plistlib.dump(info, info_file)
+PY
+}
+
 write_executable_fixture() {
   local bundle_path="$1"
   local executable_name="$2"
@@ -1044,6 +1063,21 @@ fi
 if ! grep -q "Missing Debug extension CFBundleDisplayName" "$TMP_DIR/missing-extension-display.err"; then
   printf 'Verifier failure did not explain the missing extension display name.\n' >&2
   cat "$TMP_DIR/missing-extension-display.err" >&2
+  exit 1
+fi
+
+NON_STRING_DISPLAY_PRODUCTS="$TMP_DIR/non-string-display/Products"
+write_product_fixture "$NON_STRING_DISPLAY_PRODUCTS" Debug
+set_info_plist_boolean_key "$NON_STRING_DISPLAY_PRODUCTS/Debug/GarethVideoCam.app" "CFBundleDisplayName" true
+
+if PRODUCTS_PATH="$NON_STRING_DISPLAY_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/non-string-display.out" 2>"$TMP_DIR/non-string-display.err"; then
+  printf 'Expected verifier to reject a non-string app display name.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug app CFBundleDisplayName" "$TMP_DIR/non-string-display.err"; then
+  printf 'Verifier failure did not explain the non-string app display name.\n' >&2
+  cat "$TMP_DIR/non-string-display.err" >&2
   exit 1
 fi
 
