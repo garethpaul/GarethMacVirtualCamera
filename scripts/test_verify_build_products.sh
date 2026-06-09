@@ -87,6 +87,9 @@ stale_self_test = sys.argv[2]
 
 passing_outputs = {
     "resource-discovery": [
+        "Diagnostics script path:",
+        "Diagnostics script directory:",
+        "Diagnostics parser path:",
         "Diagnostics parser source: adjacent script resource",
         "Diagnostics parser available: yes",
     ],

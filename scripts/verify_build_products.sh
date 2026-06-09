@@ -223,6 +223,9 @@ verify_app_diagnostics_resources() {
   fi
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "resource-discovery" "resource" \
+    "Diagnostics script path:" \
+    "Diagnostics script directory:" \
+    "Diagnostics parser path:" \
     "Diagnostics parser source: adjacent script resource" \
     "Diagnostics parser available: yes"
 

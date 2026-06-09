@@ -77,3 +77,4 @@
 - Verified packaged activation-evidence diagnostics cover ready counts and active, blocked, and unknown next actions.
 - Verified packaged MP4 parser diagnostics cover expected parsed dimensions and frame rate.
 - Verified packaged readiness-rollup diagnostics cover blocked, unknown, ready, and missing-bundle counts.
+- Verified packaged resource-discovery diagnostics cover bundled script and parser paths.
