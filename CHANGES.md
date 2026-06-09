@@ -117,3 +117,4 @@
 - Rejected unsupported MP4 full-box versions for handler, timing, and sample descriptions.
 - Limited parsed MP4 sample-description dimensions to confirmed video tracks.
 - Treated malformed signed app-group entitlements as unreadable runtime evidence.
+- Verified packaged malformed app-group entitlement diagnostics self-tests.
