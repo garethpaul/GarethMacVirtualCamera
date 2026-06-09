@@ -1072,6 +1072,7 @@ run_activation_evidence_self_test() {
   print_activation_evidence_summary "yes" "yes" "yes"
   print_activation_evidence_summary "no" "no" "yes"
   print_activation_evidence_summary "yes" "unknown" "yes"
+  print_activation_evidence_summary "unknown" "unknown" "unknown"
 }
 
 case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in

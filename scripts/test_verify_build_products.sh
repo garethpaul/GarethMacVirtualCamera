@@ -178,7 +178,9 @@ passing_outputs = {
         "Runtime activation evidence checks ready: 3/3",
         "Runtime activation evidence result: blocked",
         "Runtime activation evidence result: incomplete",
+        "Runtime activation evidence checks unknown: 3",
         "Runtime activation evidence next action: inspect Extension registration activated enabled",
+        "Runtime activation evidence next action: inspect Extension registration entry present",
     ],
     "video-parser": [
         "Video parser metadata ready fixture: yes",

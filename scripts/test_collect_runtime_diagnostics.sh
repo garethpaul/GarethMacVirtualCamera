@@ -177,5 +177,8 @@ require_output "$activation_evidence_output" "Runtime activation evidence result
 require_output "$activation_evidence_output" "Runtime activation evidence next action: resolve Extension registration entry present"
 require_output "$activation_evidence_output" "Runtime activation evidence result: incomplete"
 require_output "$activation_evidence_output" "Runtime activation evidence next action: inspect Extension registration activated enabled"
+require_output "$activation_evidence_output" "Runtime activation evidence checks ready: 0/3"
+require_output "$activation_evidence_output" "Runtime activation evidence checks unknown: 3"
+require_output "$activation_evidence_output" "Runtime activation evidence next action: inspect Extension registration entry present"
 
 printf 'Runtime diagnostics tests passed.\n'

@@ -62,3 +62,4 @@
 - Reported unreadable signed entitlements as unknown in detailed runtime diagnostics while keeping entitlement readiness blocked.
 - Reported unreadable signed app-group entitlements as unknown in detailed runtime diagnostics while keeping app-group readiness blocked.
 - Reported failed `systemextensionsctl` and `system_profiler` activation-evidence commands as unknown instead of absent.
+- Covered all-unknown activation evidence rollups in runtime diagnostics and packaged diagnostics verification.

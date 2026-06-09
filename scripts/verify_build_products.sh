@@ -313,7 +313,9 @@ verify_app_diagnostics_resources() {
     "Runtime activation evidence result: active" \
     "Runtime activation evidence result: blocked" \
     "Runtime activation evidence result: incomplete" \
-    "Runtime activation evidence next action: inspect Extension registration activated enabled"
+    "Runtime activation evidence checks unknown: 3" \
+    "Runtime activation evidence next action: inspect Extension registration activated enabled" \
+    "Runtime activation evidence next action: inspect Extension registration entry present"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "video-parser" "parser" \
     "Video parser metadata ready fixture: yes"
