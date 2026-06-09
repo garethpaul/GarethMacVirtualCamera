@@ -58,3 +58,4 @@
 - Required a valid extension signature before runtime diagnostics can report the host-only extension entitlement as absent.
 - Split install and uninstall readiness so deactivation can still be submitted when only activation packaging checks fail.
 - Added activation and deactivation request readiness details to copied diagnostics and the host details panel.
+- Reported unreadable signed entitlements as unknown in detailed runtime diagnostics while keeping entitlement readiness blocked.

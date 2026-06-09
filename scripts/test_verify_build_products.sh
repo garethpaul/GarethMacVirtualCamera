@@ -136,6 +136,7 @@ passing_outputs = {
         "Extension host entitlement valid absent fixture: yes",
         "Extension host entitlement valid present fixture: no",
         "Extension host entitlement invalid signature fixture: no",
+        "Extension host entitlement unreadable fixture: no",
     ],
     "application-identity": [
         "App path match fixture: yes",
@@ -225,6 +226,7 @@ stale_outputs = {
         "Extension host entitlement valid absent fixture: yes",
         "Extension host entitlement valid present fixture: yes",
         "Extension host entitlement invalid signature fixture: yes",
+        "Extension host entitlement unreadable fixture: yes",
     ],
     "application-identity": [
         "App path match fixture: no",

@@ -259,23 +259,35 @@ team_identifiers_match_value() {
   fi
 }
 
-has_boolean_entitlement() {
+boolean_entitlement_value() {
   local bundle_path="$1"
   local entitlement="$2"
   local entitlements_file
   local entitlement_value
 
-  entitlements_file="$(/usr/bin/mktemp -t gareth-entitlements.XXXXXX)" || return 1
+  entitlements_file="$(/usr/bin/mktemp -t gareth-entitlements.XXXXXX)" || {
+    printf 'unknown\n'
+    return
+  }
 
   if ! /usr/bin/codesign -d --entitlements :- "$bundle_path" >"$entitlements_file" 2>/dev/null; then
     /bin/rm -f "$entitlements_file"
-    return 1
+    printf 'unknown\n'
+    return
   fi
 
   entitlement_value="$(/usr/libexec/PlistBuddy -c "Print :${entitlement}" "$entitlements_file" 2>/dev/null || true)"
   /bin/rm -f "$entitlements_file"
 
-  [ "$entitlement_value" = "true" ]
+  if [ "$entitlement_value" = "true" ]; then
+    printf 'yes\n'
+  else
+    printf 'no\n'
+  fi
+}
+
+has_boolean_entitlement() {
+  [ "$(boolean_entitlement_value "$1" "$2")" = "yes" ]
 }
 
 extension_host_only_entitlement_absent_readiness_value() {
@@ -936,6 +948,7 @@ run_extension_host_entitlement_self_test() {
   printf 'Extension host entitlement valid absent fixture: %s\n' "$(extension_host_only_entitlement_absent_readiness_value "yes" "no")"
   printf 'Extension host entitlement valid present fixture: %s\n' "$(extension_host_only_entitlement_absent_readiness_value "yes" "yes")"
   printf 'Extension host entitlement invalid signature fixture: %s\n' "$(extension_host_only_entitlement_absent_readiness_value "no" "no")"
+  printf 'Extension host entitlement unreadable fixture: %s\n' "$(extension_host_only_entitlement_absent_readiness_value "yes" "unknown")"
 }
 
 run_mach_service_self_test() {
@@ -1412,7 +1425,10 @@ section "Entitlement Check"
 printf 'Expected app System Extension entitlement: %s\n' "$HOST_SYSTEM_EXTENSION_ENTITLEMENT"
 printf 'Expected application group suffix: %s\n' "$APP_GROUP_BASE_ID"
 if [ -d "$APP_PATH" ]; then
-  if has_boolean_entitlement "$APP_PATH" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT"; then
+  app_system_extension_entitlement_present="$(boolean_entitlement_value "$APP_PATH" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT")"
+  if [ "$app_system_extension_entitlement_present" = "unknown" ]; then
+    printf 'App System Extension entitlement present: unknown; signed entitlements could not be read.\n'
+  elif [ "$app_system_extension_entitlement_present" = "yes" ]; then
     printf 'App System Extension entitlement present: yes\n'
   else
     printf 'App System Extension entitlement present: no\n'
@@ -1428,7 +1444,10 @@ else
 fi
 
 if [ -d "$EXTENSION_PATH" ]; then
-  if has_boolean_entitlement "$EXTENSION_PATH" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT"; then
+  extension_host_only_entitlement_present="$(boolean_entitlement_value "$EXTENSION_PATH" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT")"
+  if [ "$extension_host_only_entitlement_present" = "unknown" ]; then
+    printf 'Extension carries host-only System Extension entitlement: unknown; signed entitlements could not be read.\n'
+  elif [ "$extension_host_only_entitlement_present" = "yes" ]; then
     printf 'Extension carries host-only System Extension entitlement: yes\n'
   else
     printf 'Extension carries host-only System Extension entitlement: no\n'
@@ -1463,7 +1482,7 @@ if [ -d "$APP_PATH" ]; then
     print_readiness_check "App signature ready" "no"
   fi
 
-  if has_boolean_entitlement "$APP_PATH" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT"; then
+  if [ "$(boolean_entitlement_value "$APP_PATH" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT")" = "yes" ]; then
     print_readiness_check "App System Extension entitlement ready" "yes"
   else
     print_readiness_check "App System Extension entitlement ready" "no"
@@ -1488,9 +1507,7 @@ if [ -d "$EXTENSION_PATH" ]; then
   fi
   print_readiness_check "Extension signature ready" "$extension_signature_ready"
 
-  if has_boolean_entitlement "$EXTENSION_PATH" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT"; then
-    extension_host_only_entitlement_present="yes"
-  fi
+  extension_host_only_entitlement_present="$(boolean_entitlement_value "$EXTENSION_PATH" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT")"
   print_readiness_check "Extension host-only entitlement absent" "$(extension_host_only_entitlement_absent_readiness_value "$extension_signature_ready" "$extension_host_only_entitlement_present")"
 
   print_readiness_check "Extension executable ready" "$(executable_readiness_value "$extension_executable" "${EXTENSION_PATH}/Contents/MacOS/${extension_executable}")"

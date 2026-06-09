@@ -110,6 +110,7 @@ require_output "$team_id_output" "Team ID missing extension fixture: no"
 require_output "$extension_host_entitlement_output" "Extension host entitlement valid absent fixture: yes"
 require_output "$extension_host_entitlement_output" "Extension host entitlement valid present fixture: no"
 require_output "$extension_host_entitlement_output" "Extension host entitlement invalid signature fixture: no"
+require_output "$extension_host_entitlement_output" "Extension host entitlement unreadable fixture: no"
 
 require_output "$mach_service_output" "Mach service direct fixture resolved: yes"
 require_output "$mach_service_output" "Mach service direct fixture matches expected: yes"
