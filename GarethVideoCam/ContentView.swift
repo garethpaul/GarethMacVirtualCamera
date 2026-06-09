@@ -606,6 +606,16 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         return trimmedValue.isEmpty ? nil : trimmedValue
     }
 
+    private static func extensionMachServiceName(in bundle: Bundle) -> String? {
+        guard let cmioExtension = bundle.object(forInfoDictionaryKey: "CMIOExtension") as? [String: Any],
+              let machServiceName = cmioExtension["CMIOExtensionMachServiceName"] as? String else {
+            return nil
+        }
+
+        let trimmedMachServiceName = machServiceName.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmedMachServiceName.isEmpty ? nil : trimmedMachServiceName
+    }
+
     private static func bundledRuntimeDiagnosticsScriptPath() -> String? {
         guard let scriptURL = Bundle.main.url(forResource: "collect_runtime_diagnostics",
                                               withExtension: "sh") else {
@@ -1750,8 +1760,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             let buildVersion = Self.infoPlistString(in: extensionBundle, key: "CFBundleVersion")
             let version = Self.displayVersion(shortVersion: shortVersion,
                                               buildVersion: buildVersion)
-            guard let executableName = extensionBundle.object(forInfoDictionaryKey: "CFBundleExecutable") as? String,
-                  !executableName.isEmpty else {
+            guard let executableName = Self.infoPlistString(in: extensionBundle, key: "CFBundleExecutable") else {
                 throw ExtensionRequestError.missingExtensionExecutable(extensionURL.path)
             }
             let executableURL = extensionURL
@@ -1759,9 +1768,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                 .appendingPathComponent("MacOS")
                 .appendingPathComponent(executableName)
             try Self.validateExtensionExecutable(at: executableURL)
-            let cmioExtension = extensionBundle.object(forInfoDictionaryKey: "CMIOExtension") as? NSDictionary
-            guard let machServiceName = cmioExtension?.object(forKey: "CMIOExtensionMachServiceName") as? String,
-                  !machServiceName.isEmpty else {
+            guard let machServiceName = Self.extensionMachServiceName(in: extensionBundle) else {
                 throw ExtensionRequestError.missingExtensionMachService(extensionURL.path)
             }
             let videoURL = extensionURL

@@ -729,6 +729,34 @@ done
     )
 
 
+def test_validator_rejects_raw_extension_executable_metadata():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        """            guard let executableName = Self.infoPlistString(in: extensionBundle, key: "CFBundleExecutable") else {
+                throw ExtensionRequestError.missingExtensionExecutable(extensionURL.path)
+            }
+""",
+        """            guard let executableName = extensionBundle.object(forInfoDictionaryKey: "CFBundleExecutable") as? String,
+                  !executableName.isEmpty else {
+                throw ExtensionRequestError.missingExtensionExecutable(extensionURL.path)
+            }
+""",
+        "host app should require trimmed string embedded extension executable and CMIO metadata",
+    )
+
+
+def test_validator_rejects_raw_extension_cmio_metadata():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        """        let trimmedMachServiceName = machServiceName.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmedMachServiceName.isEmpty ? nil : trimmedMachServiceName
+""",
+        """        return machServiceName
+""",
+        "host app should require trimmed string embedded extension executable and CMIO metadata",
+    )
+
+
 def test_validator_rejects_missing_host_mp4_sample_count_guard():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",
@@ -942,6 +970,8 @@ def main():
     test_validator_rejects_bare_application_group_acceptance()
     test_validator_rejects_missing_extension_load_failure_detail_row()
     test_validator_rejects_missing_unsigned_build_configuration_guard()
+    test_validator_rejects_raw_extension_executable_metadata()
+    test_validator_rejects_raw_extension_cmio_metadata()
     test_validator_rejects_missing_host_mp4_sample_count_guard()
     test_validator_rejects_missing_host_mp4_complete_stts_entry_guard()
     test_validator_rejects_missing_host_mp4_stsd_entry_count_guard()
