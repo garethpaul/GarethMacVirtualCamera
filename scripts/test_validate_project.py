@@ -336,6 +336,20 @@ def test_validator_rejects_missing_all_architecture_signature_validation():
     )
 
 
+def test_validator_rejects_missing_signing_information_unknown_guard():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        """        guard let signingDictionary = signingInformation(for: staticCode) else {
+            return .unknown("The code signature is valid, but signing information could not be read.")
+        }
+
+""",
+        """        let signingDictionary = signingInformation(for: staticCode)
+""",
+        "host app should distinguish unknown and invalid code-signing states, validate all architecture slices, and preserve detailed validation errors before submitting system-extension requests",
+    )
+
+
 def test_validator_rejects_missing_runtime_diagnostics_all_architecture_details():
     assert_validator_rejects_mutation(
         "scripts/collect_runtime_diagnostics.sh",
@@ -504,6 +518,7 @@ def main():
     test_validator_rejects_missing_indefinite_stream_duration_guard()
     test_validator_rejects_missing_unknown_signature_state()
     test_validator_rejects_missing_all_architecture_signature_validation()
+    test_validator_rejects_missing_signing_information_unknown_guard()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_details()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_entitlements()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_application_groups()

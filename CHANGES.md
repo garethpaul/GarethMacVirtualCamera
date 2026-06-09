@@ -118,3 +118,4 @@
 - Limited parsed MP4 sample-description dimensions to confirmed video tracks.
 - Treated malformed signed app-group entitlements as unreadable runtime evidence.
 - Verified packaged malformed app-group entitlement diagnostics self-tests.
+- Reported unreadable host signing metadata as an unknown signing state.

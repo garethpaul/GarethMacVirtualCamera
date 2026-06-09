@@ -2542,7 +2542,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
         validationError?.release()
 
-        let signingDictionary = signingInformation(for: staticCode)
+        guard let signingDictionary = signingInformation(for: staticCode) else {
+            return .unknown("The code signature is valid, but signing information could not be read.")
+        }
+
         return .valid(validDetail,
                       teamIdentifier(in: signingDictionary),
                       enabledEntitlementKeys(in: signingDictionary),
