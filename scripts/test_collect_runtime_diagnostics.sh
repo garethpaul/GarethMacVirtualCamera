@@ -146,6 +146,7 @@ require_output "$application_group_output" "Application group all architectures 
 require_output "$application_group_output" "Application group missing architecture common fixture: none"
 require_output "$application_group_output" "Application group malformed entitlements readable fixture: no"
 require_output "$application_group_output" "Application group scalar entitlements readable fixture: no"
+require_output "$application_group_output" "Application group fallback scalar entitlements readable fixture: no"
 require_output "$application_group_output" "Application group fallback malformed entitlements readable fixture: no"
 
 require_output "$camera_device_output" "Camera device present fixture: yes"

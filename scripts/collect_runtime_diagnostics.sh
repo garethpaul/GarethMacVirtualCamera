@@ -516,6 +516,7 @@ read_application_groups_for_architecture() {
 read_application_groups_from_entitlements_file() {
   local entitlements_file="$1"
   local python_bin=""
+  local plistbuddy_output
 
   python_bin="$(python3_command)"
 
@@ -542,12 +543,22 @@ PY
       /usr/bin/plutil -lint "$entitlements_file" >/dev/null 2>/dev/null || return 1
     fi
 
-    /usr/libexec/PlistBuddy -c "Print :${APP_GROUP_ENTITLEMENT}" "$entitlements_file" 2>/dev/null \
-      | /usr/bin/awk '
-        /^[[:space:]]*Array[[:space:]]*\{/ { next }
+    plistbuddy_output="$(/usr/libexec/PlistBuddy -c "Print :${APP_GROUP_ENTITLEMENT}" "$entitlements_file" 2>/dev/null)" || return 1
+    printf '%s\n' "$plistbuddy_output" | /usr/bin/awk '
+        /^[[:space:]]*Array[[:space:]]*\{/ { saw_array = 1; next }
         /^[[:space:]]*\}/ { next }
-        NF { sub(/^[[:space:]]+/, ""); print }
-      ' || true
+        NF {
+          if (!saw_array) {
+            exit 1
+          }
+          sub(/^[[:space:]]+/, "")
+          print
+        }
+        END {
+          if (!saw_array) {
+            exit 1
+          }
+        }'
   else
     return 1
   fi
@@ -1295,6 +1306,15 @@ PLIST
     printf 'Application group scalar entitlements readable fixture: yes\n'
   else
     printf 'Application group scalar entitlements readable fixture: no\n'
+  fi
+  set +e
+  GARETH_DIAGNOSTICS_SKIP_PYTHON=1 read_application_groups_from_entitlements_file "$scalar_entitlements" >/dev/null 2>/dev/null
+  malformed_entitlements_status=$?
+  set -e
+  if [ "$malformed_entitlements_status" -eq 0 ]; then
+    printf 'Application group fallback scalar entitlements readable fixture: yes\n'
+  else
+    printf 'Application group fallback scalar entitlements readable fixture: no\n'
   fi
   set +e
   GARETH_DIAGNOSTICS_SKIP_PYTHON=1 read_application_groups_from_entitlements_file "$malformed_entitlements" >/dev/null 2>/dev/null
