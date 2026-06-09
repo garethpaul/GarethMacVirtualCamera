@@ -2642,7 +2642,15 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     private static func isTeamIdentifier(_ teamIdentifier: String) -> Bool {
-        return teamIdentifier.range(of: "^[A-Za-z0-9]{10}$", options: .regularExpression) != nil
+        return wholeRegularExpressionMatch(teamIdentifier, pattern: "^[A-Za-z0-9]{10}$")
+    }
+
+    private static func wholeRegularExpressionMatch(_ value: String, pattern: String) -> Bool {
+        guard let range = value.range(of: pattern, options: .regularExpression) else {
+            return false
+        }
+
+        return range == value.startIndex..<value.endIndex
     }
 
     private static func enabledEntitlementKeys(in signingDictionary: [String: Any]?) -> Set<String> {
@@ -2698,7 +2706,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     private static func isExpectedApplicationGroupIdentifier(_ groupIdentifier: String, baseIdentifier: String) -> Bool {
         let escapedBaseIdentifier = NSRegularExpression.escapedPattern(for: baseIdentifier)
         let teamPrefixedPattern = "^[A-Za-z0-9]{10}\\.\(escapedBaseIdentifier)$"
-        return groupIdentifier.range(of: teamPrefixedPattern, options: .regularExpression) != nil
+        return wholeRegularExpressionMatch(groupIdentifier, pattern: teamPrefixedPattern)
     }
 
     private static func expectedApplicationGroups(_ groups: Set<String>, baseIdentifier: String) -> Set<String> {
@@ -2809,7 +2817,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         let escapedExtensionIdentifier = NSRegularExpression.escapedPattern(for: extensionIdentifier)
         let teamPrefixedPattern = "^[A-Za-z0-9]{10}\\.\(escapedExtensionIdentifier)$"
-        return machServiceName.range(of: teamPrefixedPattern, options: .regularExpression) != nil
+        return wholeRegularExpressionMatch(machServiceName, pattern: teamPrefixedPattern)
     }
 
     private func handleReadinessFailure(_ error: Error) {

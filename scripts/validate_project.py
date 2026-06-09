@@ -682,6 +682,9 @@ def main():
     require("isTeamIdentifier" in host_source and "^[A-Za-z0-9]{10}$" in host_source and "!teamIdentifier.isEmpty,\n              isTeamIdentifier(teamIdentifier) else" in host_source,
             "host app should validate signing Team IDs before comparing app and extension signatures",
             failures)
+    require("private static func wholeRegularExpressionMatch(_ value: String, pattern: String) -> Bool" in host_source and "guard let range = value.range(of: pattern, options: .regularExpression) else" in host_source and "range == value.startIndex..<value.endIndex" in host_source and "wholeRegularExpressionMatch(teamIdentifier, pattern:" in host_source and "wholeRegularExpressionMatch(groupIdentifier, pattern:" in host_source and "wholeRegularExpressionMatch(machServiceName, pattern:" in host_source and "    test_validator_rejects_missing_host_whole_regex_match_guard()" in validate_project_test_source,
+            "host app should require whole-string regex matches for Team IDs, app groups, and CMIO Mach services",
+            failures)
     require("requiredSystemExtensionInstallEntitlement" in host_source and "kSecCodeInfoEntitlementsDict" in host_source and "hasEnabledEntitlement" in host_source and "appEntitlementReadinessDetail" in host_source and "Entitlement Required" in host_source,
             "host app should verify the signed app has the System Extension entitlement before submitting requests",
             failures)

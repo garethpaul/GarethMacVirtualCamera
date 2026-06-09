@@ -26,6 +26,8 @@
   metadata in host readiness and build-product verification.
 - Rejected multiline signed app-group entitlement values in host readiness and
   executed the signed app-group mutation coverage in the validator suite.
+- Required host Team ID, app-group, and CMIO regex checks to match the whole
+  string through a shared helper.
 - Rejected whitespace-padded app icon size and scale metadata before validating
   icon PNG dimensions.
 - Required app icon catalog scale metadata to use the expected `x` suffix before

@@ -754,6 +754,15 @@ def test_validator_rejects_missing_host_team_identifier_shape_guard():
     )
 
 
+def test_validator_rejects_missing_host_whole_regex_match_guard():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        "        return range == value.startIndex..<value.endIndex\n",
+        "        return true\n",
+        "host app should require whole-string regex matches for Team IDs, app groups, and CMIO Mach services",
+    )
+
+
 def test_validator_rejects_numeric_boolean_entitlement_acceptance():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",
@@ -1792,6 +1801,7 @@ def main():
     test_validator_rejects_missing_all_architecture_signature_validation()
     test_validator_rejects_missing_signing_information_unknown_guard()
     test_validator_rejects_missing_host_team_identifier_shape_guard()
+    test_validator_rejects_missing_host_whole_regex_match_guard()
     test_validator_rejects_numeric_boolean_entitlement_acceptance()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_details()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_entitlements()
