@@ -106,6 +106,37 @@ def test_malformed_mdhd_atom_does_not_raise():
         raise AssertionError(f"Unexpected malformed mdhd metadata: {metadata}")
 
 
+def test_zero_sample_count_stts_does_not_report_frame_rate():
+    validator = load_validator()
+    mdhd_payload = b"\0\0\0\0" + b"\0" * 8 + struct.pack(">II", 24_000, 24_000)
+    hdlr_payload = b"\0" * 8 + b"vide"
+    stts_payload = b"\0\0\0\0" + struct.pack(">I", 1) + struct.pack(">II", 0, 1_000)
+    minimal_mp4 = atom(
+        "moov",
+        atom(
+            "trak",
+            atom(
+                "mdia",
+                atom("mdhd", mdhd_payload)
+                + atom("hdlr", hdlr_payload)
+                + atom("minf", atom("stbl", atom("stts", stts_payload))),
+            ),
+        ),
+    )
+
+    with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as fixture:
+        fixture.write(minimal_mp4)
+        fixture_path = Path(fixture.name)
+
+    try:
+        metadata = validator.mp4_video_metadata(fixture_path)
+    finally:
+        fixture_path.unlink(missing_ok=True)
+
+    if metadata["frame_rate"] is not None:
+        raise AssertionError(f"Unexpected frame rate for zero-sample stts entry: {metadata}")
+
+
 def test_tracked_fixture_validates():
     with tracked_fixture_repo() as fixture_root:
         status, output = run_validator(fixture_root)
@@ -219,6 +250,15 @@ done
     )
 
 
+def test_validator_rejects_missing_host_mp4_sample_count_guard():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        "if sampleCount > 0, sampleDelta > 0, timescale % sampleDelta == 0",
+        "if sampleDelta > 0, timescale % sampleDelta == 0",
+        "host app should only accept positive-sample MP4 timing entries when parsing bundled-video frame rate",
+    )
+
+
 def test_validator_rejects_missing_partial_ci_log_scan():
     assert_validator_rejects_mutation(
         ".github/workflows/macos-build.yml",
@@ -262,6 +302,7 @@ done
 
 def main():
     test_malformed_mdhd_atom_does_not_raise()
+    test_zero_sample_count_stts_does_not_report_frame_rate()
     test_tracked_fixture_validates()
     test_validator_rejects_missing_indefinite_stream_duration_guard()
     test_validator_rejects_missing_unknown_signature_state()
@@ -271,6 +312,7 @@ def main():
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_application_groups()
     test_validator_rejects_missing_extension_load_failure_detail_row()
     test_validator_rejects_missing_unsigned_build_configuration_guard()
+    test_validator_rejects_missing_host_mp4_sample_count_guard()
     test_validator_rejects_missing_partial_ci_log_scan()
     test_validator_rejects_root_level_unsigned_build_logs()
     test_validator_rejects_missing_build_product_python_resolver()

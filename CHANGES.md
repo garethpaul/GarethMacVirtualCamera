@@ -108,3 +108,4 @@
 - Rejected invalid build-product verifier configuration names before resolving Python or product paths.
 - Covered the build-product verifier configuration guard in validator mutation tests.
 - Captured unsigned Xcode build logs under the configured build output path.
+- Rejected zero-sample MP4 timing entries when parsing bundled-video frame rate.

@@ -173,8 +173,8 @@ def mp4_video_metadata(path):
                     video_metadata["duration_seconds"] = media_duration / timescale
 
                 if handler == "vide" and timescale and len(sample_durations) == 1:
-                    _, sample_delta = sample_durations[0]
-                    if sample_delta and timescale % sample_delta == 0:
+                    sample_count, sample_delta = sample_durations[0]
+                    if sample_count and sample_delta and timescale % sample_delta == 0:
                         video_metadata["frame_rate"] = timescale // sample_delta
 
     return video_metadata
@@ -320,6 +320,9 @@ def main():
     runtime_diagnostics_source = (ROOT / "scripts/collect_runtime_diagnostics.sh").read_text()
     runtime_diagnostics_test_path = ROOT / "scripts/test_collect_runtime_diagnostics.sh"
     runtime_diagnostics_test_source = runtime_diagnostics_test_path.read_text()
+    validate_project_source = (ROOT / "scripts/validate_project.py").read_text()
+    validate_project_test_path = ROOT / "scripts/test_validate_project.py"
+    validate_project_test_source = validate_project_test_path.read_text() if validate_project_test_path.exists() else ""
     require(f"PRODUCT_BUNDLE_IDENTIFIER = {APP_BUNDLE_ID};" in project_text,
             "project is missing the host app bundle identifier",
             failures)
@@ -697,6 +700,9 @@ def main():
     require("MP4Atom" in host_source and "atoms(in data:" in host_source and "atomType(in data:" in host_source and "readUInt16" in host_source and "readUInt32" in host_source and "readUInt64" in host_source and "parseMdhd" in host_source and "parseHdlr" in host_source and "parseStts" in host_source and "findSttsEntries" in host_source and "parseStsdDimensions" in host_source and "avc1" in host_source and "hvc1" in host_source and "hev1" in host_source and "mp4v" in host_source,
             "host app should parse bundled MP4 video dimensions, frame rate, and duration for readiness",
             failures)
+    require("sampleCount > 0" in host_source and "sample_count, sample_delta = sample_durations[0]" in validate_project_source and "sample_count and sample_delta" in validate_project_source and "test_zero_sample_count_stts_does_not_report_frame_rate" in validate_project_test_source and "test_validator_rejects_missing_host_mp4_sample_count_guard" in validate_project_test_source,
+            "host app should only accept positive-sample MP4 timing entries when parsing bundled-video frame rate",
+            failures)
     require("extensionInfo != nil" in host_source and "extensionExecutableReadinessDetail == nil" in host_source and "extensionMetadataReadinessDetail == nil" in host_source and "bundledVideoReadinessDetail == nil" in host_source and "extensionLoadFailureDetail" in host_source and "isExtensionExecutableFailureDetail" in host_source and "isExtensionMetadataFailureDetail" in host_source and "isBundledVideoFailureDetail" in host_source and "isBundledExtensionFailureDetail" in host_source and "bundled .systemextension" in host_source and "Expected bundled extension" in host_source and "containsUnresolvedBuildSetting" in host_source and "isExpectedMachServiceName" in host_source and "Team ID-prefixed value ending in" in host_source and "bundledVideoMetadataSummary" in host_source,
             "host app should make extension executable, resolved CMIO Mach service, and bundled-video readiness explicit system-extension request gates",
             failures)
@@ -1050,12 +1056,10 @@ def main():
     require(check_project_path.stat().st_mode & 0o111,
             "project check script should be executable",
             failures)
-    validate_project_test_path = ROOT / "scripts/test_validate_project.py"
-    validate_project_test_source = validate_project_test_path.read_text() if validate_project_test_path.exists() else ""
     require(validate_project_test_path.exists() and validate_project_test_path.stat().st_mode & 0o111,
             "validate_project unit test script should exist and be executable",
             failures)
-    require("sys.dont_write_bytecode = True" in validate_project_test_source and "malformed mdhd" in validate_project_test_source and "mp4_video_metadata" in validate_project_test_source and "assert_validator_rejects_mutation" in validate_project_test_source and "test_validator_rejects_missing_indefinite_stream_duration_guard" in validate_project_test_source and "test_validator_rejects_missing_unknown_signature_state" in validate_project_test_source and "test_validator_rejects_missing_all_architecture_signature_validation" in validate_project_test_source and "test_validator_rejects_missing_extension_load_failure_detail_row" in validate_project_test_source and "test_validator_rejects_missing_partial_ci_log_scan" in validate_project_test_source and "test_validator_rejects_missing_build_product_python_resolver" in validate_project_test_source and "test_validator_rejects_missing_build_product_configuration_guard" in validate_project_test_source,
+    require("sys.dont_write_bytecode = True" in validate_project_test_source and "malformed mdhd" in validate_project_test_source and "mp4_video_metadata" in validate_project_test_source and "assert_validator_rejects_mutation" in validate_project_test_source and "test_validator_rejects_missing_indefinite_stream_duration_guard" in validate_project_test_source and "test_validator_rejects_missing_unknown_signature_state" in validate_project_test_source and "test_validator_rejects_missing_all_architecture_signature_validation" in validate_project_test_source and "test_validator_rejects_missing_extension_load_failure_detail_row" in validate_project_test_source and "test_validator_rejects_missing_host_mp4_sample_count_guard" in validate_project_test_source and "test_validator_rejects_missing_partial_ci_log_scan" in validate_project_test_source and "test_validator_rejects_missing_build_product_python_resolver" in validate_project_test_source and "test_validator_rejects_missing_build_product_configuration_guard" in validate_project_test_source,
             "validate_project unit tests should cover malformed MP4 metadata parsing and mutation rejection for recent runtime-readiness guardrails",
             failures)
     require("test_validator_rejects_missing_runtime_diagnostics_all_architecture_details" in validate_project_test_source,

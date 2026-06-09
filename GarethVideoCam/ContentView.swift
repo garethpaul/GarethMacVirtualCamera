@@ -1874,8 +1874,9 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                     }
 
                     if let timescale, timescale > 0, sampleDurations.count == 1 {
+                        let sampleCount = sampleDurations[0].sampleCount
                         let sampleDelta = sampleDurations[0].sampleDelta
-                        if sampleDelta > 0, timescale % sampleDelta == 0 {
+                        if sampleCount > 0, sampleDelta > 0, timescale % sampleDelta == 0 {
                             videoMetadata.frameRate = Int(timescale / sampleDelta)
                         }
                     }
