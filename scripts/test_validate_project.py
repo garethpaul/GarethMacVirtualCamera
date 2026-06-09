@@ -238,6 +238,19 @@ def test_validator_rejects_missing_build_product_python_resolver():
     )
 
 
+def test_validator_rejects_missing_build_product_configuration_guard():
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
+        """for configuration in "${configurations[@]}"; do
+  validate_configuration_name "$configuration"
+done
+
+""",
+        "",
+        "build-product verifier should reject invalid configuration names before resolving Python or product paths",
+    )
+
+
 def main():
     test_malformed_mdhd_atom_does_not_raise()
     test_tracked_fixture_validates()
@@ -251,6 +264,7 @@ def main():
     test_validator_rejects_missing_unsigned_build_configuration_guard()
     test_validator_rejects_missing_partial_ci_log_scan()
     test_validator_rejects_missing_build_product_python_resolver()
+    test_validator_rejects_missing_build_product_configuration_guard()
     print("Project validator tests passed.")
     return 0
 
