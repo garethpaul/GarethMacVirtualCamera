@@ -113,6 +113,8 @@ for key in sys.argv[2].split("."):
 
 if isinstance(value, str):
     trimmed_value = value.strip()
+    if "\n" in value or "\r" in value:
+        sys.exit(0)
     if trimmed_value and trimmed_value == value:
         print(value)
 PY
@@ -1326,6 +1328,9 @@ run_application_identity_self_test() {
   local string_app_path
   local string_info_value
   local string_mach_service_value
+  local multiline_app_path
+  local multiline_info_value
+  local multiline_mach_service_value
   local untrimmed_app_path
   local untrimmed_info_value
   local untrimmed_mach_service_value
@@ -1336,8 +1341,9 @@ run_application_identity_self_test() {
   scalar_app_path="$temp_dir/ScalarMetadata.app"
   blank_app_path="$temp_dir/BlankMetadata.app"
   untrimmed_app_path="$temp_dir/UntrimmedMetadata.app"
+  multiline_app_path="$temp_dir/MultilineMetadata.app"
   /bin/mkdir -p "$existing_app_path"
-  /bin/mkdir -p "$string_app_path/Contents" "$scalar_app_path/Contents" "$blank_app_path/Contents" "$untrimmed_app_path/Contents"
+  /bin/mkdir -p "$string_app_path/Contents" "$scalar_app_path/Contents" "$blank_app_path/Contents" "$untrimmed_app_path/Contents" "$multiline_app_path/Contents"
 
   cat >"$string_app_path/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -1403,6 +1409,24 @@ PLIST
 </plist>
 PLIST
 
+  cat >"$multiline_app_path/Contents/Info.plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleIdentifier</key>
+  <string>com.example.MultilineMetadata
+Identifier</string>
+  <key>CMIOExtension</key>
+  <dict>
+    <key>CMIOExtensionMachServiceName</key>
+    <string>com.example.MultilineMetadata.Extension
+Service</string>
+  </dict>
+</dict>
+</plist>
+PLIST
+
   printf 'App path match fixture: %s\n' "$(path_matches_expected_value "/Applications/GarethVideoCam.app" "/Applications/GarethVideoCam.app")"
   printf 'App path mismatch fixture: %s\n' "$(path_matches_expected_value "/Users/example/GarethVideoCam.app" "/Applications/GarethVideoCam.app")"
   printf 'Application location existing fixture: %s\n' "$(application_location_readiness_value "$existing_app_path" "$existing_app_path")"
@@ -1415,6 +1439,7 @@ PLIST
   scalar_info_value="$(read_info_plist_value "$scalar_app_path" CFBundleIdentifier)"
   blank_info_value="$(read_info_plist_value "$blank_app_path" CFBundleIdentifier)"
   untrimmed_info_value="$(read_info_plist_value "$untrimmed_app_path" CFBundleIdentifier)"
+  multiline_info_value="$(read_info_plist_value "$multiline_app_path" CFBundleIdentifier)"
   local EXTENSION_INFO_PLIST="$string_app_path/Contents/Info.plist"
   string_mach_service_value="$(read_extension_mach_service_name)"
   EXTENSION_INFO_PLIST="$scalar_app_path/Contents/Info.plist"
@@ -1423,14 +1448,18 @@ PLIST
   blank_mach_service_value="$(read_extension_mach_service_name)"
   EXTENSION_INFO_PLIST="$untrimmed_app_path/Contents/Info.plist"
   untrimmed_mach_service_value="$(read_extension_mach_service_name)"
+  EXTENSION_INFO_PLIST="$multiline_app_path/Contents/Info.plist"
+  multiline_mach_service_value="$(read_extension_mach_service_name)"
   printf 'Info.plist string metadata fixture: %s\n' "${string_info_value:-missing}"
   printf 'Info.plist scalar metadata fixture: %s\n' "${scalar_info_value:-missing}"
   printf 'Info.plist blank string metadata fixture: %s\n' "${blank_info_value:-missing}"
   printf 'Info.plist untrimmed string metadata fixture: %s\n' "${untrimmed_info_value:-missing}"
+  printf 'Info.plist multiline string metadata fixture: %s\n' "${multiline_info_value:-missing}"
   printf 'Info.plist nested string metadata fixture: %s\n' "${string_mach_service_value:-missing}"
   printf 'Info.plist nested scalar metadata fixture: %s\n' "${scalar_mach_service_value:-missing}"
   printf 'Info.plist nested blank string metadata fixture: %s\n' "${blank_mach_service_value:-missing}"
   printf 'Info.plist nested untrimmed string metadata fixture: %s\n' "${untrimmed_mach_service_value:-missing}"
+  printf 'Info.plist nested multiline string metadata fixture: %s\n' "${multiline_mach_service_value:-missing}"
 
   /bin/rm -rf "$temp_dir"
 }

@@ -854,13 +854,15 @@ def test_validator_rejects_missing_runtime_diagnostics_info_plist_string_guard()
         "scripts/collect_runtime_diagnostics.sh",
         """if isinstance(value, str):
     trimmed_value = value.strip()
+    if "\\n" in value or "\\r" in value:
+        sys.exit(0)
     if trimmed_value and trimmed_value == value:
         print(value)
 """,
         """if value:
     print(value)
 """,
-        "runtime diagnostics should reject non-string, blank, or untrimmed Info.plist metadata values",
+        "runtime diagnostics should reject non-string, blank, untrimmed, or multiline Info.plist metadata values",
     )
 
 
@@ -869,7 +871,7 @@ def test_validator_rejects_missing_runtime_diagnostics_blank_info_plist_guard():
         "scripts/collect_runtime_diagnostics.sh",
         "if trimmed_value and trimmed_value == value:",
         "if value:",
-        "runtime diagnostics should reject non-string, blank, or untrimmed Info.plist metadata values",
+        "runtime diagnostics should reject non-string, blank, untrimmed, or multiline Info.plist metadata values",
     )
 
 
@@ -878,7 +880,7 @@ def test_validator_rejects_missing_runtime_diagnostics_untrimmed_info_plist_guar
         "scripts/collect_runtime_diagnostics.sh",
         "if trimmed_value and trimmed_value == value:",
         "if trimmed_value:",
-        "runtime diagnostics should reject non-string, blank, or untrimmed Info.plist metadata values",
+        "runtime diagnostics should reject non-string, blank, untrimmed, or multiline Info.plist metadata values",
     )
     assert_validator_rejects_mutation(
         "scripts/collect_runtime_diagnostics.sh",
@@ -890,7 +892,18 @@ def test_validator_rejects_missing_runtime_diagnostics_untrimmed_info_plist_guar
         """      if (trimmed_value != "") {
         print value
       }""",
-        "runtime diagnostics should reject non-string, blank, or untrimmed Info.plist metadata values",
+        "runtime diagnostics should reject non-string, blank, untrimmed, or multiline Info.plist metadata values",
+    )
+
+
+def test_validator_rejects_missing_runtime_diagnostics_multiline_info_plist_guard():
+    assert_validator_rejects_mutation(
+        "scripts/collect_runtime_diagnostics.sh",
+        """    if "\\n" in value or "\\r" in value:
+        sys.exit(0)
+""",
+        "",
+        "runtime diagnostics should reject non-string, blank, untrimmed, or multiline Info.plist metadata values",
     )
 
 
@@ -1673,6 +1686,15 @@ def test_validator_rejects_missing_packaged_file_byte_count_verifier():
     )
 
 
+def test_validator_rejects_missing_packaged_multiline_info_plist_verifier():
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
+        '    "Info.plist multiline string metadata fixture: missing" \\\n',
+        "",
+        "build-product verifier should run the bundled runtime diagnostics application-identity self-test",
+    )
+
+
 def test_validator_rejects_missing_packaged_multiline_app_group_verifier():
     assert_validator_rejects_mutation(
         "scripts/verify_build_products.sh",
@@ -1725,6 +1747,7 @@ def main():
     test_validator_rejects_missing_runtime_diagnostics_info_plist_string_guard()
     test_validator_rejects_missing_runtime_diagnostics_blank_info_plist_guard()
     test_validator_rejects_missing_runtime_diagnostics_untrimmed_info_plist_guard()
+    test_validator_rejects_missing_runtime_diagnostics_multiline_info_plist_guard()
     test_validator_rejects_missing_runtime_diagnostics_zero_parser_metadata_guard()
     test_validator_rejects_missing_runtime_diagnostics_checksum_failure_guard()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_application_groups()
@@ -1780,6 +1803,7 @@ def main():
     test_validator_rejects_missing_build_product_cmio_string_type_guard()
     test_validator_rejects_missing_build_product_untrimmed_cmio_guard()
     test_validator_rejects_missing_packaged_file_byte_count_verifier()
+    test_validator_rejects_missing_packaged_multiline_info_plist_verifier()
     test_validator_rejects_missing_packaged_multiline_app_group_verifier()
     print("Project validator tests passed.")
     return 0

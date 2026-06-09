@@ -398,10 +398,12 @@ verify_app_diagnostics_resources() {
     "Info.plist scalar metadata fixture: missing" \
     "Info.plist blank string metadata fixture: missing" \
     "Info.plist untrimmed string metadata fixture: missing" \
+    "Info.plist multiline string metadata fixture: missing" \
     "Info.plist nested string metadata fixture: com.example.StringMetadata.Extension" \
     "Info.plist nested scalar metadata fixture: missing" \
     "Info.plist nested blank string metadata fixture: missing" \
-    "Info.plist nested untrimmed string metadata fixture: missing"
+    "Info.plist nested untrimmed string metadata fixture: missing" \
+    "Info.plist nested multiline string metadata fixture: missing"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "video-metadata" "video-metadata" \
     "Video metadata parsed width fixture: 1280" \

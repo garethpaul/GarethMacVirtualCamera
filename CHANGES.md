@@ -20,6 +20,8 @@
   checklist.
 - Required packaged build products to verify the multiline app-group diagnostics
   self-test.
+- Rejected multiline Info.plist metadata strings in runtime diagnostics and
+  packaged diagnostics verification.
 - Rejected whitespace-padded app icon size and scale metadata before validating
   icon PNG dimensions.
 - Required app icon catalog scale metadata to use the expected `x` suffix before
