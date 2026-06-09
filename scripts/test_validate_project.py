@@ -302,6 +302,59 @@ def test_validator_rejects_missing_indefinite_stream_duration_guard():
     )
 
 
+def test_validator_rejects_missing_non_finite_sample_time_guard():
+    assert_validator_rejects_mutation(
+        "Extension/ExtensionProvider.swift",
+        """        guard Self.isFiniteTime(presentationTime) else {
+            logger.error("Skipping sample buffer with invalid, indefinite, or infinite presentation timestamp")
+            return
+        }""",
+        """        guard presentationTime.flags.contains(.valid) else {
+            logger.error("Skipping sample buffer with invalid presentation timestamp")
+            return
+        }""",
+        "extension should reject non-finite sample and host times before retiming",
+    )
+
+
+def test_validator_rejects_missing_host_time_sample_retiming():
+    assert_validator_rejects_mutation(
+        "Extension/ExtensionProvider.swift",
+        """        let assetPresentationTime = CMTimeAdd(presentationTime, timestampOffset)
+        guard Self.isFiniteTime(assetPresentationTime) else {
+            logger.error("Skipping sample buffer with non-finite adjusted presentation timestamp")
+            return
+        }
+
+        let hostScaledAssetPresentationTime = CMTimeConvertScale(assetPresentationTime,
+                                                                 timescale: CMTimeScale(NSEC_PER_SEC),
+                                                                 method: .roundTowardZero)
+        guard Self.isFiniteTime(hostScaledAssetPresentationTime) else {
+            logger.error("Skipping sample buffer with non-finite host-scaled presentation timestamp")
+            return
+        }
+
+        guard let currentHostTime = currentHostTime() else {
+            logger.error("Skipping sample buffer because host clock time is unavailable")
+            return
+        }
+
+        guard let adjustedPresentationTime = hostPresentationTime(for: hostScaledAssetPresentationTime,
+                                                                  currentHostTime: currentHostTime) else {
+            logger.error("Skipping sample buffer with non-finite host presentation timestamp")
+            return
+        }
+
+        guard let hostTimeInNanoseconds = hostTimeInNanoseconds(from: adjustedPresentationTime) else {
+            logger.error("Skipping sample buffer with non-finite host-time nanoseconds")
+            return
+        }""",
+        """        let adjustedPresentationTime = CMTimeAdd(presentationTime, timestampOffset)
+        let hostTimeInNanoseconds = UInt64(0)""",
+        "extension should retime emitted sample timestamps into the advertised host-time clock domain",
+    )
+
+
 def test_validator_rejects_missing_unknown_signature_state():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",
@@ -580,6 +633,8 @@ def main():
     test_zero_sample_count_stts_does_not_report_frame_rate()
     test_tracked_fixture_validates()
     test_validator_rejects_missing_indefinite_stream_duration_guard()
+    test_validator_rejects_missing_non_finite_sample_time_guard()
+    test_validator_rejects_missing_host_time_sample_retiming()
     test_validator_rejects_missing_unknown_signature_state()
     test_validator_rejects_missing_all_architecture_signature_validation()
     test_validator_rejects_missing_signing_information_unknown_guard()

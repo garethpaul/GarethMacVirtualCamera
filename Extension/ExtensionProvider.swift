@@ -223,6 +223,7 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
 
     private var lastPresentationTime: CMTime?
     private var timestampOffset: CMTime = .zero
+    private var hostPresentationTimebase: CMTime?
 
     private func addStream() throws {
         do {
@@ -429,8 +430,8 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
         }
 
         let presentationTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
-        guard presentationTime.flags.contains(.valid) else {
-            logger.error("Skipping sample buffer with invalid presentation timestamp")
+        guard Self.isFiniteTime(presentationTime) else {
+            logger.error("Skipping sample buffer with invalid, indefinite, or infinite presentation timestamp")
             return
         }
 
@@ -439,7 +440,36 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
         }
         lastPresentationTime = presentationTime
 
-        let adjustedPresentationTime = CMTimeAdd(presentationTime, timestampOffset)
+        let assetPresentationTime = CMTimeAdd(presentationTime, timestampOffset)
+        guard Self.isFiniteTime(assetPresentationTime) else {
+            logger.error("Skipping sample buffer with non-finite adjusted presentation timestamp")
+            return
+        }
+
+        let hostScaledAssetPresentationTime = CMTimeConvertScale(assetPresentationTime,
+                                                                 timescale: CMTimeScale(NSEC_PER_SEC),
+                                                                 method: .roundTowardZero)
+        guard Self.isFiniteTime(hostScaledAssetPresentationTime) else {
+            logger.error("Skipping sample buffer with non-finite host-scaled presentation timestamp")
+            return
+        }
+
+        guard let currentHostTime = currentHostTime() else {
+            logger.error("Skipping sample buffer because host clock time is unavailable")
+            return
+        }
+
+        guard let adjustedPresentationTime = hostPresentationTime(for: hostScaledAssetPresentationTime,
+                                                                  currentHostTime: currentHostTime) else {
+            logger.error("Skipping sample buffer with non-finite host presentation timestamp")
+            return
+        }
+
+        guard let hostTimeInNanoseconds = hostTimeInNanoseconds(from: adjustedPresentationTime) else {
+            logger.error("Skipping sample buffer with non-finite host-time nanoseconds")
+            return
+        }
+
         guard let retimedSampleBuffer = retimedSampleBuffer(from: sampleBuffer,
                                                            adjustedPresentationTime: adjustedPresentationTime,
                                                            originalPresentationTime: presentationTime) else {
@@ -448,7 +478,7 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
 
         _streamSource.stream.send(retimedSampleBuffer,
                                   discontinuity: [],
-                                  hostTimeInNanoseconds: currentHostTimeInNanoseconds())
+                                  hostTimeInNanoseconds: hostTimeInNanoseconds)
     }
 
     private func validateSampleBufferPixelBuffer(_ sampleBuffer: CMSampleBuffer) -> Bool {
@@ -495,6 +525,11 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
         timing.presentationTimeStamp = adjustedPresentationTime
 
         if timing.decodeTimeStamp.flags.contains(.valid) {
+            guard Self.isFiniteTime(timing.decodeTimeStamp) else {
+                logger.error("Skipping sample buffer with non-finite decode timestamp")
+                return nil
+            }
+
             let decodeOffset = CMTimeSubtract(timing.decodeTimeStamp, originalPresentationTime)
             timing.decodeTimeStamp = CMTimeAdd(adjustedPresentationTime, decodeOffset)
         }
@@ -513,27 +548,63 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
         return retimedSampleBuffer
     }
 
-    private func currentHostTimeInNanoseconds() -> UInt64 {
+    private func currentHostTime() -> CMTime? {
         let hostTime = CMClockGetTime(CMClockGetHostTimeClock())
-        guard hostTime.flags.contains(.valid),
-              !hostTime.flags.contains(.indefinite),
+        guard Self.isFiniteTime(hostTime),
               CMTimeCompare(hostTime, .zero) > 0 else {
-            return 0
+            return nil
         }
 
         let nanoseconds = CMTimeConvertScale(hostTime,
                                              timescale: CMTimeScale(NSEC_PER_SEC),
                                              method: .roundTowardZero)
-        guard nanoseconds.value > 0 else {
-            return 0
+        guard Self.isFiniteTime(nanoseconds), nanoseconds.value > 0 else {
+            return nil
+        }
+
+        return nanoseconds
+    }
+
+    private func hostPresentationTime(for assetPresentationTime: CMTime,
+                                      currentHostTime: CMTime) -> CMTime? {
+        if let hostPresentationTimebase {
+            let hostPresentationTime = CMTimeAdd(hostPresentationTimebase, assetPresentationTime)
+            guard Self.isFiniteTime(hostPresentationTime),
+                  CMTimeCompare(hostPresentationTime, .zero) > 0 else {
+                return nil
+            }
+
+            return hostPresentationTime
+        }
+
+        let basePresentationTime = CMTimeSubtract(currentHostTime, assetPresentationTime)
+        guard Self.isFiniteTime(basePresentationTime) else {
+            return nil
+        }
+
+        hostPresentationTimebase = basePresentationTime
+        return currentHostTime
+    }
+
+    private func hostTimeInNanoseconds(from hostTime: CMTime) -> UInt64? {
+        let nanoseconds = CMTimeConvertScale(hostTime,
+                                             timescale: CMTimeScale(NSEC_PER_SEC),
+                                             method: .roundTowardZero)
+        guard Self.isFiniteTime(nanoseconds), nanoseconds.value > 0 else {
+            return nil
         }
 
         return UInt64(nanoseconds.value)
     }
 
+    private static func isFiniteTime(_ time: CMTime) -> Bool {
+        return time.isNumeric
+    }
+
     private func resetTiming() {
         lastPresentationTime = nil
         timestampOffset = .zero
+        hostPresentationTimebase = nil
     }
 
     private func advanceLoopTiming(by duration: CMTime) {
