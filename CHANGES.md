@@ -2,6 +2,8 @@
 
 ## 2026-06-08 to 2026-06-09
 
+- Rejected path-like unsigned build architecture overrides before resolving
+  `xcodebuild` or writing build logs.
 - Rejected permissive signed or underscore-separated app icon size and scale
   numbers before validating icon PNG dimensions.
 - Made build-product executable-name validation reject blank names inside the

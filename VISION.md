@@ -20,7 +20,8 @@ Priority:
 - Maintain local checks and CI-equivalent unsigned build paths
 - Keep build-log scanning strict for warnings, errors, failed Xcode commands,
   and build/archive/analyze/clean/test failure banners
-- Keep unsigned build script inputs constrained before log files are written
+- Keep unsigned build configuration and architecture inputs constrained before
+  log files are written
 - Keep `make lint`, `make test`, `make build`, and `make check` aligned with
   `./scripts/check_project.sh`
 - Make runtime activation blockers clear to users

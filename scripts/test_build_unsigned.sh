@@ -183,6 +183,31 @@ fi
 
 require_file_contains "$TMP_DIR/build-unsigned-missing-xcodebuild-invalid.err" "Invalid Xcode configuration name: ../Release"
 
+MISSING_XCODEBUILD_INVALID_ARCH_WORK_DIR="$TMP_DIR/missing-xcodebuild-invalid-arch-work"
+mkdir -p "$MISSING_XCODEBUILD_INVALID_ARCH_WORK_DIR"
+
+set +e
+(
+  cd "$MISSING_XCODEBUILD_INVALID_ARCH_WORK_DIR"
+  PATH="$MISSING_XCODEBUILD_BIN" \
+    PROJECT_PATH="Fixture.xcodeproj" \
+    TARGET_NAME="FixtureCamera" \
+    BUILD_ARCH="../arm64" \
+    BUILD_OUTPUT_PATH="$TMP_DIR/MissingXcodebuildInvalidArchProducts" \
+    /bin/bash "$ROOT/scripts/build_unsigned.sh" Debug >"$TMP_DIR/build-unsigned-missing-xcodebuild-invalid-arch.out" 2>"$TMP_DIR/build-unsigned-missing-xcodebuild-invalid-arch.err"
+)
+missing_xcodebuild_invalid_arch_status=$?
+set -e
+
+if [ "$missing_xcodebuild_invalid_arch_status" -ne 2 ]; then
+  printf 'Expected invalid BUILD_ARCH to be rejected before missing xcodebuild with exit 2, got %s.\n' "$missing_xcodebuild_invalid_arch_status" >&2
+  cat "$TMP_DIR/build-unsigned-missing-xcodebuild-invalid-arch.out" >&2
+  cat "$TMP_DIR/build-unsigned-missing-xcodebuild-invalid-arch.err" >&2
+  exit 1
+fi
+
+require_file_contains "$TMP_DIR/build-unsigned-missing-xcodebuild-invalid-arch.err" "Invalid Xcode build architecture: ../arm64"
+
 INVALID_WORK_DIR="$TMP_DIR/invalid-work"
 INVALID_CALL_LOG="$TMP_DIR/xcodebuild-invalid-calls.log"
 mkdir -p "$INVALID_WORK_DIR"
@@ -240,5 +265,35 @@ if [ -f "$DOT_SEGMENT_CALL_LOG" ]; then
 fi
 
 require_file_contains "$TMP_DIR/build-unsigned-dot-segment.err" "Invalid Xcode configuration name: .."
+
+INVALID_ARCH_WORK_DIR="$TMP_DIR/invalid-arch-work"
+INVALID_ARCH_CALL_LOG="$TMP_DIR/xcodebuild-invalid-arch-calls.log"
+mkdir -p "$INVALID_ARCH_WORK_DIR"
+
+set +e
+(
+  cd "$INVALID_ARCH_WORK_DIR"
+  PATH="$FAKE_BIN:$PATH" \
+    XCODEBUILD_CALL_LOG="$INVALID_ARCH_CALL_LOG" \
+    BUILD_ARCH="../arm64" \
+    "$ROOT/scripts/build_unsigned.sh" Debug >"$TMP_DIR/build-unsigned-invalid-arch.out" 2>"$TMP_DIR/build-unsigned-invalid-arch.err"
+)
+invalid_build_arch_status=$?
+set -e
+
+if [ "$invalid_build_arch_status" -ne 2 ]; then
+  printf 'Expected unsigned build script to reject invalid BUILD_ARCH values with exit 2, got %s.\n' "$invalid_build_arch_status" >&2
+  cat "$TMP_DIR/build-unsigned-invalid-arch.out" >&2
+  cat "$TMP_DIR/build-unsigned-invalid-arch.err" >&2
+  exit 1
+fi
+
+if [ -f "$INVALID_ARCH_CALL_LOG" ]; then
+  printf 'Expected invalid BUILD_ARCH to be rejected before xcodebuild is invoked.\n' >&2
+  cat "$INVALID_ARCH_CALL_LOG" >&2
+  exit 1
+fi
+
+require_file_contains "$TMP_DIR/build-unsigned-invalid-arch.err" "Invalid Xcode build architecture: ../arm64"
 
 printf 'Unsigned build script tests passed.\n'

@@ -1159,6 +1159,17 @@ done
     )
 
 
+def test_validator_rejects_missing_unsigned_build_architecture_guard():
+    assert_validator_rejects_mutation(
+        "scripts/build_unsigned.sh",
+        """validate_build_arch_name "$BUILD_ARCH"
+
+""",
+        "",
+        "unsigned build script should perform Debug and Release app target builds without code signing",
+    )
+
+
 def test_validator_rejects_raw_extension_executable_metadata():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",

@@ -22,6 +22,15 @@ validate_configuration_name() {
   fi
 }
 
+validate_build_arch_name() {
+  local build_arch="$1"
+
+  if [[ ! "$build_arch" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]*$ ]]; then
+    printf 'Invalid Xcode build architecture: %s\n' "$build_arch" >&2
+    exit 2
+  fi
+}
+
 for configuration in "${configurations[@]}"; do
   validate_configuration_name "$configuration"
 done
@@ -29,6 +38,8 @@ done
 if [ -z "$BUILD_ARCH" ]; then
   BUILD_ARCH="$(/usr/bin/uname -m)"
 fi
+
+validate_build_arch_name "$BUILD_ARCH"
 
 if ! command -v xcodebuild >/dev/null 2>&1; then
   printf 'xcodebuild is required to build GarethVideoCam; install Xcode and select it with xcode-select.\n' >&2
