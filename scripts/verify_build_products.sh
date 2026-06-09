@@ -138,7 +138,7 @@ mach_service_matches_expected_identifier() {
 
   if [[ "$mach_service_name" == *"$team_prefixed_suffix" ]]; then
     team_prefix="${mach_service_name%"$team_prefixed_suffix"}"
-    if [[ "$team_prefix" =~ ^[[:alnum:]]+$ ]]; then
+    if [[ "$team_prefix" =~ ^[[:alnum:]]{10}$ ]]; then
       return 0
     fi
   fi
@@ -382,6 +382,7 @@ verify_app_diagnostics_resources() {
     "Application group shared fixture ready: yes" \
     "Application group missing fixture ready: no" \
     "Application group mismatched fixture ready: no" \
+    "Application group short-prefix fixture ready: no" \
     "Application group wrong suffix fixture ready: no" \
     "Application group dotted-prefix fixture ready: no" \
     "Application group unresolved fixture ready: no" \
@@ -396,6 +397,7 @@ verify_app_diagnostics_resources() {
     "Mach service direct fixture matches expected: yes" \
     "Mach service direct fixture ready: yes" \
     "Mach service team-prefixed fixture ready: yes" \
+    "Mach service short-prefix fixture ready: no" \
     "Mach service dotted-prefix fixture ready: no" \
     "Mach service unresolved fixture resolved: no" \
     "Mach service wrong fixture matches expected: no" \

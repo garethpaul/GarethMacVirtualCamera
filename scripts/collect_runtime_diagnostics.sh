@@ -226,7 +226,7 @@ mach_service_matches_expected_value() {
     printf 'yes\n'
   elif [[ "$mach_service_name" == *"$team_prefixed_suffix" ]]; then
     team_prefix="${mach_service_name%"$team_prefixed_suffix"}"
-    if [[ "$team_prefix" =~ ^[[:alnum:]]+$ ]]; then
+    if [[ "$team_prefix" =~ ^[[:alnum:]]{10}$ ]]; then
       printf 'yes\n'
     else
       printf 'no\n'
@@ -576,7 +576,7 @@ application_group_matches_expected_identifier() {
 
   if [[ "$application_group" == *"$team_prefixed_suffix" ]]; then
     team_prefix="${application_group%"$team_prefixed_suffix"}"
-    if [[ "$team_prefix" =~ ^[[:alnum:]]+$ ]]; then
+    if [[ "$team_prefix" =~ ^[[:alnum:]]{10}$ ]]; then
       return 0
     fi
   fi
@@ -1184,6 +1184,7 @@ run_mach_service_self_test() {
   printf 'Mach service direct fixture matches expected: %s\n' "$(mach_service_matches_expected_value "$EXTENSION_ID" "$EXTENSION_ID")"
   printf 'Mach service direct fixture ready: %s\n' "$(mach_service_readiness_value "$EXTENSION_ID" "$EXTENSION_ID")"
   printf 'Mach service team-prefixed fixture ready: %s\n' "$(mach_service_readiness_value "ABCDE12345.$EXTENSION_ID" "$EXTENSION_ID")"
+  printf 'Mach service short-prefix fixture ready: %s\n' "$(mach_service_readiness_value "ABC123.$EXTENSION_ID" "$EXTENSION_ID")"
   printf 'Mach service dotted-prefix fixture ready: %s\n' "$(mach_service_readiness_value "com.example.$EXTENSION_ID" "$EXTENSION_ID")"
   printf 'Mach service unresolved fixture resolved: %s\n' "$(mach_service_resolved_value '$(TeamIdentifierPrefix)$(PRODUCT_BUNDLE_IDENTIFIER)')"
   printf 'Mach service wrong fixture matches expected: %s\n' "$(mach_service_matches_expected_value "com.example.WrongMachService" "$EXTENSION_ID")"
@@ -1194,6 +1195,7 @@ run_application_group_self_test() {
   local direct_group="$APP_GROUP_BASE_ID"
   local shared_group="ABCDE12345.$APP_GROUP_BASE_ID"
   local other_team_group="ZYXWV98765.$APP_GROUP_BASE_ID"
+  local short_prefix_group="ABC123.$APP_GROUP_BASE_ID"
   local wrong_group="ABCDE12345.com.example.Other"
   local dotted_prefix_group="com.example.$APP_GROUP_BASE_ID"
   local formatted_groups
@@ -1207,6 +1209,7 @@ run_application_group_self_test() {
   printf 'Application group shared fixture ready: %s\n' "$(application_groups_ready_value "$shared_group" "$shared_group")"
   printf 'Application group missing fixture ready: %s\n' "$(application_groups_ready_value "" "$shared_group")"
   printf 'Application group mismatched fixture ready: %s\n' "$(application_groups_ready_value "$shared_group" "$other_team_group")"
+  printf 'Application group short-prefix fixture ready: %s\n' "$(application_groups_ready_value "$short_prefix_group" "$short_prefix_group")"
   printf 'Application group wrong suffix fixture ready: %s\n' "$(application_groups_ready_value "$wrong_group" "$wrong_group")"
   printf 'Application group dotted-prefix fixture ready: %s\n' "$(application_groups_ready_value "$dotted_prefix_group" "$dotted_prefix_group")"
   printf 'Application group unresolved fixture ready: %s\n' "$(application_groups_ready_value '$(TeamIdentifierPrefix)com.garethpaul.GarethVideoCam' '$(TeamIdentifierPrefix)com.garethpaul.GarethVideoCam')"

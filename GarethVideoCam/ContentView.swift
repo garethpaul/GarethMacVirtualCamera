@@ -2650,7 +2650,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
 
         let escapedBaseIdentifier = NSRegularExpression.escapedPattern(for: baseIdentifier)
-        let teamPrefixedPattern = "^[A-Za-z0-9]+\\.\(escapedBaseIdentifier)$"
+        let teamPrefixedPattern = "^[A-Za-z0-9]{10}\\.\(escapedBaseIdentifier)$"
         return groupIdentifier.range(of: teamPrefixedPattern, options: .regularExpression) != nil
     }
 
@@ -2761,7 +2761,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
 
         let escapedExtensionIdentifier = NSRegularExpression.escapedPattern(for: extensionIdentifier)
-        let teamPrefixedPattern = "^[A-Za-z0-9]+\\.\(escapedExtensionIdentifier)$"
+        let teamPrefixedPattern = "^[A-Za-z0-9]{10}\\.\(escapedExtensionIdentifier)$"
         return machServiceName.range(of: teamPrefixedPattern, options: .regularExpression) != nil
     }
 

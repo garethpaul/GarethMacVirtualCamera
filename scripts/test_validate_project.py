@@ -385,6 +385,29 @@ def test_validator_rejects_missing_runtime_diagnostics_all_architecture_applicat
     )
 
 
+def test_validator_rejects_loose_team_id_prefix_lengths():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        """        let escapedBaseIdentifier = NSRegularExpression.escapedPattern(for: baseIdentifier)
+        let teamPrefixedPattern = "^[A-Za-z0-9]{10}\\\\.\\(escapedBaseIdentifier)$"
+""",
+        """        let escapedBaseIdentifier = NSRegularExpression.escapedPattern(for: baseIdentifier)
+        let teamPrefixedPattern = "^[A-Za-z0-9]+\\\\.\\(escapedBaseIdentifier)$"
+""",
+        "host app should restrict Team-ID-prefixed app groups and CMIO Mach services to 10-character Team IDs",
+    )
+    assert_validator_rejects_mutation(
+        "scripts/collect_runtime_diagnostics.sh",
+        """    if [[ "$team_prefix" =~ ^[[:alnum:]]{10}$ ]]; then
+      printf 'yes\\n'
+""",
+        """    if [[ "$team_prefix" =~ ^[[:alnum:]]+$ ]]; then
+      printf 'yes\\n'
+""",
+        "runtime diagnostics should restrict Team-ID-prefixed app groups and CMIO Mach services to 10-character Team IDs",
+    )
+
+
 def test_validator_rejects_missing_extension_load_failure_detail_row():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",
@@ -522,6 +545,7 @@ def main():
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_details()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_entitlements()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_application_groups()
+    test_validator_rejects_loose_team_id_prefix_lengths()
     test_validator_rejects_missing_extension_load_failure_detail_row()
     test_validator_rejects_missing_unsigned_build_configuration_guard()
     test_validator_rejects_missing_host_mp4_sample_count_guard()
