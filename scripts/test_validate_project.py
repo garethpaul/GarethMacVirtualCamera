@@ -215,6 +215,16 @@ def test_validator_rejects_missing_unsigned_build_configuration_guard():
     )
 
 
+def test_validator_rejects_missing_partial_ci_log_scan():
+    assert_validator_rejects_mutation(
+        ".github/workflows/macos-build.yml",
+        """        if: always() && hashFiles('build-*.log') != ''
+        run: ./scripts/scan_build_log.py build-*.log""",
+        "        run: ./scripts/scan_build_log.py build-Debug.log build-Release.log",
+        "macOS build workflow should scan any captured Debug or Release xcodebuild output even after failed build steps",
+    )
+
+
 def main():
     test_malformed_mdhd_atom_does_not_raise()
     test_tracked_fixture_validates()
@@ -226,6 +236,7 @@ def main():
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_application_groups()
     test_validator_rejects_missing_extension_load_failure_detail_row()
     test_validator_rejects_missing_unsigned_build_configuration_guard()
+    test_validator_rejects_missing_partial_ci_log_scan()
     print("Project validator tests passed.")
     return 0
 
