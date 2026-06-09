@@ -103,8 +103,8 @@ require_output "$application_identity_output" "Bundle identifier missing fixture
 
 require_output "$team_id_output" "Team ID match fixture: yes"
 require_output "$team_id_output" "Team ID mismatch fixture: no"
-require_output "$team_id_output" "Team ID missing app fixture: unknown"
-require_output "$team_id_output" "Team ID missing extension fixture: unknown"
+require_output "$team_id_output" "Team ID missing app fixture: no"
+require_output "$team_id_output" "Team ID missing extension fixture: no"
 
 require_output "$mach_service_output" "Mach service direct fixture resolved: yes"
 require_output "$mach_service_output" "Mach service direct fixture matches expected: yes"

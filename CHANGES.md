@@ -54,3 +54,4 @@
 - Included expected signed-host evidence lines in copied diagnostics snapshots.
 - Reported missing installed app and embedded extension runtime-readiness gates as blocked instead of unknown.
 - Classified missing or unreadable bundled system-extension packages as extension metadata readiness blockers in the host app.
+- Reported missing app or extension signing Team IDs as blocked runtime diagnostics readiness.

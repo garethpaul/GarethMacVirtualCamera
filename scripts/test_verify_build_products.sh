@@ -129,6 +129,8 @@ passing_outputs = {
     "team-id": [
         "Team ID match fixture: yes",
         "Team ID mismatch fixture: no",
+        "Team ID missing app fixture: no",
+        "Team ID missing extension fixture: no",
     ],
     "application-identity": [
         "App path match fixture: yes",
@@ -211,6 +213,8 @@ stale_outputs = {
     "team-id": [
         "Team ID match fixture: no",
         "Team ID mismatch fixture: no",
+        "Team ID missing app fixture: unknown",
+        "Team ID missing extension fixture: unknown",
     ],
     "application-identity": [
         "App path match fixture: no",

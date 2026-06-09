@@ -250,14 +250,12 @@ team_identifiers_match_value() {
   local app_team_identifier="$1"
   local extension_team_identifier="$2"
 
-  if [ -n "$app_team_identifier" ] && [ -n "$extension_team_identifier" ]; then
-    if [ "$app_team_identifier" = "$extension_team_identifier" ]; then
-      printf 'yes\n'
-    else
-      printf 'no\n'
-    fi
+  if [ -n "$app_team_identifier" ] \
+    && [ -n "$extension_team_identifier" ] \
+    && [ "$app_team_identifier" = "$extension_team_identifier" ]; then
+    printf 'yes\n'
   else
-    printf 'unknown\n'
+    printf 'no\n'
   fi
 }
 

@@ -264,7 +264,9 @@ verify_app_diagnostics_resources() {
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "team-id" "Team ID" \
     "Team ID match fixture: yes" \
-    "Team ID mismatch fixture: no"
+    "Team ID mismatch fixture: no" \
+    "Team ID missing app fixture: no" \
+    "Team ID missing extension fixture: no"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "application-identity" "application-identity" \
     "App path match fixture: yes" \
