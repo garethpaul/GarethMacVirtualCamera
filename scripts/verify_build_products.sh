@@ -294,7 +294,9 @@ verify_app_diagnostics_resources() {
     "Team ID match fixture: yes" \
     "Team ID mismatch fixture: no" \
     "Team ID missing app fixture: no" \
-    "Team ID missing extension fixture: no"
+    "Team ID missing extension fixture: no" \
+    "Team ID multiple app fixture: no" \
+    "Team ID multiple extension fixture: no"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "extension-host-entitlement" "extension-host-entitlement" \
     "Extension host entitlement valid absent fixture: yes" \

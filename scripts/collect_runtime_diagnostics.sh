@@ -231,27 +231,41 @@ mach_service_readiness_value() {
 read_team_identifier() {
   local bundle_path="$1"
   local signing_detail
-  local team_identifier
+  local team_identifiers
 
-  signing_detail="$(/usr/bin/codesign -dv "$bundle_path" 2>&1 || true)"
-  team_identifier="$(printf '%s\n' "$signing_detail" | /usr/bin/awk -F= '/^TeamIdentifier=/{ print $2; exit }')"
+  signing_detail="$(/usr/bin/codesign -d --all-architectures -v "$bundle_path" 2>&1 || true)"
+  team_identifiers="$(printf '%s\n' "$signing_detail" | /usr/bin/awk -F= '
+    /^TeamIdentifier=/ {
+      value = $2
+      sub(/^[[:space:]]+/, "", value)
+      sub(/[[:space:]]+$/, "", value)
+      if (value != "" && value != "not set") {
+        print value
+      }
+    }' | /usr/bin/sort -u)"
 
-  case "$team_identifier" in
-    ""|"not set")
-      return 1
-      ;;
-    *)
-      printf '%s\n' "$team_identifier"
-      ;;
-  esac
+  if [ -z "$team_identifiers" ]; then
+    return 1
+  fi
+
+  printf '%s\n' "$team_identifiers"
 }
 
 team_identifiers_match_value() {
-  local app_team_identifier="$1"
-  local extension_team_identifier="$2"
+  local app_team_identifiers="$1"
+  local extension_team_identifiers="$2"
+  local app_team_identifier_count
+  local extension_team_identifier_count
+  local app_team_identifier
+  local extension_team_identifier
 
-  if [ -n "$app_team_identifier" ] \
-    && [ -n "$extension_team_identifier" ] \
+  app_team_identifier_count="$(printf '%s\n' "$app_team_identifiers" | /usr/bin/awk 'NF { count += 1 } END { print count + 0 }')"
+  extension_team_identifier_count="$(printf '%s\n' "$extension_team_identifiers" | /usr/bin/awk 'NF { count += 1 } END { print count + 0 }')"
+  app_team_identifier="$(printf '%s\n' "$app_team_identifiers" | /usr/bin/awk 'NF { print; exit }')"
+  extension_team_identifier="$(printf '%s\n' "$extension_team_identifiers" | /usr/bin/awk 'NF { print; exit }')"
+
+  if [ "$app_team_identifier_count" = "1" ] \
+    && [ "$extension_team_identifier_count" = "1" ] \
     && [ "$app_team_identifier" = "$extension_team_identifier" ]; then
     printf 'yes\n'
   else
@@ -342,7 +356,13 @@ PY
 format_application_groups() {
   local groups="$1"
 
-  printf '%s\n' "$groups" | /usr/bin/awk '
+  format_line_values "$groups"
+}
+
+format_line_values() {
+  local values="$1"
+
+  printf '%s\n' "$values" | /usr/bin/awk '
     NF {
       if (out) {
         out = out ", " $0
@@ -934,10 +954,14 @@ run_application_identity_self_test() {
 }
 
 run_team_identifier_self_test() {
+  local multiple_team_identifiers=$'ABCDE12345\nZYXWV98765'
+
   printf 'Team ID match fixture: %s\n' "$(team_identifiers_match_value "ABCDE12345" "ABCDE12345")"
   printf 'Team ID mismatch fixture: %s\n' "$(team_identifiers_match_value "ABCDE12345" "ZYXWV98765")"
   printf 'Team ID missing app fixture: %s\n' "$(team_identifiers_match_value "" "ABCDE12345")"
   printf 'Team ID missing extension fixture: %s\n' "$(team_identifiers_match_value "ABCDE12345" "")"
+  printf 'Team ID multiple app fixture: %s\n' "$(team_identifiers_match_value "$multiple_team_identifiers" "ABCDE12345")"
+  printf 'Team ID multiple extension fixture: %s\n' "$(team_identifiers_match_value "ABCDE12345" "$multiple_team_identifiers")"
 }
 
 run_extension_host_entitlement_self_test() {
@@ -1402,13 +1426,13 @@ if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
   extension_team_identifier=""
 
   if app_team_identifier="$(read_team_identifier "$APP_PATH")"; then
-    printf 'App team identifier: %s\n' "$app_team_identifier"
+    printf 'App team identifier: %s\n' "$(format_line_values "$app_team_identifier")"
   else
     printf 'App team identifier: unknown\n'
   fi
 
   if extension_team_identifier="$(read_team_identifier "$EXTENSION_PATH")"; then
-    printf 'Extension team identifier: %s\n' "$extension_team_identifier"
+    printf 'Extension team identifier: %s\n' "$(format_line_values "$extension_team_identifier")"
   else
     printf 'Extension team identifier: unknown\n'
   fi

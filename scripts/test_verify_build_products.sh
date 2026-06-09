@@ -159,6 +159,8 @@ passing_outputs = {
         "Team ID mismatch fixture: no",
         "Team ID missing app fixture: no",
         "Team ID missing extension fixture: no",
+        "Team ID multiple app fixture: no",
+        "Team ID multiple extension fixture: no",
     ],
     "extension-host-entitlement": [
         "Extension host entitlement valid absent fixture: yes",
@@ -309,6 +311,8 @@ stale_outputs = {
         "Team ID mismatch fixture: no",
         "Team ID missing app fixture: unknown",
         "Team ID missing extension fixture: unknown",
+        "Team ID multiple app fixture: yes",
+        "Team ID multiple extension fixture: yes",
     ],
     "extension-host-entitlement": [
         "Extension host entitlement valid absent fixture: yes",

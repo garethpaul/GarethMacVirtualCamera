@@ -84,3 +84,4 @@
   logs or invoking `xcodebuild`.
 - Validated host and runtime diagnostics code-signing checks across all architecture slices.
 - Covered all-architecture signature validation in validator mutation tests.
+- Reported and blocked multiple architecture-slice Team IDs in runtime diagnostics.
