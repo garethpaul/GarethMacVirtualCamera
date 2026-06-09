@@ -64,3 +64,4 @@
 - Reported failed `systemextensionsctl` and `system_profiler` activation-evidence commands as unknown instead of absent.
 - Covered all-unknown activation evidence rollups in runtime diagnostics and packaged diagnostics verification.
 - Included refresh-failure context in copied host diagnostics and activation checklist activity.
+- Separated host extension-load failures from unknown or invalid extension signature status.

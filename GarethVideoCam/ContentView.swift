@@ -352,6 +352,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     enum CodeSigningStatus: Equatable {
         case valid(String, String?, Set<String>, Set<String>)
         case invalid(String)
+        case unknown(String)
 
         var title: String {
             switch self {
@@ -359,6 +360,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                 return "Valid"
             case .invalid:
                 return "Invalid"
+            case .unknown:
+                return "Unknown"
             }
         }
 
@@ -368,6 +371,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                 return detail
             case .invalid(let detail):
                 return detail
+            case .unknown(let detail):
+                return detail
             }
         }
 
@@ -375,7 +380,16 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             switch self {
             case .valid:
                 return true
-            case .invalid:
+            case .invalid, .unknown:
+                return false
+            }
+        }
+
+        var isUnknown: Bool {
+            switch self {
+            case .unknown:
+                return true
+            case .valid, .invalid:
                 return false
             }
         }
@@ -384,7 +398,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             switch self {
             case .valid(_, let teamIdentifier, _, _):
                 return teamIdentifier
-            case .invalid:
+            case .invalid, .unknown:
                 return nil
             }
         }
@@ -393,7 +407,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             switch self {
             case .valid(_, _, let enabledEntitlementKeys, _):
                 return enabledEntitlementKeys.contains(entitlement)
-            case .invalid:
+            case .invalid, .unknown:
                 return false
             }
         }
@@ -402,7 +416,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             switch self {
             case .valid(_, _, _, let applicationGroupIdentifiers):
                 return applicationGroupIdentifiers
-            case .invalid:
+            case .invalid, .unknown:
                 return []
             }
         }
@@ -498,10 +512,11 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     @Published var state: InstallState = .idle
     @Published var extensionInfo: ExtensionInfo?
     @Published var activity: [ActivityItem] = []
-    @Published var appCodeSigningStatus: CodeSigningStatus = .invalid("App code-signing status has not been checked yet.")
-    @Published var extensionCodeSigningStatus: CodeSigningStatus = .invalid("System extension code-signing status has not been checked yet.")
+    @Published var appCodeSigningStatus: CodeSigningStatus = .unknown("App code-signing status has not been checked yet.")
+    @Published var extensionCodeSigningStatus: CodeSigningStatus = .unknown("System extension code-signing status has not been checked yet.")
     @Published var appQuarantineStatus: QuarantineStatus = .unknown("App quarantine status has not been checked yet.")
     @Published var extensionQuarantineStatus: QuarantineStatus = .unknown("System extension quarantine status has not been checked yet.")
+    @Published var extensionLoadFailureDetail: String?
     @Published var lastFailureDetail: String?
 
     private var pendingRequestKind: RequestKind?
@@ -682,6 +697,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return "System extension requests require a runnable host app executable."
         }
 
+        if appCodeSigningStatus.isUnknown {
+            return "System extension requests require a checked app signature."
+        }
+
         if !appCodeSigningStatus.isValid {
             return "System extension requests require a valid app signature."
         }
@@ -704,6 +723,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         if bundledVideoReadinessDetail != nil {
             return "System extension requests require the bundled loop video metadata."
+        }
+
+        if extensionCodeSigningStatus.isUnknown {
+            return "System extension requests require a checked system extension signature."
         }
 
         if !extensionCodeSigningStatus.isValid {
@@ -783,8 +806,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     var readinessChecks: [ReadinessCheck] {
-        let appSignatureStatus: ReadinessCheck.Status = appCodeSigningStatus.isValid ? .passing : .blocked
-        let extensionSignatureStatus: ReadinessCheck.Status = extensionCodeSigningStatus.isValid ? .passing : .blocked
+        let appSignatureStatus: ReadinessCheck.Status = appCodeSigningStatus.isValid ? .passing : (appCodeSigningStatus.isUnknown ? .pending : .blocked)
+        let extensionSignatureStatus: ReadinessCheck.Status = extensionCodeSigningStatus.isValid ? .passing : (extensionCodeSigningStatus.isUnknown ? .pending : .blocked)
         let appExecutableStatus: ReadinessCheck.Status = applicationExecutableReadinessDetail == nil ? .passing : .blocked
         let entitlementStatus: ReadinessCheck.Status
         if appCodeSigningStatus.isValid {
@@ -1031,6 +1054,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return "Rebuild and reinstall the app so its declared executable exists and is runnable. \(applicationExecutableReadinessDetail)"
         }
 
+        if appCodeSigningStatus.isUnknown {
+            return "Refresh app status so the host app signature can be checked. \(appCodeSigningStatus.detail)"
+        }
+
         if !appCodeSigningStatus.isValid {
             return "Sign the host app with a valid Apple Developer identity. \(appCodeSigningStatus.detail)"
         }
@@ -1053,6 +1080,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         if let bundledVideoReadinessDetail {
             return "Rebuild the embedded system extension with a bundled loop video that has the expected metadata. \(bundledVideoReadinessDetail)"
+        }
+
+        if extensionCodeSigningStatus.isUnknown {
+            return "Refresh app status so the embedded system extension signature can be checked. \(extensionCodeSigningStatus.detail)"
         }
 
         if !extensionCodeSigningStatus.isValid {
@@ -1340,6 +1371,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         App Team ID: \(appTeamIdentifier)
         Extension Code Signing: \(extensionCodeSigningStatus.title)
         Extension Code Signing Detail: \(extensionCodeSigningStatus.detail)
+        Extension Load Failure: \(extensionLoadFailureDetail ?? "None")
         Extension Quarantine: \(extensionQuarantineStatus.title)
         Extension Quarantine Detail: \(extensionQuarantineStatus.detail)
         Extension Host-Only Entitlement: \(extensionHostOnlyEntitlementStatus)
@@ -1513,6 +1545,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         do {
             let loadedExtensionInfo = try loadBundledExtensionInfo()
             extensionInfo = loadedExtensionInfo
+            extensionLoadFailureDetail = nil
             extensionCodeSigningStatus = Self.evaluateCodeSigningStatus(for: URL(fileURLWithPath: loadedExtensionInfo.bundlePath),
                                                                         validDetail: "The embedded system extension code signature is valid.")
             extensionQuarantineStatus = Self.quarantineStatus(for: URL(fileURLWithPath: loadedExtensionInfo.bundlePath))
@@ -1526,7 +1559,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return true
         } catch {
             extensionInfo = nil
-            extensionCodeSigningStatus = .invalid("System extension code-signing status could not be checked: \(error.localizedDescription)")
+            extensionLoadFailureDetail = error.localizedDescription
+            extensionCodeSigningStatus = .unknown("System extension signature has not been checked because the embedded extension could not be loaded.")
             extensionQuarantineStatus = .unknown("System extension quarantine status could not be checked: \(error.localizedDescription)")
             handleReadinessFailure(error)
             return false
@@ -2085,12 +2119,14 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         do {
             extensionInfo = try loadBundledExtensionInfo()
             self.extensionInfo = extensionInfo
+            extensionLoadFailureDetail = nil
             extensionCodeSigningStatus = Self.evaluateCodeSigningStatus(for: URL(fileURLWithPath: extensionInfo.bundlePath),
                                                                         validDetail: "The embedded system extension code signature is valid.")
             extensionQuarantineStatus = Self.quarantineStatus(for: URL(fileURLWithPath: extensionInfo.bundlePath))
         } catch {
             self.extensionInfo = nil
-            extensionCodeSigningStatus = .invalid("System extension code-signing status could not be checked: \(error.localizedDescription)")
+            extensionLoadFailureDetail = error.localizedDescription
+            extensionCodeSigningStatus = .unknown("System extension signature has not been checked because the embedded extension could not be loaded.")
             extensionQuarantineStatus = .unknown("System extension quarantine status could not be checked: \(error.localizedDescription)")
             handleReadinessFailure(error)
             return nil
@@ -2304,9 +2340,9 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return nil
         }
 
-        let extensionSigningDetail = extensionCodeSigningStatus.detail
-        if Self.isExtensionExecutableFailureDetail(extensionSigningDetail) {
-            return extensionSigningDetail
+        if let extensionLoadFailureDetail,
+           Self.isExtensionExecutableFailureDetail(extensionLoadFailureDetail) {
+            return extensionLoadFailureDetail
         }
 
         return nil
@@ -2400,9 +2436,9 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return nil
         }
 
-        let extensionSigningDetail = extensionCodeSigningStatus.detail
-        if Self.isBundledVideoFailureDetail(extensionSigningDetail) {
-            return extensionSigningDetail
+        if let extensionLoadFailureDetail,
+           Self.isBundledVideoFailureDetail(extensionLoadFailureDetail) {
+            return extensionLoadFailureDetail
         }
 
         return nil
@@ -2433,9 +2469,9 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return nil
         }
 
-        let extensionSigningDetail = extensionCodeSigningStatus.detail
-        if Self.isExtensionMetadataFailureDetail(extensionSigningDetail) {
-            return extensionSigningDetail
+        if let extensionLoadFailureDetail,
+           Self.isExtensionMetadataFailureDetail(extensionLoadFailureDetail) {
+            return extensionLoadFailureDetail
         }
 
         return nil
@@ -3277,6 +3313,9 @@ private struct DetailsPanel: View {
                 DetailRow(title: "Extension Signature", value: manager.extensionCodeSigningStatus.title)
                 if !manager.extensionCodeSigningStatus.isValid {
                     DetailRow(title: "Extension Signature Detail", value: manager.extensionCodeSigningStatus.detail)
+                }
+                if let extensionLoadFailureDetail = manager.extensionLoadFailureDetail {
+                    DetailRow(title: "Extension Load Failure", value: extensionLoadFailureDetail)
                 }
                 DetailRow(title: "Extension Quarantine", value: manager.extensionQuarantineStatus.title)
                 DetailRow(title: "Extension Quarantine Detail", value: manager.extensionQuarantineStatus.detail, monospaced: true)
