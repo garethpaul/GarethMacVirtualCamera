@@ -1989,7 +1989,11 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         var entries: [(sampleCount: UInt32, sampleDelta: UInt32)] = []
         var entryOffset = payloadStart + 8
         let maxEntryCount = max(0, (payloadEnd - entryOffset) / 8)
-        for _ in 0..<min(Int(entryCount), maxEntryCount) {
+        guard Int(entryCount) <= maxEntryCount else {
+            return []
+        }
+
+        for _ in 0..<Int(entryCount) {
             guard let sampleCount = readUInt32(data, at: entryOffset, end: payloadEnd),
                   let sampleDelta = readUInt32(data, at: entryOffset + 4, end: payloadEnd) else {
                 return entries
@@ -2034,7 +2038,16 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return nil
         }
 
-        for atom in atoms(in: data, start: payloadStart + 8, end: payloadEnd) {
+        guard let entryCount = readUInt32(data, at: payloadStart + 4, end: payloadEnd) else {
+            return nil
+        }
+
+        let sampleDescriptions = atoms(in: data, start: payloadStart + 8, end: payloadEnd)
+        guard Int(entryCount) <= sampleDescriptions.count else {
+            return nil
+        }
+
+        for atom in sampleDescriptions.prefix(Int(entryCount)) {
             guard ["avc1", "hvc1", "hev1", "mp4v"].contains(atom.type),
                   let width = readUInt16(data, at: atom.payloadStart + 24, end: atom.payloadEnd),
                   let height = readUInt16(data, at: atom.payloadStart + 26, end: atom.payloadEnd) else {

@@ -280,6 +280,65 @@ def test_zero_sample_count_stts_does_not_report_frame_rate():
         raise AssertionError(f"Unexpected frame rate for zero-sample stts entry: {metadata}")
 
 
+def test_truncated_stts_entry_count_does_not_report_frame_rate():
+    validator = load_validator()
+    mdhd_payload = b"\0\0\0\0" + b"\0" * 8 + struct.pack(">II", 24_000, 24_000)
+    hdlr_payload = b"\0" * 8 + b"vide"
+    stts_payload = b"\0\0\0\0" + struct.pack(">I", 2) + struct.pack(">II", 24, 1_000)
+    minimal_mp4 = atom(
+        "moov",
+        atom(
+            "trak",
+            atom(
+                "mdia",
+                atom("mdhd", mdhd_payload)
+                + atom("hdlr", hdlr_payload)
+                + atom("minf", atom("stbl", atom("stts", stts_payload))),
+            ),
+        ),
+    )
+
+    fixture_path = write_metadata_fixture(minimal_mp4)
+
+    try:
+        metadata = validator.mp4_video_metadata(fixture_path)
+    finally:
+        fixture_path.unlink(missing_ok=True)
+
+    if metadata["frame_rate"] is not None:
+        raise AssertionError(f"Unexpected frame rate for truncated stts entries: {metadata}")
+
+
+def test_zero_stsd_entry_count_does_not_report_dimensions():
+    validator = load_validator()
+    mdhd_payload = b"\0\0\0\0" + b"\0" * 8 + struct.pack(">II", 24_000, 24_000)
+    hdlr_payload = b"\0" * 8 + b"vide"
+    sample_description = atom("avc1", b"\0" * 24 + struct.pack(">HH", 1280, 720))
+    stsd_payload = b"\0\0\0\0" + struct.pack(">I", 0) + sample_description
+    minimal_mp4 = atom(
+        "moov",
+        atom(
+            "trak",
+            atom(
+                "mdia",
+                atom("mdhd", mdhd_payload)
+                + atom("hdlr", hdlr_payload)
+                + atom("minf", atom("stbl", atom("stsd", stsd_payload))),
+            ),
+        ),
+    )
+
+    fixture_path = write_metadata_fixture(minimal_mp4)
+
+    try:
+        metadata = validator.mp4_video_metadata(fixture_path)
+    finally:
+        fixture_path.unlink(missing_ok=True)
+
+    if metadata["dimensions"] is not None:
+        raise AssertionError(f"Unexpected dimensions for zero-entry stsd table: {metadata}")
+
+
 def test_tracked_fixture_validates():
     with tracked_fixture_repo() as fixture_root:
         status, output = run_validator(fixture_root)
@@ -601,6 +660,34 @@ def test_validator_rejects_missing_host_mp4_sample_count_guard():
     )
 
 
+def test_validator_rejects_missing_host_mp4_complete_stts_entry_guard():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        """        guard Int(entryCount) <= maxEntryCount else {
+            return []
+        }
+
+""",
+        "",
+        "host app should reject incomplete MP4 timing and sample-description tables",
+    )
+
+
+def test_validator_rejects_missing_host_mp4_stsd_entry_count_guard():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        """        let sampleDescriptions = atoms(in: data, start: payloadStart + 8, end: payloadEnd)
+        guard Int(entryCount) <= sampleDescriptions.count else {
+            return nil
+        }
+
+        for atom in sampleDescriptions.prefix(Int(entryCount)) {""",
+        """        let sampleDescriptions = atoms(in: data, start: payloadStart + 8, end: payloadEnd)
+        for atom in sampleDescriptions {""",
+        "host app should reject incomplete MP4 timing and sample-description tables",
+    )
+
+
 def test_validator_rejects_missing_host_mp4_mdhd_version_guard():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",
@@ -717,6 +804,8 @@ def main():
     test_unsupported_stsd_version_does_not_report_dimensions()
     test_non_video_track_stsd_does_not_report_dimensions()
     test_zero_sample_count_stts_does_not_report_frame_rate()
+    test_truncated_stts_entry_count_does_not_report_frame_rate()
+    test_zero_stsd_entry_count_does_not_report_dimensions()
     test_tracked_fixture_validates()
     test_validator_rejects_missing_indefinite_stream_duration_guard()
     test_validator_rejects_missing_non_finite_sample_time_guard()
@@ -737,6 +826,8 @@ def main():
     test_validator_rejects_missing_extension_load_failure_detail_row()
     test_validator_rejects_missing_unsigned_build_configuration_guard()
     test_validator_rejects_missing_host_mp4_sample_count_guard()
+    test_validator_rejects_missing_host_mp4_complete_stts_entry_guard()
+    test_validator_rejects_missing_host_mp4_stsd_entry_count_guard()
     test_validator_rejects_missing_host_mp4_mdhd_version_guard()
     test_validator_rejects_missing_host_mp4_full_box_version_guards()
     test_validator_rejects_missing_host_mp4_video_track_dimension_gate()
