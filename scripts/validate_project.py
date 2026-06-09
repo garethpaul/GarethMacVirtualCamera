@@ -563,8 +563,8 @@ def main():
     require("streamProperties.activeFormatIndex = activeFormatIndex" in extension_source,
             "extension stream should report the stored active format index",
             failures)
-    require("invalidFrameDuration" in extension_source and "throw CameraExtensionError.invalidFrameDuration" in extension_source and "streamProperties.frameDuration" in extension_source,
-            "extension stream should reject unsupported frame-duration requests",
+    require("invalidFrameDuration" in extension_source and "throw CameraExtensionError.invalidFrameDuration" in extension_source and "streamProperties.frameDuration" in extension_source and "!frameDuration.flags.contains(.indefinite)" in extension_source,
+            "extension stream should reject unsupported or indefinite frame-duration requests",
             failures)
     require("validFrameDurations: [CameraExtensionConfiguration.frameDuration]" in extension_source,
             "extension stream should advertise the fixed frame duration it enforces",
