@@ -1942,6 +1942,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             return (timescale, duration)
         }
 
+        guard version == 0 else {
+            return nil
+        }
+
         guard let timescale = readUInt32(data, at: payloadStart + 12, end: payloadEnd),
               let duration = readUInt32(data, at: payloadStart + 16, end: payloadEnd) else {
             return nil
