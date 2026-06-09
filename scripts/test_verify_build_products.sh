@@ -1279,6 +1279,21 @@ if ! grep -q "Missing Debug app CFBundleDisplayName" "$TMP_DIR/untrimmed-display
   exit 1
 fi
 
+MULTILINE_DISPLAY_PRODUCTS="$TMP_DIR/multiline-display/Products"
+write_product_fixture "$MULTILINE_DISPLAY_PRODUCTS" Debug
+set_info_plist_key "$MULTILINE_DISPLAY_PRODUCTS/Debug/GarethVideoCam.app" "CFBundleDisplayName" $'Gareth\nVideo Cam'
+
+if PRODUCTS_PATH="$MULTILINE_DISPLAY_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/multiline-display.out" 2>"$TMP_DIR/multiline-display.err"; then
+  printf 'Expected verifier to reject a multiline app display name.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug app CFBundleDisplayName" "$TMP_DIR/multiline-display.err"; then
+  printf 'Verifier failure did not explain the multiline app display name.\n' >&2
+  cat "$TMP_DIR/multiline-display.err" >&2
+  exit 1
+fi
+
 WRONG_DISPLAY_PRODUCTS="$TMP_DIR/wrong-display/Products"
 write_product_fixture "$WRONG_DISPLAY_PRODUCTS" Debug
 set_info_plist_key "$WRONG_DISPLAY_PRODUCTS/Debug/GarethVideoCam.app" "CFBundleDisplayName" "GarethVideoCam"
@@ -1363,6 +1378,20 @@ fi
 if ! grep -q "Missing Debug extension CMIOExtensionMachServiceName" "$TMP_DIR/untrimmed-cmio.err"; then
   printf 'Verifier failure did not explain the untrimmed CMIO extension metadata.\n' >&2
   cat "$TMP_DIR/untrimmed-cmio.err" >&2
+  exit 1
+fi
+
+MULTILINE_CMIO_PRODUCTS="$TMP_DIR/multiline-cmio/Products"
+write_product_fixture "$MULTILINE_CMIO_PRODUCTS" Debug "$EXTENSION_ID" $'com.garethpaul\n.GarethVideoCam.Extension'
+
+if PRODUCTS_PATH="$MULTILINE_CMIO_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/multiline-cmio.out" 2>"$TMP_DIR/multiline-cmio.err"; then
+  printf 'Expected verifier to reject multiline CMIO extension metadata.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug extension CMIOExtensionMachServiceName" "$TMP_DIR/multiline-cmio.err"; then
+  printf 'Verifier failure did not explain the multiline CMIO extension metadata.\n' >&2
+  cat "$TMP_DIR/multiline-cmio.err" >&2
   exit 1
 fi
 

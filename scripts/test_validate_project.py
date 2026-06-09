@@ -1152,7 +1152,7 @@ def test_validator_rejects_raw_extension_executable_metadata():
             throw ExtensionRequestError.missingExtensionExecutable(extensionURL.path)
         }
 """,
-        "host app should reject blank or untrimmed embedded extension Info.plist and CMIO metadata strings",
+        "host app should reject blank, untrimmed, or multiline embedded extension Info.plist and CMIO metadata strings",
     )
 
 
@@ -1220,6 +1220,7 @@ def test_validator_rejects_untrimmed_host_info_plist_metadata():
         "GarethVideoCam/ContentView.swift",
         """        let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedValue.isEmpty,
+              value.rangeOfCharacter(from: .newlines) == nil,
               trimmedValue == value else {
             return nil
         }
@@ -1229,7 +1230,16 @@ def test_validator_rejects_untrimmed_host_info_plist_metadata():
         """        let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmedValue.isEmpty ? nil : trimmedValue
 """,
-        "host app should reject blank or untrimmed embedded extension Info.plist and CMIO metadata strings",
+        "host app should reject blank, untrimmed, or multiline embedded extension Info.plist and CMIO metadata strings",
+    )
+
+
+def test_validator_rejects_multiline_host_info_plist_metadata():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        "              value.rangeOfCharacter(from: .newlines) == nil,\n",
+        "",
+        "host app should reject blank, untrimmed, or multiline embedded extension Info.plist and CMIO metadata strings",
     )
 
 
@@ -1238,6 +1248,7 @@ def test_validator_rejects_raw_extension_cmio_metadata():
         "GarethVideoCam/ContentView.swift",
         """        let trimmedMachServiceName = machServiceName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedMachServiceName.isEmpty,
+              machServiceName.rangeOfCharacter(from: .newlines) == nil,
               trimmedMachServiceName == machServiceName else {
             return nil
         }
@@ -1246,7 +1257,7 @@ def test_validator_rejects_raw_extension_cmio_metadata():
 """,
         """        return machServiceName
 """,
-        "host app should reject blank or untrimmed embedded extension Info.plist and CMIO metadata strings",
+        "host app should reject blank, untrimmed, or multiline embedded extension Info.plist and CMIO metadata strings",
     )
 
 
@@ -1255,6 +1266,7 @@ def test_validator_rejects_untrimmed_host_cmio_metadata():
         "GarethVideoCam/ContentView.swift",
         """        let trimmedMachServiceName = machServiceName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedMachServiceName.isEmpty,
+              machServiceName.rangeOfCharacter(from: .newlines) == nil,
               trimmedMachServiceName == machServiceName else {
             return nil
         }
@@ -1264,7 +1276,16 @@ def test_validator_rejects_untrimmed_host_cmio_metadata():
         """        let trimmedMachServiceName = machServiceName.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmedMachServiceName.isEmpty ? nil : trimmedMachServiceName
 """,
-        "host app should reject blank or untrimmed embedded extension Info.plist and CMIO metadata strings",
+        "host app should reject blank, untrimmed, or multiline embedded extension Info.plist and CMIO metadata strings",
+    )
+
+
+def test_validator_rejects_multiline_host_cmio_metadata():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        "              machServiceName.rangeOfCharacter(from: .newlines) == nil,\n",
+        "",
+        "host app should reject blank, untrimmed, or multiline embedded extension Info.plist and CMIO metadata strings",
     )
 
 
@@ -1616,11 +1637,13 @@ def test_validator_rejects_missing_build_product_info_plist_string_type_guard():
     assert_validator_rejects_mutation(
         "scripts/verify_build_products.sh",
         """if isinstance(value, str):
+    if "\\n" in value or "\\r" in value:
+        sys.exit(0)
     trimmed_value = value.strip()
     if trimmed_value and trimmed_value == value:
         print(value)""",
         "if value:",
-        "build-product verifier should reject non-string, blank, or untrimmed Info.plist display and privacy strings",
+        "build-product verifier should reject non-string, blank, untrimmed, or multiline Info.plist display and privacy strings",
     )
 
 
@@ -1629,7 +1652,7 @@ def test_validator_rejects_missing_build_product_blank_info_plist_guard():
         "scripts/verify_build_products.sh",
         "if trimmed_value and trimmed_value == value:",
         "if value:",
-        "build-product verifier should reject non-string, blank, or untrimmed Info.plist display and privacy strings",
+        "build-product verifier should reject non-string, blank, untrimmed, or multiline Info.plist display and privacy strings",
     )
 
 
@@ -1638,7 +1661,16 @@ def test_validator_rejects_missing_build_product_untrimmed_info_plist_guard():
         "scripts/verify_build_products.sh",
         "if trimmed_value and trimmed_value == value:",
         "if trimmed_value:",
-        "build-product verifier should reject non-string, blank, or untrimmed Info.plist display and privacy strings",
+        "build-product verifier should reject non-string, blank, untrimmed, or multiline Info.plist display and privacy strings",
+    )
+
+
+def test_validator_rejects_missing_build_product_multiline_info_plist_guard():
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
+        "    if \"\\n\" in value or \"\\r\" in value:\n        sys.exit(0)\n",
+        "",
+        "build-product verifier should reject non-string, blank, untrimmed, or multiline Info.plist display and privacy strings",
     )
 
 
@@ -1647,7 +1679,7 @@ def test_validator_rejects_missing_build_product_blank_cmio_guard():
         "scripts/verify_build_products.sh",
         "if trimmed_mach_service_name and trimmed_mach_service_name == mach_service_name:",
         "if mach_service_name:",
-        "build-product verifier should reject non-string, blank, or untrimmed CMIO Mach-service metadata as missing",
+        "build-product verifier should reject non-string, blank, untrimmed, or multiline CMIO Mach-service metadata as missing",
     )
 
 
@@ -1655,12 +1687,14 @@ def test_validator_rejects_missing_build_product_cmio_string_type_guard():
     assert_validator_rejects_mutation(
         "scripts/verify_build_products.sh",
         """if isinstance(mach_service_name, str):
+    if "\\n" in mach_service_name or "\\r" in mach_service_name:
+        sys.exit(0)
     trimmed_mach_service_name = mach_service_name.strip()
     if trimmed_mach_service_name and trimmed_mach_service_name == mach_service_name:
         print(mach_service_name)""",
         """if mach_service_name:
     print(mach_service_name)""",
-        "build-product verifier should reject non-string, blank, or untrimmed CMIO Mach-service metadata as missing",
+        "build-product verifier should reject non-string, blank, untrimmed, or multiline CMIO Mach-service metadata as missing",
     )
 
 
@@ -1669,7 +1703,16 @@ def test_validator_rejects_missing_build_product_untrimmed_cmio_guard():
         "scripts/verify_build_products.sh",
         "if trimmed_mach_service_name and trimmed_mach_service_name == mach_service_name:",
         "if trimmed_mach_service_name:",
-        "build-product verifier should reject non-string, blank, or untrimmed CMIO Mach-service metadata as missing",
+        "build-product verifier should reject non-string, blank, untrimmed, or multiline CMIO Mach-service metadata as missing",
+    )
+
+
+def test_validator_rejects_missing_build_product_multiline_cmio_guard():
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
+        "    if \"\\n\" in mach_service_name or \"\\r\" in mach_service_name:\n        sys.exit(0)\n",
+        "",
+        "build-product verifier should reject non-string, blank, untrimmed, or multiline CMIO Mach-service metadata as missing",
     )
 
 
@@ -1767,8 +1810,10 @@ def main():
     test_validator_rejects_raw_extension_executable_metadata()
     test_validator_rejects_missing_host_executable_name_shape_guard()
     test_validator_rejects_untrimmed_host_info_plist_metadata()
+    test_validator_rejects_multiline_host_info_plist_metadata()
     test_validator_rejects_raw_extension_cmio_metadata()
     test_validator_rejects_untrimmed_host_cmio_metadata()
+    test_validator_rejects_multiline_host_cmio_metadata()
     test_validator_rejects_missing_host_mp4_sample_count_guard()
     test_validator_rejects_missing_host_mp4_integer_frame_rate_guard()
     test_validator_rejects_missing_host_mp4_complete_stts_entry_guard()
@@ -1799,9 +1844,11 @@ def main():
     test_validator_rejects_missing_build_product_info_plist_string_type_guard()
     test_validator_rejects_missing_build_product_blank_info_plist_guard()
     test_validator_rejects_missing_build_product_untrimmed_info_plist_guard()
+    test_validator_rejects_missing_build_product_multiline_info_plist_guard()
     test_validator_rejects_missing_build_product_blank_cmio_guard()
     test_validator_rejects_missing_build_product_cmio_string_type_guard()
     test_validator_rejects_missing_build_product_untrimmed_cmio_guard()
+    test_validator_rejects_missing_build_product_multiline_cmio_guard()
     test_validator_rejects_missing_packaged_file_byte_count_verifier()
     test_validator_rejects_missing_packaged_multiline_info_plist_verifier()
     test_validator_rejects_missing_packaged_multiline_app_group_verifier()

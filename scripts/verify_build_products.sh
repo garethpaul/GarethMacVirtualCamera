@@ -91,6 +91,8 @@ with open(sys.argv[1], "rb") as info_file:
     value = plistlib.load(info_file).get(sys.argv[2], "")
 
 if isinstance(value, str):
+    if "\n" in value or "\r" in value:
+        sys.exit(0)
     trimmed_value = value.strip()
     if trimmed_value and trimmed_value == value:
         print(value)
@@ -150,6 +152,8 @@ if not isinstance(cmio_extension, dict):
 
 mach_service_name = cmio_extension.get("CMIOExtensionMachServiceName", "")
 if isinstance(mach_service_name, str):
+    if "\n" in mach_service_name or "\r" in mach_service_name:
+        sys.exit(0)
     trimmed_mach_service_name = mach_service_name.strip()
     if trimmed_mach_service_name and trimmed_mach_service_name == mach_service_name:
         print(mach_service_name)

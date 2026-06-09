@@ -22,6 +22,8 @@
   self-test.
 - Rejected multiline Info.plist metadata strings in runtime diagnostics and
   packaged diagnostics verification.
+- Rejected multiline embedded-extension Info.plist, app display, and CMIO
+  metadata in host readiness and build-product verification.
 - Rejected whitespace-padded app icon size and scale metadata before validating
   icon PNG dimensions.
 - Required app icon catalog scale metadata to use the expected `x` suffix before

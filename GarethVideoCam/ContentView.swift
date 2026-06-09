@@ -605,6 +605,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedValue.isEmpty,
+              value.rangeOfCharacter(from: .newlines) == nil,
               trimmedValue == value else {
             return nil
         }
@@ -627,6 +628,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
         let trimmedMachServiceName = machServiceName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedMachServiceName.isEmpty,
+              machServiceName.rangeOfCharacter(from: .newlines) == nil,
               trimmedMachServiceName == machServiceName else {
             return nil
         }
