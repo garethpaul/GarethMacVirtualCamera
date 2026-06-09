@@ -286,10 +286,6 @@ boolean_entitlement_value() {
   fi
 }
 
-has_boolean_entitlement() {
-  [ "$(boolean_entitlement_value "$1" "$2")" = "yes" ]
-}
-
 extension_host_only_entitlement_absent_readiness_value() {
   local extension_signature_ready="$1"
   local host_only_entitlement_present="$2"
@@ -1424,6 +1420,10 @@ fi
 section "Entitlement Check"
 printf 'Expected app System Extension entitlement: %s\n' "$HOST_SYSTEM_EXTENSION_ENTITLEMENT"
 printf 'Expected application group suffix: %s\n' "$APP_GROUP_BASE_ID"
+app_application_groups=""
+app_application_groups_readable="no"
+extension_application_groups=""
+extension_application_groups_readable="no"
 if [ -d "$APP_PATH" ]; then
   app_system_extension_entitlement_present="$(boolean_entitlement_value "$APP_PATH" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT")"
   if [ "$app_system_extension_entitlement_present" = "unknown" ]; then
@@ -1434,9 +1434,14 @@ if [ -d "$APP_PATH" ]; then
     printf 'App System Extension entitlement present: no\n'
   fi
 
-  app_application_groups="$(read_application_groups "$APP_PATH" || true)"
-  printf 'App application groups: %s\n' "$(format_application_groups "$app_application_groups")"
-  printf 'App expected application group present: %s\n' "$(application_groups_expected_present_value "$app_application_groups")"
+  if app_application_groups="$(read_application_groups "$APP_PATH")"; then
+    app_application_groups_readable="yes"
+    printf 'App application groups: %s\n' "$(format_application_groups "$app_application_groups")"
+    printf 'App expected application group present: %s\n' "$(application_groups_expected_present_value "$app_application_groups")"
+  else
+    printf 'App application groups: unknown; signed entitlements could not be read.\n'
+    printf 'App expected application group present: unknown\n'
+  fi
 else
   printf 'App System Extension entitlement present: unknown; app bundle is missing.\n'
   printf 'App application groups: unknown; app bundle is missing.\n'
@@ -1453,9 +1458,14 @@ if [ -d "$EXTENSION_PATH" ]; then
     printf 'Extension carries host-only System Extension entitlement: no\n'
   fi
 
-  extension_application_groups="$(read_application_groups "$EXTENSION_PATH" || true)"
-  printf 'Extension application groups: %s\n' "$(format_application_groups "$extension_application_groups")"
-  printf 'Extension expected application group present: %s\n' "$(application_groups_expected_present_value "$extension_application_groups")"
+  if extension_application_groups="$(read_application_groups "$EXTENSION_PATH")"; then
+    extension_application_groups_readable="yes"
+    printf 'Extension application groups: %s\n' "$(format_application_groups "$extension_application_groups")"
+    printf 'Extension expected application group present: %s\n' "$(application_groups_expected_present_value "$extension_application_groups")"
+  else
+    printf 'Extension application groups: unknown; signed entitlements could not be read.\n'
+    printf 'Extension expected application group present: unknown\n'
+  fi
 else
   printf 'Extension carries host-only System Extension entitlement: unknown; embedded extension is missing.\n'
   printf 'Extension application groups: unknown; embedded extension is missing.\n'
@@ -1463,7 +1473,11 @@ else
 fi
 
 if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
-  printf 'Application groups share expected value: %s\n' "$(application_groups_share_expected_value "$app_application_groups" "$extension_application_groups")"
+  if [ "$app_application_groups_readable" = "yes" ] && [ "$extension_application_groups_readable" = "yes" ]; then
+    printf 'Application groups share expected value: %s\n' "$(application_groups_share_expected_value "$app_application_groups" "$extension_application_groups")"
+  else
+    printf 'Application groups share expected value: unknown; signed entitlements could not be read.\n'
+  fi
 else
   printf 'Application groups share expected value: unknown\n'
 fi
@@ -1536,9 +1550,11 @@ else
 fi
 
 if [ -d "$APP_PATH" ] && [ -d "$EXTENSION_PATH" ]; then
-  app_application_groups="$(read_application_groups "$APP_PATH" || true)"
-  extension_application_groups="$(read_application_groups "$EXTENSION_PATH" || true)"
-  print_readiness_check "Application group match ready" "$(application_groups_ready_value "$app_application_groups" "$extension_application_groups")"
+  if [ "$app_application_groups_readable" = "yes" ] && [ "$extension_application_groups_readable" = "yes" ]; then
+    print_readiness_check "Application group match ready" "$(application_groups_ready_value "$app_application_groups" "$extension_application_groups")"
+  else
+    print_readiness_check "Application group match ready" "no"
+  fi
 else
   print_readiness_check "Application group match ready" "no"
 fi
