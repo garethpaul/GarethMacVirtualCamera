@@ -369,6 +369,28 @@ write_product_fixture() {
   cp "$ROOT/Extension/video.mp4" "$video_path"
 }
 
+assert_stale_diagnostics_rejected() {
+  local fixture_name="$1"
+  local fixture_writer="$2"
+  local verifier_label="$3"
+  local self_test_label="$4"
+  local products_path="$TMP_DIR/$fixture_name/Products"
+
+  write_product_fixture "$products_path" Debug
+  "$fixture_writer" "$products_path" Debug
+
+  if PRODUCTS_PATH="$products_path" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/$fixture_name.out" 2>"$TMP_DIR/$fixture_name.err"; then
+    printf 'Expected verifier to reject stale bundled runtime diagnostics %s self-test output.\n' "$self_test_label" >&2
+    exit 1
+  fi
+
+  if ! grep -q "Unexpected Debug app bundled runtime diagnostics $verifier_label self-test output" "$TMP_DIR/$fixture_name.err"; then
+    printf 'Verifier failure did not explain the stale bundled runtime diagnostics %s self-test output.\n' "$self_test_label" >&2
+    cat "$TMP_DIR/$fixture_name.err" >&2
+    exit 1
+  fi
+}
+
 GOOD_PRODUCTS="$TMP_DIR/good/Products"
 for configuration in Debug Release; do
   write_product_fixture "$GOOD_PRODUCTS" "$configuration"
@@ -464,185 +486,18 @@ if ! grep -q "Missing Debug app runtime diagnostics parser" "$TMP_DIR/missing-di
   exit 1
 fi
 
-STALE_RESOURCE_DISCOVERY_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-resource-discovery-diagnostics/Products"
-write_product_fixture "$STALE_RESOURCE_DISCOVERY_DIAGNOSTICS_PRODUCTS" Debug
-write_stale_resource_discovery_diagnostics_fixture "$STALE_RESOURCE_DISCOVERY_DIAGNOSTICS_PRODUCTS" Debug
-
-if PRODUCTS_PATH="$STALE_RESOURCE_DISCOVERY_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stale-resource-discovery-diagnostics.out" 2>"$TMP_DIR/stale-resource-discovery-diagnostics.err"; then
-  printf 'Expected verifier to reject stale bundled runtime diagnostics resource-discovery self-test output.\n' >&2
-  exit 1
-fi
-
-if ! grep -q "Unexpected Debug app bundled runtime diagnostics resource self-test output" "$TMP_DIR/stale-resource-discovery-diagnostics.err"; then
-  printf 'Verifier failure did not explain the stale bundled runtime diagnostics resource-discovery self-test output.\n' >&2
-  cat "$TMP_DIR/stale-resource-discovery-diagnostics.err" >&2
-  exit 1
-fi
-
-STALE_READINESS_ROLLUP_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-readiness-rollup-diagnostics/Products"
-write_product_fixture "$STALE_READINESS_ROLLUP_DIAGNOSTICS_PRODUCTS" Debug
-write_stale_readiness_rollup_diagnostics_fixture "$STALE_READINESS_ROLLUP_DIAGNOSTICS_PRODUCTS" Debug
-
-if PRODUCTS_PATH="$STALE_READINESS_ROLLUP_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stale-readiness-rollup-diagnostics.out" 2>"$TMP_DIR/stale-readiness-rollup-diagnostics.err"; then
-  printf 'Expected verifier to reject stale bundled runtime diagnostics readiness-rollup self-test output.\n' >&2
-  exit 1
-fi
-
-if ! grep -q "Unexpected Debug app bundled runtime diagnostics readiness-rollup self-test output" "$TMP_DIR/stale-readiness-rollup-diagnostics.err"; then
-  printf 'Verifier failure did not explain the stale bundled runtime diagnostics readiness-rollup self-test output.\n' >&2
-  cat "$TMP_DIR/stale-readiness-rollup-diagnostics.err" >&2
-  exit 1
-fi
-
-STALE_EXECUTABLE_READINESS_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-executable-readiness-diagnostics/Products"
-write_product_fixture "$STALE_EXECUTABLE_READINESS_DIAGNOSTICS_PRODUCTS" Debug
-write_stale_executable_readiness_diagnostics_fixture "$STALE_EXECUTABLE_READINESS_DIAGNOSTICS_PRODUCTS" Debug
-
-if PRODUCTS_PATH="$STALE_EXECUTABLE_READINESS_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stale-executable-readiness-diagnostics.out" 2>"$TMP_DIR/stale-executable-readiness-diagnostics.err"; then
-  printf 'Expected verifier to reject stale bundled runtime diagnostics executable-readiness self-test output.\n' >&2
-  exit 1
-fi
-
-if ! grep -q "Unexpected Debug app bundled runtime diagnostics executable-readiness self-test output" "$TMP_DIR/stale-executable-readiness-diagnostics.err"; then
-  printf 'Verifier failure did not explain the stale bundled runtime diagnostics executable-readiness self-test output.\n' >&2
-  cat "$TMP_DIR/stale-executable-readiness-diagnostics.err" >&2
-  exit 1
-fi
-
-STALE_TEAM_ID_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-team-id-diagnostics/Products"
-write_product_fixture "$STALE_TEAM_ID_DIAGNOSTICS_PRODUCTS" Debug
-write_stale_team_id_diagnostics_fixture "$STALE_TEAM_ID_DIAGNOSTICS_PRODUCTS" Debug
-
-if PRODUCTS_PATH="$STALE_TEAM_ID_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stale-team-id-diagnostics.out" 2>"$TMP_DIR/stale-team-id-diagnostics.err"; then
-  printf 'Expected verifier to reject stale bundled runtime diagnostics Team ID self-test output.\n' >&2
-  exit 1
-fi
-
-if ! grep -q "Unexpected Debug app bundled runtime diagnostics Team ID self-test output" "$TMP_DIR/stale-team-id-diagnostics.err"; then
-  printf 'Verifier failure did not explain the stale bundled runtime diagnostics Team ID self-test output.\n' >&2
-  cat "$TMP_DIR/stale-team-id-diagnostics.err" >&2
-  exit 1
-fi
-
-STALE_APPLICATION_IDENTITY_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-application-identity-diagnostics/Products"
-write_product_fixture "$STALE_APPLICATION_IDENTITY_DIAGNOSTICS_PRODUCTS" Debug
-write_stale_application_identity_diagnostics_fixture "$STALE_APPLICATION_IDENTITY_DIAGNOSTICS_PRODUCTS" Debug
-
-if PRODUCTS_PATH="$STALE_APPLICATION_IDENTITY_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stale-application-identity-diagnostics.out" 2>"$TMP_DIR/stale-application-identity-diagnostics.err"; then
-  printf 'Expected verifier to reject stale bundled runtime diagnostics application-identity self-test output.\n' >&2
-  exit 1
-fi
-
-if ! grep -q "Unexpected Debug app bundled runtime diagnostics application-identity self-test output" "$TMP_DIR/stale-application-identity-diagnostics.err"; then
-  printf 'Verifier failure did not explain the stale bundled runtime diagnostics application-identity self-test output.\n' >&2
-  cat "$TMP_DIR/stale-application-identity-diagnostics.err" >&2
-  exit 1
-fi
-
-STALE_VIDEO_METADATA_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-video-metadata-diagnostics/Products"
-write_product_fixture "$STALE_VIDEO_METADATA_DIAGNOSTICS_PRODUCTS" Debug
-write_stale_video_metadata_diagnostics_fixture "$STALE_VIDEO_METADATA_DIAGNOSTICS_PRODUCTS" Debug
-
-if PRODUCTS_PATH="$STALE_VIDEO_METADATA_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stale-video-metadata-diagnostics.out" 2>"$TMP_DIR/stale-video-metadata-diagnostics.err"; then
-  printf 'Expected verifier to reject stale bundled runtime diagnostics video-metadata self-test output.\n' >&2
-  exit 1
-fi
-
-if ! grep -q "Unexpected Debug app bundled runtime diagnostics video-metadata self-test output" "$TMP_DIR/stale-video-metadata-diagnostics.err"; then
-  printf 'Verifier failure did not explain the stale bundled runtime diagnostics video-metadata self-test output.\n' >&2
-  cat "$TMP_DIR/stale-video-metadata-diagnostics.err" >&2
-  exit 1
-fi
-
-STALE_APPLICATION_GROUP_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-application-group-diagnostics/Products"
-write_product_fixture "$STALE_APPLICATION_GROUP_DIAGNOSTICS_PRODUCTS" Debug
-write_stale_application_group_diagnostics_fixture "$STALE_APPLICATION_GROUP_DIAGNOSTICS_PRODUCTS" Debug
-
-if PRODUCTS_PATH="$STALE_APPLICATION_GROUP_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stale-application-group-diagnostics.out" 2>"$TMP_DIR/stale-application-group-diagnostics.err"; then
-  printf 'Expected verifier to reject stale bundled runtime diagnostics application-group self-test output.\n' >&2
-  exit 1
-fi
-
-if ! grep -q "Unexpected Debug app bundled runtime diagnostics application-group self-test output" "$TMP_DIR/stale-application-group-diagnostics.err"; then
-  printf 'Verifier failure did not explain the stale bundled runtime diagnostics application-group self-test output.\n' >&2
-  cat "$TMP_DIR/stale-application-group-diagnostics.err" >&2
-  exit 1
-fi
-
-STALE_MACH_SERVICE_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-mach-service-diagnostics/Products"
-write_product_fixture "$STALE_MACH_SERVICE_DIAGNOSTICS_PRODUCTS" Debug
-write_stale_mach_service_diagnostics_fixture "$STALE_MACH_SERVICE_DIAGNOSTICS_PRODUCTS" Debug
-
-if PRODUCTS_PATH="$STALE_MACH_SERVICE_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stale-mach-service-diagnostics.out" 2>"$TMP_DIR/stale-mach-service-diagnostics.err"; then
-  printf 'Expected verifier to reject stale bundled runtime diagnostics mach-service self-test output.\n' >&2
-  exit 1
-fi
-
-if ! grep -q "Unexpected Debug app bundled runtime diagnostics mach-service self-test output" "$TMP_DIR/stale-mach-service-diagnostics.err"; then
-  printf 'Verifier failure did not explain the stale bundled runtime diagnostics mach-service self-test output.\n' >&2
-  cat "$TMP_DIR/stale-mach-service-diagnostics.err" >&2
-  exit 1
-fi
-
-STALE_CAMERA_DEVICE_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-camera-device-diagnostics/Products"
-write_product_fixture "$STALE_CAMERA_DEVICE_DIAGNOSTICS_PRODUCTS" Debug
-write_stale_camera_device_diagnostics_fixture "$STALE_CAMERA_DEVICE_DIAGNOSTICS_PRODUCTS" Debug
-
-if PRODUCTS_PATH="$STALE_CAMERA_DEVICE_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stale-camera-device-diagnostics.out" 2>"$TMP_DIR/stale-camera-device-diagnostics.err"; then
-  printf 'Expected verifier to reject stale bundled runtime diagnostics camera-device self-test output.\n' >&2
-  exit 1
-fi
-
-if ! grep -q "Unexpected Debug app bundled runtime diagnostics camera-device self-test output" "$TMP_DIR/stale-camera-device-diagnostics.err"; then
-  printf 'Verifier failure did not explain the stale bundled runtime diagnostics camera-device self-test output.\n' >&2
-  cat "$TMP_DIR/stale-camera-device-diagnostics.err" >&2
-  exit 1
-fi
-
-STALE_REGISTRATION_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-registration-diagnostics/Products"
-write_product_fixture "$STALE_REGISTRATION_DIAGNOSTICS_PRODUCTS" Debug
-write_stale_registration_diagnostics_fixture "$STALE_REGISTRATION_DIAGNOSTICS_PRODUCTS" Debug
-
-if PRODUCTS_PATH="$STALE_REGISTRATION_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stale-registration-diagnostics.out" 2>"$TMP_DIR/stale-registration-diagnostics.err"; then
-  printf 'Expected verifier to reject stale bundled runtime diagnostics registration self-test output.\n' >&2
-  exit 1
-fi
-
-if ! grep -q "Unexpected Debug app bundled runtime diagnostics registration self-test output" "$TMP_DIR/stale-registration-diagnostics.err"; then
-  printf 'Verifier failure did not explain the stale bundled runtime diagnostics registration self-test output.\n' >&2
-  cat "$TMP_DIR/stale-registration-diagnostics.err" >&2
-  exit 1
-fi
-
-STALE_ACTIVATION_EVIDENCE_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-activation-evidence-diagnostics/Products"
-write_product_fixture "$STALE_ACTIVATION_EVIDENCE_DIAGNOSTICS_PRODUCTS" Debug
-write_stale_activation_evidence_diagnostics_fixture "$STALE_ACTIVATION_EVIDENCE_DIAGNOSTICS_PRODUCTS" Debug
-
-if PRODUCTS_PATH="$STALE_ACTIVATION_EVIDENCE_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stale-activation-evidence-diagnostics.out" 2>"$TMP_DIR/stale-activation-evidence-diagnostics.err"; then
-  printf 'Expected verifier to reject stale bundled runtime diagnostics activation-evidence self-test output.\n' >&2
-  exit 1
-fi
-
-if ! grep -q "Unexpected Debug app bundled runtime diagnostics activation-evidence self-test output" "$TMP_DIR/stale-activation-evidence-diagnostics.err"; then
-  printf 'Verifier failure did not explain the stale bundled runtime diagnostics activation-evidence self-test output.\n' >&2
-  cat "$TMP_DIR/stale-activation-evidence-diagnostics.err" >&2
-  exit 1
-fi
-
-STALE_VIDEO_PARSER_DIAGNOSTICS_PRODUCTS="$TMP_DIR/stale-video-parser-diagnostics/Products"
-write_product_fixture "$STALE_VIDEO_PARSER_DIAGNOSTICS_PRODUCTS" Debug
-write_stale_video_parser_diagnostics_fixture "$STALE_VIDEO_PARSER_DIAGNOSTICS_PRODUCTS" Debug
-
-if PRODUCTS_PATH="$STALE_VIDEO_PARSER_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stale-video-parser-diagnostics.out" 2>"$TMP_DIR/stale-video-parser-diagnostics.err"; then
-  printf 'Expected verifier to reject stale bundled runtime diagnostics video-parser self-test output.\n' >&2
-  exit 1
-fi
-
-if ! grep -q "Unexpected Debug app bundled runtime diagnostics parser self-test output" "$TMP_DIR/stale-video-parser-diagnostics.err"; then
-  printf 'Verifier failure did not explain the stale bundled runtime diagnostics video-parser self-test output.\n' >&2
-  cat "$TMP_DIR/stale-video-parser-diagnostics.err" >&2
-  exit 1
-fi
+assert_stale_diagnostics_rejected "stale-resource-discovery-diagnostics" write_stale_resource_discovery_diagnostics_fixture "resource" "resource-discovery"
+assert_stale_diagnostics_rejected "stale-readiness-rollup-diagnostics" write_stale_readiness_rollup_diagnostics_fixture "readiness-rollup" "readiness-rollup"
+assert_stale_diagnostics_rejected "stale-executable-readiness-diagnostics" write_stale_executable_readiness_diagnostics_fixture "executable-readiness" "executable-readiness"
+assert_stale_diagnostics_rejected "stale-team-id-diagnostics" write_stale_team_id_diagnostics_fixture "Team ID" "Team ID"
+assert_stale_diagnostics_rejected "stale-application-identity-diagnostics" write_stale_application_identity_diagnostics_fixture "application-identity" "application-identity"
+assert_stale_diagnostics_rejected "stale-video-metadata-diagnostics" write_stale_video_metadata_diagnostics_fixture "video-metadata" "video-metadata"
+assert_stale_diagnostics_rejected "stale-application-group-diagnostics" write_stale_application_group_diagnostics_fixture "application-group" "application-group"
+assert_stale_diagnostics_rejected "stale-mach-service-diagnostics" write_stale_mach_service_diagnostics_fixture "mach-service" "mach-service"
+assert_stale_diagnostics_rejected "stale-camera-device-diagnostics" write_stale_camera_device_diagnostics_fixture "camera-device" "camera-device"
+assert_stale_diagnostics_rejected "stale-registration-diagnostics" write_stale_registration_diagnostics_fixture "registration" "registration"
+assert_stale_diagnostics_rejected "stale-activation-evidence-diagnostics" write_stale_activation_evidence_diagnostics_fixture "activation-evidence" "activation-evidence"
+assert_stale_diagnostics_rejected "stale-video-parser-diagnostics" write_stale_video_parser_diagnostics_fixture "parser" "video-parser"
 
 BAD_VIDEO_METADATA_PRODUCTS="$TMP_DIR/bad-video-metadata/Products"
 write_product_fixture "$BAD_VIDEO_METADATA_PRODUCTS" Debug
