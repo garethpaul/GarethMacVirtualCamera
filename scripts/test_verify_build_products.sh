@@ -658,6 +658,24 @@ if ! grep -q "Invalid Xcode configuration name: ../Debug" "$TMP_DIR/invalid-conf
   exit 1
 fi
 
+set +e
+PYTHON3_BIN="$TMP_DIR/missing-python3" PRODUCTS_PATH="$GOOD_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" ".." >"$TMP_DIR/dot-segment-configuration.out" 2>"$TMP_DIR/dot-segment-configuration.err"
+dot_segment_configuration_status=$?
+set -e
+
+if [ "$dot_segment_configuration_status" -ne 2 ]; then
+  printf 'Expected verifier to reject a dot-segment configuration before resolving Python, got %s.\n' "$dot_segment_configuration_status" >&2
+  cat "$TMP_DIR/dot-segment-configuration.out" >&2
+  cat "$TMP_DIR/dot-segment-configuration.err" >&2
+  exit 1
+fi
+
+if ! grep -q "Invalid Xcode configuration name: .." "$TMP_DIR/dot-segment-configuration.err"; then
+  printf 'Verifier failure did not explain the dot-segment configuration name.\n' >&2
+  cat "$TMP_DIR/dot-segment-configuration.err" >&2
+  exit 1
+fi
+
 MISSING_APP_PRODUCTS="$TMP_DIR/missing-app/Products"
 mkdir -p "$MISSING_APP_PRODUCTS/Debug"
 

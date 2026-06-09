@@ -42,7 +42,7 @@ python3_command() {
 validate_configuration_name() {
   local configuration="$1"
 
-  if [[ ! "$configuration" =~ ^[A-Za-z0-9_.-]+$ ]]; then
+  if [[ ! "$configuration" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]*$ ]]; then
     printf 'Invalid Xcode configuration name: %s\n' "$configuration" >&2
     exit 2
   fi

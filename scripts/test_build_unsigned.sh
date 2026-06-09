@@ -212,4 +212,33 @@ fi
 
 require_file_contains "$TMP_DIR/build-unsigned-invalid.err" "Invalid Xcode configuration name: ../Release"
 
+DOT_SEGMENT_WORK_DIR="$TMP_DIR/dot-segment-work"
+DOT_SEGMENT_CALL_LOG="$TMP_DIR/xcodebuild-dot-segment-calls.log"
+mkdir -p "$DOT_SEGMENT_WORK_DIR"
+
+set +e
+(
+  cd "$DOT_SEGMENT_WORK_DIR"
+  PATH="$FAKE_BIN:$PATH" \
+    XCODEBUILD_CALL_LOG="$DOT_SEGMENT_CALL_LOG" \
+    "$ROOT/scripts/build_unsigned.sh" ".." >"$TMP_DIR/build-unsigned-dot-segment.out" 2>"$TMP_DIR/build-unsigned-dot-segment.err"
+)
+dot_segment_status=$?
+set -e
+
+if [ "$dot_segment_status" -ne 2 ]; then
+  printf 'Expected unsigned build script to reject dot-segment configuration names with exit 2, got %s.\n' "$dot_segment_status" >&2
+  cat "$TMP_DIR/build-unsigned-dot-segment.out" >&2
+  cat "$TMP_DIR/build-unsigned-dot-segment.err" >&2
+  exit 1
+fi
+
+if [ -f "$DOT_SEGMENT_CALL_LOG" ]; then
+  printf 'Expected dot-segment configuration to be rejected before xcodebuild is invoked.\n' >&2
+  cat "$DOT_SEGMENT_CALL_LOG" >&2
+  exit 1
+fi
+
+require_file_contains "$TMP_DIR/build-unsigned-dot-segment.err" "Invalid Xcode configuration name: .."
+
 printf 'Unsigned build script tests passed.\n'

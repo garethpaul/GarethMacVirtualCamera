@@ -112,3 +112,4 @@
 - Reported clean numeric runtime video byte counts across BSD and GNU `stat`.
 - Verified packaged runtime diagnostics file-byte-count self-tests in built app products.
 - Added validator mutation coverage for the packaged file-byte-count verifier gate.
+- Rejected dot-segment Xcode configuration names before build or verifier path setup.
