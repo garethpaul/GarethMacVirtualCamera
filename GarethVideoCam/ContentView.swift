@@ -1271,6 +1271,9 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         Request Readiness Next Action: \(requestReadinessNextAction)
         Runtime Diagnostics Command Source: \(runtimeDiagnosticsCommandSource)
         Runtime Diagnostics Command: \(runtimeDiagnosticsCommand)
+        Expected Runtime Evidence:
+        \(runtimeEvidenceExpectedDiagnostics)
+
         Pending Request: \(pendingRequestStatus)
         State Guidance: \(stateGuidanceDetail ?? "None")
         Last Failure: \(lastFailureDetail ?? "No failure recorded.")

@@ -49,3 +49,4 @@
 - Aligned copied activation checklist wording with the full signed-host evidence list.
 - Used request-specific approval guidance when opening System Settings.
 - Verified packaged runtime diagnostics bundle-version self-test in built app products.
+- Included expected signed-host evidence lines in copied diagnostics snapshots.
