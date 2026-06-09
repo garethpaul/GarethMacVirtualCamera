@@ -55,7 +55,7 @@ jobs:
       - name: Verify build products
         run: ./scripts/verify_build_products.sh
 
-      - name: Scan build log for source warnings
+      - name: Scan Xcode logs for warnings and failures
         run: ./scripts/scan_build_log.py build-Debug.log build-Release.log
 
       - name: Upload Xcode build logs

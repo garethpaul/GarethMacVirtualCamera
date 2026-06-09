@@ -41,12 +41,13 @@ def test_ignores_appintents_metadata_notice():
         "No AppIntents.framework dependency found.\n"
     )
     require(result.returncode == 0, result.stdout + result.stderr)
-    require("No actionable" in result.stdout, result.stdout)
+    require("No actionable Xcode log warnings/errors/failures found." in result.stdout, result.stdout)
 
 
 def test_fails_on_actionable_warning():
     result = run_scanner("note: harmless\nSwiftCompile warning: real source warning\n")
     require(result.returncode == 1, result.stdout + result.stderr)
+    require("Actionable Xcode log warnings/errors/failures found:" in result.stdout, result.stdout)
     require("real source warning" in result.stdout, result.stdout)
     require(":2: SwiftCompile warning: real source warning" in result.stdout, result.stdout)
 

@@ -48,12 +48,12 @@ def main():
         actionable_lines.extend(actionable_lines_in(build_log_path))
 
     if actionable_lines:
-        print("Actionable build warnings/errors found:")
+        print("Actionable Xcode log warnings/errors/failures found:")
         for build_log_path, line_number, line in actionable_lines:
             print(f"{build_log_path}:{line_number}: {line}")
         return 1
 
-    print("No actionable build warnings/errors found.")
+    print("No actionable Xcode log warnings/errors/failures found.")
     return 0
 
 

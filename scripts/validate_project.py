@@ -862,7 +862,7 @@ def main():
     require("signed entitlements across architecture slices" in readme_text,
             "README should document runtime diagnostics per-architecture signed entitlement dumps",
             failures)
-    require("ACTIONABLE_PATTERN" in build_log_scanner_source and "BUILD FAILED" in build_log_scanner_source and "TEST FAILED" in build_log_scanner_source and "testing failed:" in build_log_scanner_source and "the following build commands failed:" in build_log_scanner_source and "IGNORED_LINE_TOKEN_GROUPS" in build_log_scanner_source and "all(token.lower() in normalized_line" in build_log_scanner_source,
+    require("ACTIONABLE_PATTERN" in build_log_scanner_source and "BUILD FAILED" in build_log_scanner_source and "TEST FAILED" in build_log_scanner_source and "testing failed:" in build_log_scanner_source and "the following build commands failed:" in build_log_scanner_source and "warnings/errors/failures" in build_log_scanner_source and "IGNORED_LINE_TOKEN_GROUPS" in build_log_scanner_source and "all(token.lower() in normalized_line" in build_log_scanner_source,
             "build-log scanner should fail on warnings, errors, build/test-failed banners, build/test failure summaries, and nonzero Xcode command failures while narrowly ignoring known Xcode AppIntents metadata noise",
             failures)
     require("BUILD_LOG [BUILD_LOG ...]" in build_log_scanner_source and "for build_log_path in (Path(argument) for argument in sys.argv[1:])" in build_log_scanner_source and "actionable_lines_in(build_log_path)" in build_log_scanner_source,
@@ -1142,7 +1142,7 @@ def main():
         require("build-Debug.log" in workflow_text and "build-Release.log" in workflow_text,
                 "macOS build workflow should capture separate Debug and Release logs",
                 failures)
-        require("./scripts/scan_build_log.py build-Debug.log build-Release.log" in workflow_text,
+        require("Scan Xcode logs for warnings and failures" in workflow_text and "./scripts/scan_build_log.py build-Debug.log build-Release.log" in workflow_text,
                 "macOS build workflow should scan captured Debug and Release xcodebuild output",
                 failures)
         require("actions/upload-artifact@v7.0.1" in workflow_text and "xcode-build-logs" in workflow_text and "path: build-*.log" in workflow_text and "if-no-files-found: ignore" in workflow_text,
