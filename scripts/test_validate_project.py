@@ -1673,6 +1673,15 @@ def test_validator_rejects_missing_packaged_file_byte_count_verifier():
     )
 
 
+def test_validator_rejects_missing_packaged_multiline_app_group_verifier():
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
+        '    "Application group multiline entitlements readable fixture: no" \\\n',
+        "",
+        "build-product verifier should run the bundled runtime diagnostics application-group self-test",
+    )
+
+
 def main():
     test_malformed_mdhd_atom_does_not_raise()
     test_unsupported_mdhd_version_does_not_report_duration()
@@ -1771,6 +1780,7 @@ def main():
     test_validator_rejects_missing_build_product_cmio_string_type_guard()
     test_validator_rejects_missing_build_product_untrimmed_cmio_guard()
     test_validator_rejects_missing_packaged_file_byte_count_verifier()
+    test_validator_rejects_missing_packaged_multiline_app_group_verifier()
     print("Project validator tests passed.")
     return 0
 

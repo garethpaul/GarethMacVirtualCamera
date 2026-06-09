@@ -18,6 +18,8 @@
   diagnostics compare host and extension groups.
 - Added a first-viewport header action for copying the signed runtime activation
   checklist.
+- Required packaged build products to verify the multiline app-group diagnostics
+  self-test.
 - Rejected whitespace-padded app icon size and scale metadata before validating
   icon PNG dimensions.
 - Required app icon catalog scale metadata to use the expected `x` suffix before

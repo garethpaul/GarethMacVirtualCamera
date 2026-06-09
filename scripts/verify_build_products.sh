@@ -444,6 +444,7 @@ verify_app_diagnostics_resources() {
     "Application group scalar entitlements readable fixture: no" \
     "Application group non-string entitlements readable fixture: no" \
     "Application group untrimmed entitlements readable fixture: no" \
+    "Application group multiline entitlements readable fixture: no" \
     "Application group fallback scalar entitlements readable fixture: no" \
     "Application group fallback non-string entitlements readable fixture: no" \
     "Application group fallback untrimmed entitlements readable fixture: no" \
