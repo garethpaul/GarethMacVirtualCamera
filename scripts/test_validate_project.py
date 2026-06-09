@@ -1055,13 +1055,23 @@ def test_validator_rejects_untrimmed_signed_app_group_values():
         "GarethVideoCam/ContentView.swift",
         """            let trimmedGroupIdentifier = groupIdentifier.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmedGroupIdentifier.isEmpty,
+                  groupIdentifier.rangeOfCharacter(from: .newlines) == nil,
                   trimmedGroupIdentifier == groupIdentifier else {
                 return []
             }
 
 """,
         "",
-        "host app should reject untrimmed signed app-group entitlement values",
+        "host app should reject blank, untrimmed, or multiline signed app-group entitlement values",
+    )
+
+
+def test_validator_rejects_multiline_signed_app_group_values():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        "                  groupIdentifier.rangeOfCharacter(from: .newlines) == nil,\n",
+        "",
+        "host app should reject blank, untrimmed, or multiline signed app-group entitlement values",
     )
 
 
@@ -1801,6 +1811,8 @@ def main():
     test_validator_rejects_missing_runtime_diagnostics_fallback_untrimmed_app_group_guard()
     test_validator_rejects_loose_team_id_prefix_lengths()
     test_validator_rejects_bare_application_group_acceptance()
+    test_validator_rejects_untrimmed_signed_app_group_values()
+    test_validator_rejects_multiline_signed_app_group_values()
     test_validator_rejects_missing_extension_load_failure_detail_row()
     test_validator_rejects_missing_header_action_buttons()
     test_validator_rejects_missing_activity_limit()

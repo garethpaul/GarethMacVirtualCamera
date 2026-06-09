@@ -694,8 +694,8 @@ def main():
     require("applicationGroupsEntitlement" in host_source and "applicationGroupReadinessDetail" in host_source and "Application Group Required" in host_source and "Application Group" in host_source and "App Application Groups:" in host_source and "Extension Application Groups:" in host_source and "Application Group Check:" in host_source and "Shared Application Group:" in host_source and "entitlementValue as? String" not in host_source,
             "host app should verify, show, and copy matching app-group entitlements before submitting requests",
             failures)
-    require("let trimmedGroupIdentifier = groupIdentifier.trimmingCharacters(in: .whitespacesAndNewlines)" in host_source and "trimmedGroupIdentifier == groupIdentifier" in host_source and "test_validator_rejects_untrimmed_signed_app_group_values" in validate_project_test_source,
-            "host app should reject untrimmed signed app-group entitlement values",
+    require("let trimmedGroupIdentifier = groupIdentifier.trimmingCharacters(in: .whitespacesAndNewlines)" in host_source and "groupIdentifier.rangeOfCharacter(from: .newlines) == nil" in host_source and "trimmedGroupIdentifier == groupIdentifier" in host_source and "    test_validator_rejects_untrimmed_signed_app_group_values()" in validate_project_test_source and "    test_validator_rejects_multiline_signed_app_group_values()" in validate_project_test_source,
+            "host app should reject blank, untrimmed, or multiline signed app-group entitlement values",
             failures)
     require(host_source.count("^[A-Za-z0-9]{10}\\\\.") >= 2,
             "host app should restrict Team-ID-prefixed app groups and CMIO Mach services to 10-character Team IDs",

@@ -2679,6 +2679,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
 
             let trimmedGroupIdentifier = groupIdentifier.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmedGroupIdentifier.isEmpty,
+                  groupIdentifier.rangeOfCharacter(from: .newlines) == nil,
                   trimmedGroupIdentifier == groupIdentifier else {
                 return []
             }
