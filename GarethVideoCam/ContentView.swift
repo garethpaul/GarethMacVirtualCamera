@@ -3138,6 +3138,25 @@ private struct HeaderView: View {
     @ObservedObject var manager: SystemExtensionRequestManager
 
     var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .top, spacing: 16) {
+                headerIdentity
+                    .layoutPriority(1)
+
+                Spacer(minLength: 16)
+
+                headerActions
+            }
+
+            VStack(alignment: .leading, spacing: 14) {
+                headerIdentity
+                headerActions
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var headerIdentity: some View {
         HStack(alignment: .top, spacing: 16) {
             Image(systemName: "video.fill")
                 .font(.system(size: 34, weight: .semibold))
@@ -3155,9 +3174,34 @@ private struct HeaderView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .textSelection(.enabled)
             }
-
-            Spacer()
         }
+    }
+
+    private var headerActions: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 10) {
+                headerActionButtons
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                headerActionButtons
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var headerActionButtons: some View {
+        Button(action: manager.refreshStatus) {
+            Label("Refresh", systemImage: "arrow.clockwise")
+        }
+        .buttonStyle(.bordered)
+        .help("Refresh app, extension, signing, and readiness status.")
+
+        Button(action: manager.copyDiagnostics) {
+            Label("Copy Diagnostics", systemImage: "doc.on.doc")
+        }
+        .buttonStyle(.bordered)
+        .help("Copy the current readiness and diagnostics snapshot.")
     }
 }
 

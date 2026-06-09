@@ -1050,6 +1050,41 @@ def test_validator_rejects_missing_extension_load_failure_detail_row():
     )
 
 
+def test_validator_rejects_missing_header_action_buttons():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        """    private var headerActions: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 10) {
+                headerActionButtons
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                headerActionButtons
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var headerActionButtons: some View {
+        Button(action: manager.refreshStatus) {
+            Label("Refresh", systemImage: "arrow.clockwise")
+        }
+        .buttonStyle(.bordered)
+        .help("Refresh app, extension, signing, and readiness status.")
+
+        Button(action: manager.copyDiagnostics) {
+            Label("Copy Diagnostics", systemImage: "doc.on.doc")
+        }
+        .buttonStyle(.bordered)
+        .help("Copy the current readiness and diagnostics snapshot.")
+    }
+""",
+        "",
+        "host app header should surface the current request readiness detail and primary refresh/copy actions",
+    )
+
+
 def test_validator_rejects_missing_unsigned_build_configuration_guard():
     assert_validator_rejects_mutation(
         "scripts/build_unsigned.sh",
@@ -1645,6 +1680,7 @@ def main():
     test_validator_rejects_loose_team_id_prefix_lengths()
     test_validator_rejects_bare_application_group_acceptance()
     test_validator_rejects_missing_extension_load_failure_detail_row()
+    test_validator_rejects_missing_header_action_buttons()
     test_validator_rejects_missing_unsigned_build_configuration_guard()
     test_validator_rejects_missing_host_duplicate_extension_guard()
     test_validator_rejects_directory_runtime_diagnostics_script_resource()
