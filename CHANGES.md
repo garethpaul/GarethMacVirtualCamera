@@ -122,3 +122,4 @@
 - Rejected short Team-ID prefixes in CMIO Mach-service and app-group readiness checks.
 - Flagged Xcode archive-failed banners in the build-log scanner.
 - Rejected bare app-group identifiers in signed runtime-readiness checks.
+- Failed closed on malformed app-group entitlements in non-Python diagnostics parsing.

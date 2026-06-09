@@ -42,6 +42,10 @@ run_if_available() {
 }
 
 python3_command() {
+  if [ "${GARETH_DIAGNOSTICS_SKIP_PYTHON:-0}" = "1" ]; then
+    return
+  fi
+
   if [ -x /usr/bin/python3 ]; then
     printf '/usr/bin/python3\n'
   elif command -v python3 >/dev/null 2>&1; then
@@ -509,12 +513,18 @@ for group in groups:
         print(group)
 PY
   elif [ -x /usr/libexec/PlistBuddy ]; then
+    if [ -x /usr/bin/plutil ]; then
+      /usr/bin/plutil -lint "$entitlements_file" >/dev/null 2>/dev/null || return 1
+    fi
+
     /usr/libexec/PlistBuddy -c "Print :${APP_GROUP_ENTITLEMENT}" "$entitlements_file" 2>/dev/null \
       | /usr/bin/awk '
         /^[[:space:]]*Array[[:space:]]*\{/ { next }
         /^[[:space:]]*\}/ { next }
         NF { sub(/^[[:space:]]+/, ""); print }
       ' || true
+  else
+    return 1
   fi
 }
 
@@ -1228,6 +1238,15 @@ run_application_group_self_test() {
     printf 'Application group malformed entitlements readable fixture: yes\n'
   else
     printf 'Application group malformed entitlements readable fixture: no\n'
+  fi
+  set +e
+  GARETH_DIAGNOSTICS_SKIP_PYTHON=1 read_application_groups_from_entitlements_file "$malformed_entitlements" >/dev/null 2>/dev/null
+  malformed_entitlements_status=$?
+  set -e
+  if [ "$malformed_entitlements_status" -eq 0 ]; then
+    printf 'Application group fallback malformed entitlements readable fixture: yes\n'
+  else
+    printf 'Application group fallback malformed entitlements readable fixture: no\n'
   fi
   /bin/rm -rf "$temp_dir"
 }

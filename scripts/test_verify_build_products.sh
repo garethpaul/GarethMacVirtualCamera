@@ -219,6 +219,7 @@ passing_outputs = {
         "Application group all architectures common fixture: ABCDE12345.com.garethpaul.GarethVideoCam",
         "Application group missing architecture common fixture: none",
         "Application group malformed entitlements readable fixture: no",
+        "Application group fallback malformed entitlements readable fixture: no",
     ],
     "mach-service": [
         "Mach service direct fixture resolved: yes",
@@ -383,6 +384,7 @@ stale_outputs = {
         "Application group all architectures common fixture: none",
         "Application group missing architecture common fixture: value",
         "Application group malformed entitlements readable fixture: yes",
+        "Application group fallback malformed entitlements readable fixture: yes",
     ],
     "mach-service": [
         "Mach service direct fixture resolved: no",
