@@ -118,9 +118,11 @@ require_output "$application_identity_output" "Bundle identifier missing fixture
 require_output "$application_identity_output" "Info.plist string metadata fixture: com.example.StringMetadata"
 require_output "$application_identity_output" "Info.plist scalar metadata fixture: missing"
 require_output "$application_identity_output" "Info.plist blank string metadata fixture: missing"
+require_output "$application_identity_output" "Info.plist untrimmed string metadata fixture: missing"
 require_output "$application_identity_output" "Info.plist nested string metadata fixture: com.example.StringMetadata.Extension"
 require_output "$application_identity_output" "Info.plist nested scalar metadata fixture: missing"
 require_output "$application_identity_output" "Info.plist nested blank string metadata fixture: missing"
+require_output "$application_identity_output" "Info.plist nested untrimmed string metadata fixture: missing"
 
 require_output "$team_id_output" "Team ID match fixture: yes"
 require_output "$team_id_output" "Team ID mismatch fixture: no"
