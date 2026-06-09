@@ -2,6 +2,8 @@
 
 ## 2026-06-08 to 2026-06-09
 
+- Rejected permissive signed or underscore-separated app icon size and scale
+  numbers before validating icon PNG dimensions.
 - Rejected whitespace-padded app icon size and scale metadata before validating
   icon PNG dimensions.
 - Required app icon catalog scale metadata to use the expected `x` suffix before
