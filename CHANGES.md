@@ -91,3 +91,4 @@
 - Required runtime diagnostics app-group values to be present across all executable architecture slices.
 - Printed detected app and extension executable architecture slices in runtime diagnostics.
 - Printed raw signed entitlements per executable architecture slice in runtime diagnostics.
+- Flagged Xcode test-failed banners and testing-failed summaries in the build-log scanner.
