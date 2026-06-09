@@ -124,7 +124,8 @@ read_bundle_build_version() {
 is_executable_name() {
   local executable_name="$1"
 
-  [ "$executable_name" != "." ] \
+  [ -n "$executable_name" ] \
+    && [ "$executable_name" != "." ] \
     && [ "$executable_name" != ".." ] \
     && [[ "$executable_name" != */* ]]
 }

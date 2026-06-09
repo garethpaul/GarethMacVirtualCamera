@@ -1482,6 +1482,13 @@ def test_validator_rejects_missing_build_product_diagnostics_file_guards():
 def test_validator_rejects_missing_build_product_executable_name_guard():
     assert_validator_rejects_mutation(
         "scripts/verify_build_products.sh",
+        """  [ -n "$executable_name" ] \\
+    && [ "$executable_name" != "." ] \\""",
+        """  [ "$executable_name" != "." ] \\""",
+        "build-product verifier should reject blank or path-like CFBundleExecutable values",
+    )
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
         """  if ! is_executable_name "$executable_name"; then
     printf 'Invalid %s %s CFBundleExecutable: %s\\n' "$configuration" "$bundle_label" "$executable_name" >&2
     exit 1
@@ -1489,7 +1496,7 @@ def test_validator_rejects_missing_build_product_executable_name_guard():
 
 """,
         "",
-        "build-product verifier should reject path-like CFBundleExecutable values",
+        "build-product verifier should reject blank or path-like CFBundleExecutable values",
     )
 
 
