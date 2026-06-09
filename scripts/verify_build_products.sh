@@ -596,7 +596,7 @@ verify_exactly_one_embedded_system_extension() {
     exit 1
   fi
 
-  extension_listing="$(find "$system_extensions_path" -maxdepth 1 -type d -name '*.systemextension' -print | sort)"
+  extension_listing="$(find "$system_extensions_path" -maxdepth 1 -name '*.systemextension' -print | sort)"
   extension_count="$(printf '%s\n' "$extension_listing" | /usr/bin/awk 'NF { count += 1 } END { print count + 0 }')"
   if [ "$extension_count" != "1" ]; then
     printf 'Unexpected %s embedded system extension count: %s\n' "$configuration" "$extension_count" >&2

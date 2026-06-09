@@ -819,6 +819,21 @@ if ! grep -q "Unexpected Debug embedded system extension count: 2" "$TMP_DIR/dup
   exit 1
 fi
 
+STRAY_FILE_EMBEDDED_EXTENSION_PRODUCTS="$TMP_DIR/stray-file-embedded-extension/Products"
+write_product_fixture "$STRAY_FILE_EMBEDDED_EXTENSION_PRODUCTS" Debug
+printf 'stale extension fixture\n' > "$STRAY_FILE_EMBEDDED_EXTENSION_PRODUCTS/Debug/GarethVideoCam.app/Contents/Library/SystemExtensions/com.example.StaleFile.systemextension"
+
+if PRODUCTS_PATH="$STRAY_FILE_EMBEDDED_EXTENSION_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/stray-file-embedded-extension.out" 2>"$TMP_DIR/stray-file-embedded-extension.err"; then
+  printf 'Expected verifier to reject a stray embedded system extension file.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Unexpected Debug embedded system extension count: 2" "$TMP_DIR/stray-file-embedded-extension.err"; then
+  printf 'Verifier failure did not explain the stray embedded system extension file.\n' >&2
+  cat "$TMP_DIR/stray-file-embedded-extension.err" >&2
+  exit 1
+fi
+
 BAD_PRODUCTS="$TMP_DIR/bad/Products"
 write_product_fixture "$BAD_PRODUCTS" Debug "com.example.WrongExtension"
 

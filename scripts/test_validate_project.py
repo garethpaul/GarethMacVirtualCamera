@@ -1259,6 +1259,15 @@ def test_validator_rejects_missing_build_product_duplicate_extension_guard():
     )
 
 
+def test_validator_rejects_directory_only_embedded_extension_count():
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
+        "find \"$system_extensions_path\" -maxdepth 1 -name '*.systemextension' -print",
+        "find \"$system_extensions_path\" -maxdepth 1 -type d -name '*.systemextension' -print",
+        "build-product verifier should count every top-level .systemextension path",
+    )
+
+
 def test_validator_rejects_missing_make_gate_aliases():
     assert_validator_rejects_mutation(
         "Makefile",
@@ -1413,6 +1422,7 @@ def main():
     test_validator_rejects_missing_build_product_configuration_guard()
     test_validator_rejects_missing_build_product_expected_video_metadata_guard()
     test_validator_rejects_missing_build_product_duplicate_extension_guard()
+    test_validator_rejects_directory_only_embedded_extension_count()
     test_validator_rejects_missing_make_gate_aliases()
     test_validator_rejects_missing_build_product_info_plist_string_type_guard()
     test_validator_rejects_missing_build_product_blank_info_plist_guard()

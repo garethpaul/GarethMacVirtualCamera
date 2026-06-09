@@ -180,5 +180,6 @@
 - Rejected non-string CMIO Mach-service metadata during build-product verification.
 - Covered extension CoreMedia sample-retiming failure guards in validator mutation tests.
 - Rejected duplicate bundled system-extension packages in host readiness and build-product verification.
+- Counted stray top-level `.systemextension` files during build-product duplicate-extension checks.
 - Kept the AppIntents build-log ignore rule scoped to the known warning notice.
 - Documented the Xcode 27 beta Swift 6.4, macOS 27 SDK, and Apple silicon installer watch item.
