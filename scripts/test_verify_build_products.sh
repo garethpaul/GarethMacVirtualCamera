@@ -1130,6 +1130,21 @@ if ! grep -q "Missing Debug app CFBundleDisplayName" "$TMP_DIR/non-string-displa
   exit 1
 fi
 
+BLANK_DISPLAY_PRODUCTS="$TMP_DIR/blank-display/Products"
+write_product_fixture "$BLANK_DISPLAY_PRODUCTS" Debug
+set_info_plist_key "$BLANK_DISPLAY_PRODUCTS/Debug/GarethVideoCam.app" "CFBundleDisplayName" "   "
+
+if PRODUCTS_PATH="$BLANK_DISPLAY_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/blank-display.out" 2>"$TMP_DIR/blank-display.err"; then
+  printf 'Expected verifier to reject a blank app display name.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug app CFBundleDisplayName" "$TMP_DIR/blank-display.err"; then
+  printf 'Verifier failure did not explain the blank app display name.\n' >&2
+  cat "$TMP_DIR/blank-display.err" >&2
+  exit 1
+fi
+
 WRONG_DISPLAY_PRODUCTS="$TMP_DIR/wrong-display/Products"
 write_product_fixture "$WRONG_DISPLAY_PRODUCTS" Debug
 set_info_plist_key "$WRONG_DISPLAY_PRODUCTS/Debug/GarethVideoCam.app" "CFBundleDisplayName" "GarethVideoCam"
@@ -1186,6 +1201,20 @@ fi
 if ! grep -q "Missing Debug extension CMIOExtensionMachServiceName" "$TMP_DIR/missing-cmio.err"; then
   printf 'Verifier failure did not explain the missing CMIO extension metadata.\n' >&2
   cat "$TMP_DIR/missing-cmio.err" >&2
+  exit 1
+fi
+
+BLANK_CMIO_PRODUCTS="$TMP_DIR/blank-cmio/Products"
+write_product_fixture "$BLANK_CMIO_PRODUCTS" Debug "$EXTENSION_ID" "   "
+
+if PRODUCTS_PATH="$BLANK_CMIO_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/blank-cmio.out" 2>"$TMP_DIR/blank-cmio.err"; then
+  printf 'Expected verifier to reject blank CMIO extension metadata.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug extension CMIOExtensionMachServiceName" "$TMP_DIR/blank-cmio.err"; then
+  printf 'Verifier failure did not explain the blank CMIO extension metadata.\n' >&2
+  cat "$TMP_DIR/blank-cmio.err" >&2
   exit 1
 fi
 

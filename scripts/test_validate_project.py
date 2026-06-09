@@ -1006,9 +1006,27 @@ def test_validator_rejects_missing_make_gate_aliases():
 def test_validator_rejects_missing_build_product_info_plist_string_type_guard():
     assert_validator_rejects_mutation(
         "scripts/verify_build_products.sh",
-        "if isinstance(value, str) and value:",
+        "if isinstance(value, str) and value.strip():",
         "if value:",
-        "build-product verifier should reject non-string Info.plist display and privacy strings",
+        "build-product verifier should reject non-string or blank Info.plist display and privacy strings",
+    )
+
+
+def test_validator_rejects_missing_build_product_blank_info_plist_guard():
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
+        "if isinstance(value, str) and value.strip():",
+        "if isinstance(value, str) and value:",
+        "build-product verifier should reject non-string or blank Info.plist display and privacy strings",
+    )
+
+
+def test_validator_rejects_missing_build_product_blank_cmio_guard():
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
+        "if isinstance(mach_service_name, str) and mach_service_name.strip():",
+        "if isinstance(mach_service_name, str) and mach_service_name:",
+        "build-product verifier should reject non-string or blank CMIO Mach-service metadata as missing",
     )
 
 
@@ -1080,6 +1098,8 @@ def main():
     test_validator_rejects_missing_build_product_expected_video_metadata_guard()
     test_validator_rejects_missing_make_gate_aliases()
     test_validator_rejects_missing_build_product_info_plist_string_type_guard()
+    test_validator_rejects_missing_build_product_blank_info_plist_guard()
+    test_validator_rejects_missing_build_product_blank_cmio_guard()
     test_validator_rejects_missing_packaged_file_byte_count_verifier()
     print("Project validator tests passed.")
     return 0
