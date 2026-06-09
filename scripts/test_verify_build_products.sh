@@ -161,9 +161,14 @@ passing_outputs = {
         "Application group list format fixture: ABCDE12345.com.garethpaul.GarethVideoCam, ZYXWV98765.com.garethpaul.GarethVideoCam",
     ],
     "mach-service": [
+        "Mach service direct fixture resolved: yes",
+        "Mach service direct fixture matches expected: yes",
         "Mach service direct fixture ready: yes",
+        "Mach service team-prefixed fixture ready: yes",
         "Mach service dotted-prefix fixture ready: no",
         "Mach service unresolved fixture resolved: no",
+        "Mach service wrong fixture matches expected: no",
+        "Mach service missing fixture ready: no",
     ],
     "camera-device": [
         "Camera device present fixture: yes",
@@ -262,9 +267,14 @@ stale_outputs = {
         "Application group list format fixture: none",
     ],
     "mach-service": [
+        "Mach service direct fixture resolved: no",
+        "Mach service direct fixture matches expected: no",
         "Mach service direct fixture ready: no",
+        "Mach service team-prefixed fixture ready: no",
         "Mach service dotted-prefix fixture ready: yes",
         "Mach service unresolved fixture resolved: yes",
+        "Mach service wrong fixture matches expected: yes",
+        "Mach service missing fixture ready: yes",
     ],
     "camera-device": [
         "Camera device present fixture: no",

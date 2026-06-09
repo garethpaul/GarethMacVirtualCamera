@@ -297,9 +297,14 @@ verify_app_diagnostics_resources() {
     "Application group list format fixture: ABCDE12345.com.garethpaul.GarethVideoCam, ZYXWV98765.com.garethpaul.GarethVideoCam"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "mach-service" "mach-service" \
+    "Mach service direct fixture resolved: yes" \
+    "Mach service direct fixture matches expected: yes" \
     "Mach service direct fixture ready: yes" \
+    "Mach service team-prefixed fixture ready: yes" \
     "Mach service dotted-prefix fixture ready: no" \
-    "Mach service unresolved fixture resolved: no"
+    "Mach service unresolved fixture resolved: no" \
+    "Mach service wrong fixture matches expected: no" \
+    "Mach service missing fixture ready: no"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "camera-device" "camera-device" \
     "Camera device present fixture: yes" \
