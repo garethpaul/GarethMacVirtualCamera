@@ -664,12 +664,36 @@ def test_validator_rejects_missing_runtime_diagnostics_non_string_app_group_guar
     )
 
 
+def test_validator_rejects_missing_runtime_diagnostics_untrimmed_app_group_guard():
+    assert_validator_rejects_mutation(
+        "scripts/collect_runtime_diagnostics.sh",
+        """    if group.strip() != group:
+        sys.exit(1)
+""",
+        "",
+        "runtime diagnostics should reject untrimmed app-group entitlement strings",
+    )
+
+
 def test_validator_rejects_missing_runtime_diagnostics_fallback_scalar_app_group_guard():
     assert_validator_rejects_mutation(
         "scripts/collect_runtime_diagnostics.sh",
         '    if ! plistbuddy_output="$(/usr/libexec/PlistBuddy -x -c "Print :${APP_GROUP_ENTITLEMENT}" "$entitlements_file" 2>/dev/null)"; then',
         '    if ! plistbuddy_output="$(/usr/libexec/PlistBuddy -c "Print :${APP_GROUP_ENTITLEMENT}" "$entitlements_file" 2>/dev/null)"; then',
         "runtime diagnostics should reject non-array or non-string app-group entitlements in the PlistBuddy fallback parser",
+    )
+
+
+def test_validator_rejects_missing_runtime_diagnostics_fallback_untrimmed_app_group_guard():
+    assert_validator_rejects_mutation(
+        "scripts/collect_runtime_diagnostics.sh",
+        """          if (trimmed_group != group) {
+            invalid = 1
+            next
+          }
+""",
+        "",
+        "runtime diagnostics should reject untrimmed app-group entitlement strings",
     )
 
 
@@ -999,7 +1023,9 @@ def main():
     test_validator_rejects_missing_runtime_diagnostics_info_plist_string_guard()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_application_groups()
     test_validator_rejects_missing_runtime_diagnostics_non_string_app_group_guard()
+    test_validator_rejects_missing_runtime_diagnostics_untrimmed_app_group_guard()
     test_validator_rejects_missing_runtime_diagnostics_fallback_scalar_app_group_guard()
+    test_validator_rejects_missing_runtime_diagnostics_fallback_untrimmed_app_group_guard()
     test_validator_rejects_loose_team_id_prefix_lengths()
     test_validator_rejects_bare_application_group_acceptance()
     test_validator_rejects_missing_extension_load_failure_detail_row()

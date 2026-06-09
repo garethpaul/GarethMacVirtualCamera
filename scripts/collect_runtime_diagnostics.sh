@@ -623,6 +623,8 @@ if not isinstance(groups, list):
 for group in groups:
     if not isinstance(group, str):
         sys.exit(1)
+    if group.strip() != group:
+        sys.exit(1)
     if group:
         print(group)
 PY
@@ -656,6 +658,13 @@ PY
           group = $0
           sub(/^[[:space:]]*<string>/, "", group)
           sub(/<\/string>[[:space:]]*$/, "", group)
+          trimmed_group = group
+          sub(/^[[:space:]]+/, "", trimmed_group)
+          sub(/[[:space:]]+$/, "", trimmed_group)
+          if (trimmed_group != group) {
+            invalid = 1
+            next
+          }
           if (group != "") {
             print group
           }
@@ -1441,6 +1450,7 @@ run_application_group_self_test() {
   local temp_dir
   local malformed_entitlements
   local non_string_entitlements
+  local untrimmed_entitlements
   local scalar_entitlements
   local malformed_entitlements_status
 
@@ -1515,6 +1525,28 @@ PLIST
   else
     printf 'Application group non-string entitlements readable fixture: no\n'
   fi
+  untrimmed_entitlements="$temp_dir/untrimmed-entitlements.plist"
+  cat >"$untrimmed_entitlements" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>${APP_GROUP_ENTITLEMENT}</key>
+  <array>
+    <string> ABCDE12345.${APP_GROUP_BASE_ID} </string>
+  </array>
+</dict>
+</plist>
+PLIST
+  set +e
+  read_application_groups_from_entitlements_file "$untrimmed_entitlements" >/dev/null 2>/dev/null
+  malformed_entitlements_status=$?
+  set -e
+  if [ "$malformed_entitlements_status" -eq 0 ]; then
+    printf 'Application group untrimmed entitlements readable fixture: yes\n'
+  else
+    printf 'Application group untrimmed entitlements readable fixture: no\n'
+  fi
   set +e
   GARETH_DIAGNOSTICS_SKIP_PYTHON=1 read_application_groups_from_entitlements_file "$scalar_entitlements" >/dev/null 2>/dev/null
   malformed_entitlements_status=$?
@@ -1532,6 +1564,15 @@ PLIST
     printf 'Application group fallback non-string entitlements readable fixture: yes\n'
   else
     printf 'Application group fallback non-string entitlements readable fixture: no\n'
+  fi
+  set +e
+  GARETH_DIAGNOSTICS_SKIP_PYTHON=1 read_application_groups_from_entitlements_file "$untrimmed_entitlements" >/dev/null 2>/dev/null
+  malformed_entitlements_status=$?
+  set -e
+  if [ "$malformed_entitlements_status" -eq 0 ]; then
+    printf 'Application group fallback untrimmed entitlements readable fixture: yes\n'
+  else
+    printf 'Application group fallback untrimmed entitlements readable fixture: no\n'
   fi
   set +e
   GARETH_DIAGNOSTICS_SKIP_PYTHON=1 read_application_groups_from_entitlements_file "$malformed_entitlements" >/dev/null 2>/dev/null

@@ -153,8 +153,10 @@ require_output "$application_group_output" "Application group missing architectu
 require_output "$application_group_output" "Application group malformed entitlements readable fixture: no"
 require_output "$application_group_output" "Application group scalar entitlements readable fixture: no"
 require_output "$application_group_output" "Application group non-string entitlements readable fixture: no"
+require_output "$application_group_output" "Application group untrimmed entitlements readable fixture: no"
 require_output "$application_group_output" "Application group fallback scalar entitlements readable fixture: no"
 require_output "$application_group_output" "Application group fallback non-string entitlements readable fixture: no"
+require_output "$application_group_output" "Application group fallback untrimmed entitlements readable fixture: no"
 require_output "$application_group_output" "Application group fallback malformed entitlements readable fixture: no"
 
 require_output "$camera_device_output" "Camera device present fixture: yes"

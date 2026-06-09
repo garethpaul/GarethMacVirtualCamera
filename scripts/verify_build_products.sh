@@ -419,8 +419,10 @@ verify_app_diagnostics_resources() {
     "Application group malformed entitlements readable fixture: no" \
     "Application group scalar entitlements readable fixture: no" \
     "Application group non-string entitlements readable fixture: no" \
+    "Application group untrimmed entitlements readable fixture: no" \
     "Application group fallback scalar entitlements readable fixture: no" \
     "Application group fallback non-string entitlements readable fixture: no" \
+    "Application group fallback untrimmed entitlements readable fixture: no" \
     "Application group fallback malformed entitlements readable fixture: no"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "mach-service" "mach-service" \
