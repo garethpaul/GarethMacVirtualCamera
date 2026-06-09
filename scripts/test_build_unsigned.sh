@@ -159,6 +159,31 @@ fi
 
 require_file_contains "$TMP_DIR/build-unsigned-missing-xcodebuild.err" "xcodebuild is required to build GarethVideoCam"
 
+MISSING_XCODEBUILD_INVALID_WORK_DIR="$TMP_DIR/missing-xcodebuild-invalid-work"
+mkdir -p "$MISSING_XCODEBUILD_INVALID_WORK_DIR"
+
+set +e
+(
+  cd "$MISSING_XCODEBUILD_INVALID_WORK_DIR"
+  PATH="$MISSING_XCODEBUILD_BIN" \
+    PROJECT_PATH="Fixture.xcodeproj" \
+    TARGET_NAME="FixtureCamera" \
+    BUILD_ARCH="arm64" \
+    BUILD_OUTPUT_PATH="$TMP_DIR/MissingXcodebuildInvalidProducts" \
+    /bin/bash "$ROOT/scripts/build_unsigned.sh" "../Release" >"$TMP_DIR/build-unsigned-missing-xcodebuild-invalid.out" 2>"$TMP_DIR/build-unsigned-missing-xcodebuild-invalid.err"
+)
+missing_xcodebuild_invalid_status=$?
+set -e
+
+if [ "$missing_xcodebuild_invalid_status" -ne 2 ]; then
+  printf 'Expected invalid configuration to be rejected before missing xcodebuild with exit 2, got %s.\n' "$missing_xcodebuild_invalid_status" >&2
+  cat "$TMP_DIR/build-unsigned-missing-xcodebuild-invalid.out" >&2
+  cat "$TMP_DIR/build-unsigned-missing-xcodebuild-invalid.err" >&2
+  exit 1
+fi
+
+require_file_contains "$TMP_DIR/build-unsigned-missing-xcodebuild-invalid.err" "Invalid Xcode configuration name: ../Release"
+
 INVALID_WORK_DIR="$TMP_DIR/invalid-work"
 INVALID_CALL_LOG="$TMP_DIR/xcodebuild-invalid-calls.log"
 mkdir -p "$INVALID_WORK_DIR"

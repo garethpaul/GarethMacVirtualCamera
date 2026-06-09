@@ -209,7 +209,11 @@ def test_validator_rejects_missing_extension_load_failure_detail_row():
 def test_validator_rejects_missing_unsigned_build_configuration_guard():
     assert_validator_rejects_mutation(
         "scripts/build_unsigned.sh",
-        '  validate_configuration_name "$configuration"\n\n',
+        """for configuration in "${configurations[@]}"; do
+  validate_configuration_name "$configuration"
+done
+
+""",
         "",
         "unsigned build script should perform Debug and Release app target builds without code signing",
     )

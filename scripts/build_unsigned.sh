@@ -12,11 +12,6 @@ else
   configurations=(Debug Release)
 fi
 
-if ! command -v xcodebuild >/dev/null 2>&1; then
-  printf 'xcodebuild is required to build GarethVideoCam; install Xcode and select it with xcode-select.\n' >&2
-  exit 127
-fi
-
 validate_configuration_name() {
   local configuration="$1"
 
@@ -28,7 +23,14 @@ validate_configuration_name() {
 
 for configuration in "${configurations[@]}"; do
   validate_configuration_name "$configuration"
+done
 
+if ! command -v xcodebuild >/dev/null 2>&1; then
+  printf 'xcodebuild is required to build GarethVideoCam; install Xcode and select it with xcode-select.\n' >&2
+  exit 127
+fi
+
+for configuration in "${configurations[@]}"; do
   xcodebuild \
     -project "$PROJECT_PATH" \
     -target "$TARGET_NAME" \
