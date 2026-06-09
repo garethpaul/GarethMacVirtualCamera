@@ -967,6 +967,9 @@ def main():
     require("GARETH_DIAGNOSTICS_SELF_TEST=application-identity" in runtime_diagnostics_test_source and "App path match fixture: yes" in runtime_diagnostics_test_source and "App path mismatch fixture: no" in runtime_diagnostics_test_source and "Application location existing fixture: yes" in runtime_diagnostics_test_source and "Application location missing fixture: no" in runtime_diagnostics_test_source and "Application location mismatch fixture: no" in runtime_diagnostics_test_source and "Bundle identifier match fixture: yes" in runtime_diagnostics_test_source and "Bundle identifier mismatch fixture: no" in runtime_diagnostics_test_source and "Bundle identifier missing fixture: no" in runtime_diagnostics_test_source,
             "runtime diagnostics test should cover application path and bundle identifier readiness comparisons",
             failures)
+    require("/bin/rm -rf \"$missing_app_path\"" in runtime_diagnostics_source and "temp_dir=\"$(/usr/bin/mktemp -d" in runtime_diagnostics_source and "/bin/mkdir -p \"$existing_app_path\"" in runtime_diagnostics_source and "/bin/rm -rf \"$temp_dir\"" in runtime_diagnostics_source,
+            "runtime diagnostics self-test fixtures should use guarded absolute macOS setup and cleanup tools",
+            failures)
     require("GARETH_DIAGNOSTICS_SELF_TEST=team-id" in runtime_diagnostics_test_source and "Team ID match fixture: yes" in runtime_diagnostics_test_source and "Team ID mismatch fixture: no" in runtime_diagnostics_test_source and "Team ID missing app fixture: no" in runtime_diagnostics_test_source and "Team ID missing extension fixture: no" in runtime_diagnostics_test_source and "Team ID multiple app fixture: no" in runtime_diagnostics_test_source and "Team ID multiple extension fixture: no" in runtime_diagnostics_test_source,
             "runtime diagnostics test should cover signing Team ID readiness comparisons",
             failures)

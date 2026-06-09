@@ -1066,7 +1066,7 @@ run_readiness_rollup_ready_self_test() {
 run_missing_runtime_bundles_self_test() {
   local missing_app_path="${TMPDIR:-/tmp}/gareth-runtime-missing-bundles-self-test-$$.app"
 
-  rm -rf "$missing_app_path"
+  /bin/rm -rf "$missing_app_path"
   reset_readiness_rollup_counters
 
   print_readiness_check "Application location ready" "$(application_location_readiness_value "$missing_app_path" "$missing_app_path")"
@@ -1109,9 +1109,9 @@ run_application_identity_self_test() {
   local temp_dir
   local existing_app_path
 
-  temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/gareth-app-location.XXXXXX")"
+  temp_dir="$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/gareth-app-location.XXXXXX")" || return 1
   existing_app_path="$temp_dir/GarethVideoCam.app"
-  mkdir -p "$existing_app_path"
+  /bin/mkdir -p "$existing_app_path"
 
   printf 'App path match fixture: %s\n' "$(path_matches_expected_value "/Applications/GarethVideoCam.app" "/Applications/GarethVideoCam.app")"
   printf 'App path mismatch fixture: %s\n' "$(path_matches_expected_value "/Users/example/GarethVideoCam.app" "/Applications/GarethVideoCam.app")"
@@ -1122,7 +1122,7 @@ run_application_identity_self_test() {
   printf 'Bundle identifier mismatch fixture: %s\n' "$(bundle_identifier_matches_expected_value "com.example.WrongApp" "$APP_ID")"
   printf 'Bundle identifier missing fixture: %s\n' "$(bundle_identifier_matches_expected_value "" "$APP_ID")"
 
-  rm -rf "$temp_dir"
+  /bin/rm -rf "$temp_dir"
 }
 
 run_team_identifier_self_test() {
