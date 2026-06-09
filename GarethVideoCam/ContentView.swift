@@ -2585,11 +2585,16 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     private static func teamIdentifier(in signingDictionary: [String: Any]?) -> String? {
         guard let signingDictionary,
               let teamIdentifier = signingDictionary[kSecCodeInfoTeamIdentifier as String] as? String,
-              !teamIdentifier.isEmpty else {
+              !teamIdentifier.isEmpty,
+              isTeamIdentifier(teamIdentifier) else {
             return nil
         }
 
         return teamIdentifier
+    }
+
+    private static func isTeamIdentifier(_ teamIdentifier: String) -> Bool {
+        return teamIdentifier.range(of: "^[A-Za-z0-9]{10}$", options: .regularExpression) != nil
     }
 
     private static func enabledEntitlementKeys(in signingDictionary: [String: Any]?) -> Set<String> {

@@ -125,3 +125,4 @@
 - Failed closed on malformed app-group entitlements in non-Python diagnostics parsing.
 - Reported malformed boolean entitlement plists as unknown runtime evidence.
 - Rejected malformed Team IDs in runtime diagnostics comparisons.
+- Validated host-app signing Team IDs before readiness comparison.

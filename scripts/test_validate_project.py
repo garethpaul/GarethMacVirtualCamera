@@ -350,6 +350,18 @@ def test_validator_rejects_missing_signing_information_unknown_guard():
     )
 
 
+def test_validator_rejects_missing_host_team_identifier_shape_guard():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        """              !teamIdentifier.isEmpty,
+              isTeamIdentifier(teamIdentifier) else {
+""",
+        """              !teamIdentifier.isEmpty else {
+""",
+        "host app should validate signing Team IDs before comparing app and extension signatures",
+    )
+
+
 def test_validator_rejects_missing_runtime_diagnostics_all_architecture_details():
     assert_validator_rejects_mutation(
         "scripts/collect_runtime_diagnostics.sh",
@@ -571,6 +583,7 @@ def main():
     test_validator_rejects_missing_unknown_signature_state()
     test_validator_rejects_missing_all_architecture_signature_validation()
     test_validator_rejects_missing_signing_information_unknown_guard()
+    test_validator_rejects_missing_host_team_identifier_shape_guard()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_details()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_entitlements()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_application_groups()
