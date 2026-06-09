@@ -641,6 +641,8 @@ for group in groups:
         sys.exit(1)
     if group.strip() != group:
         sys.exit(1)
+    if "\n" in group or "\r" in group:
+        sys.exit(1)
     if group:
         print(group)
 PY
@@ -1521,6 +1523,7 @@ run_application_group_self_test() {
   local malformed_entitlements
   local non_string_entitlements
   local untrimmed_entitlements
+  local multiline_entitlements
   local scalar_entitlements
   local malformed_entitlements_status
 
@@ -1616,6 +1619,29 @@ PLIST
     printf 'Application group untrimmed entitlements readable fixture: yes\n'
   else
     printf 'Application group untrimmed entitlements readable fixture: no\n'
+  fi
+  multiline_entitlements="$temp_dir/multiline-entitlements.plist"
+  cat >"$multiline_entitlements" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>${APP_GROUP_ENTITLEMENT}</key>
+  <array>
+    <string>ABCDE12345.${APP_GROUP_BASE_ID}
+suffix</string>
+  </array>
+</dict>
+</plist>
+PLIST
+  set +e
+  read_application_groups_from_entitlements_file "$multiline_entitlements" >/dev/null 2>/dev/null
+  malformed_entitlements_status=$?
+  set -e
+  if [ "$malformed_entitlements_status" -eq 0 ]; then
+    printf 'Application group multiline entitlements readable fixture: yes\n'
+  else
+    printf 'Application group multiline entitlements readable fixture: no\n'
   fi
   set +e
   GARETH_DIAGNOSTICS_SKIP_PYTHON=1 read_application_groups_from_entitlements_file "$scalar_entitlements" >/dev/null 2>/dev/null

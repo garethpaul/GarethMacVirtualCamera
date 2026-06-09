@@ -14,6 +14,8 @@
   executable names before building readiness paths.
 - Named and pinned the host app activity cap so repeated troubleshooting actions
   keep the Activity view bounded.
+- Rejected multiline signed app-group entitlement strings before runtime
+  diagnostics compare host and extension groups.
 - Rejected whitespace-padded app icon size and scale metadata before validating
   icon PNG dimensions.
 - Required app icon catalog scale metadata to use the expected `x` suffix before

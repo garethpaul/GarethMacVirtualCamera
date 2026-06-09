@@ -952,6 +952,17 @@ def test_validator_rejects_missing_runtime_diagnostics_untrimmed_app_group_guard
     )
 
 
+def test_validator_rejects_missing_runtime_diagnostics_multiline_app_group_guard():
+    assert_validator_rejects_mutation(
+        "scripts/collect_runtime_diagnostics.sh",
+        """    if "\\n" in group or "\\r" in group:
+        sys.exit(1)
+""",
+        "",
+        "runtime diagnostics should reject multiline app-group entitlement strings",
+    )
+
+
 def test_validator_rejects_missing_runtime_diagnostics_fallback_scalar_app_group_guard():
     assert_validator_rejects_mutation(
         "scripts/collect_runtime_diagnostics.sh",
@@ -1704,6 +1715,7 @@ def main():
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_application_groups()
     test_validator_rejects_missing_runtime_diagnostics_non_string_app_group_guard()
     test_validator_rejects_missing_runtime_diagnostics_untrimmed_app_group_guard()
+    test_validator_rejects_missing_runtime_diagnostics_multiline_app_group_guard()
     test_validator_rejects_missing_runtime_diagnostics_fallback_scalar_app_group_guard()
     test_validator_rejects_missing_runtime_diagnostics_fallback_untrimmed_app_group_guard()
     test_validator_rejects_loose_team_id_prefix_lengths()

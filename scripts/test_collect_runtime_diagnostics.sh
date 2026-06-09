@@ -172,6 +172,7 @@ require_output "$application_group_output" "Application group malformed entitlem
 require_output "$application_group_output" "Application group scalar entitlements readable fixture: no"
 require_output "$application_group_output" "Application group non-string entitlements readable fixture: no"
 require_output "$application_group_output" "Application group untrimmed entitlements readable fixture: no"
+require_output "$application_group_output" "Application group multiline entitlements readable fixture: no"
 require_output "$application_group_output" "Application group fallback scalar entitlements readable fixture: no"
 require_output "$application_group_output" "Application group fallback non-string entitlements readable fixture: no"
 require_output "$application_group_output" "Application group fallback untrimmed entitlements readable fixture: no"
