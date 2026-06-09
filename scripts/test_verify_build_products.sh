@@ -802,6 +802,23 @@ if ! grep -q "Missing Debug embedded system extension" "$TMP_DIR/missing-embedde
   exit 1
 fi
 
+DUPLICATE_EMBEDDED_EXTENSION_PRODUCTS="$TMP_DIR/duplicate-embedded-extension/Products"
+write_product_fixture "$DUPLICATE_EMBEDDED_EXTENSION_PRODUCTS" Debug
+cp -R \
+  "$DUPLICATE_EMBEDDED_EXTENSION_PRODUCTS/Debug/GarethVideoCam.app/Contents/Library/SystemExtensions/$EXTENSION_NAME" \
+  "$DUPLICATE_EMBEDDED_EXTENSION_PRODUCTS/Debug/GarethVideoCam.app/Contents/Library/SystemExtensions/com.example.StaleExtension.systemextension"
+
+if PRODUCTS_PATH="$DUPLICATE_EMBEDDED_EXTENSION_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/duplicate-embedded-extension.out" 2>"$TMP_DIR/duplicate-embedded-extension.err"; then
+  printf 'Expected verifier to reject duplicate embedded system extensions.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Unexpected Debug embedded system extension count: 2" "$TMP_DIR/duplicate-embedded-extension.err"; then
+  printf 'Verifier failure did not explain the duplicate embedded system extension.\n' >&2
+  cat "$TMP_DIR/duplicate-embedded-extension.err" >&2
+  exit 1
+fi
+
 BAD_PRODUCTS="$TMP_DIR/bad/Products"
 write_product_fixture "$BAD_PRODUCTS" Debug "com.example.WrongExtension"
 

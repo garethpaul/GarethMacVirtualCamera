@@ -1751,58 +1751,57 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             throw ExtensionRequestError.missingBundledExtension
         }
 
-        var unexpectedIdentifiers: [String] = []
-        for extensionURL in extensionBundleURLs {
-            guard let extensionBundle = Bundle(url: extensionURL) else {
-                throw ExtensionRequestError.unreadableExtensionBundle(extensionURL.path)
-            }
-
-            guard let identifier = extensionBundle.bundleIdentifier else {
-                throw ExtensionRequestError.missingBundleIdentifier(extensionURL.path)
-            }
-
-            guard identifier == expectedExtensionBundleIdentifier else {
-                unexpectedIdentifiers.append(identifier)
-                continue
-            }
-
-            let shortVersion = Self.infoPlistString(in: extensionBundle, key: "CFBundleShortVersionString")
-            let buildVersion = Self.infoPlistString(in: extensionBundle, key: "CFBundleVersion")
-            let version = Self.displayVersion(shortVersion: shortVersion,
-                                              buildVersion: buildVersion)
-            guard let executableName = Self.infoPlistString(in: extensionBundle, key: "CFBundleExecutable") else {
-                throw ExtensionRequestError.missingExtensionExecutable(extensionURL.path)
-            }
-            let executableURL = extensionURL
-                .appendingPathComponent("Contents")
-                .appendingPathComponent("MacOS")
-                .appendingPathComponent(executableName)
-            try Self.validateExtensionExecutable(at: executableURL)
-            guard let machServiceName = Self.extensionMachServiceName(in: extensionBundle) else {
-                throw ExtensionRequestError.missingExtensionMachService(extensionURL.path)
-            }
-            let videoURL = extensionURL
-                .appendingPathComponent("Contents")
-                .appendingPathComponent("Resources")
-                .appendingPathComponent("video.mp4")
-            let videoByteCount = try Self.bundledVideoByteCount(at: videoURL)
-            let videoMetadata = try Self.bundledVideoMetadata(at: videoURL)
-
-            return ExtensionInfo(identifier: identifier,
-                                 version: version,
-                                 shortVersion: shortVersion,
-                                 buildVersion: buildVersion,
-                                 executableName: executableName,
-                                 executablePath: executableURL.path,
-                                 machServiceName: machServiceName,
-                                 bundlePath: extensionURL.path,
-                                 videoPath: videoURL.path,
-                                 videoByteCount: videoByteCount,
-                                 videoMetadata: videoMetadata)
+        guard extensionBundleURLs.count == 1 else {
+            throw ExtensionRequestError.multipleBundledExtensions(extensionBundleURLs.map(\.lastPathComponent).joined(separator: ", "))
         }
 
-        throw ExtensionRequestError.unexpectedBundleIdentifier(expected: expectedExtensionBundleIdentifier,
-                                                              actual: unexpectedIdentifiers.joined(separator: ", "))
+        let extensionURL = extensionBundleURLs[0]
+        guard let extensionBundle = Bundle(url: extensionURL) else {
+            throw ExtensionRequestError.unreadableExtensionBundle(extensionURL.path)
+        }
+
+        guard let identifier = extensionBundle.bundleIdentifier else {
+            throw ExtensionRequestError.missingBundleIdentifier(extensionURL.path)
+        }
+
+        guard identifier == expectedExtensionBundleIdentifier else {
+            throw ExtensionRequestError.unexpectedBundleIdentifier(expected: expectedExtensionBundleIdentifier,
+                                                                  actual: identifier)
+        }
+
+        let shortVersion = Self.infoPlistString(in: extensionBundle, key: "CFBundleShortVersionString")
+        let buildVersion = Self.infoPlistString(in: extensionBundle, key: "CFBundleVersion")
+        let version = Self.displayVersion(shortVersion: shortVersion,
+                                          buildVersion: buildVersion)
+        guard let executableName = Self.infoPlistString(in: extensionBundle, key: "CFBundleExecutable") else {
+            throw ExtensionRequestError.missingExtensionExecutable(extensionURL.path)
+        }
+        let executableURL = extensionURL
+            .appendingPathComponent("Contents")
+            .appendingPathComponent("MacOS")
+            .appendingPathComponent(executableName)
+        try Self.validateExtensionExecutable(at: executableURL)
+        guard let machServiceName = Self.extensionMachServiceName(in: extensionBundle) else {
+            throw ExtensionRequestError.missingExtensionMachService(extensionURL.path)
+        }
+        let videoURL = extensionURL
+            .appendingPathComponent("Contents")
+            .appendingPathComponent("Resources")
+            .appendingPathComponent("video.mp4")
+        let videoByteCount = try Self.bundledVideoByteCount(at: videoURL)
+        let videoMetadata = try Self.bundledVideoMetadata(at: videoURL)
+
+        return ExtensionInfo(identifier: identifier,
+                             version: version,
+                             shortVersion: shortVersion,
+                             buildVersion: buildVersion,
+                             executableName: executableName,
+                             executablePath: executableURL.path,
+                             machServiceName: machServiceName,
+                             bundlePath: extensionURL.path,
+                             videoPath: videoURL.path,
+                             videoByteCount: videoByteCount,
+                             videoMetadata: videoMetadata)
     }
 
     private static func bundledVideoByteCount(at videoURL: URL) throws -> Int64 {
@@ -2935,6 +2934,7 @@ extension SystemExtensionRequestManager: @preconcurrency OSSystemExtensionReques
 enum ExtensionRequestError: LocalizedError {
     case missingExtensionsDirectory(String)
     case missingBundledExtension
+    case multipleBundledExtensions(String)
     case unreadableExtensionBundle(String)
     case missingBundleIdentifier(String)
     case missingExtensionExecutable(String)
@@ -2951,6 +2951,8 @@ enum ExtensionRequestError: LocalizedError {
             return "No system extensions directory exists at \(path)."
         case .missingBundledExtension:
             return "No bundled .systemextension was found."
+        case .multipleBundledExtensions(let bundleNames):
+            return "Expected exactly one bundled .systemextension, but found \(bundleNames)."
         case .unreadableExtensionBundle(let path):
             return "The bundled extension at \(path) could not be opened."
         case .missingBundleIdentifier(let path):

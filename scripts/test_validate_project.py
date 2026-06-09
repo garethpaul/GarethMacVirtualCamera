@@ -976,16 +976,29 @@ done
 def test_validator_rejects_raw_extension_executable_metadata():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",
-        """            guard let executableName = Self.infoPlistString(in: extensionBundle, key: "CFBundleExecutable") else {
-                throw ExtensionRequestError.missingExtensionExecutable(extensionURL.path)
-            }
+        """        guard let executableName = Self.infoPlistString(in: extensionBundle, key: "CFBundleExecutable") else {
+            throw ExtensionRequestError.missingExtensionExecutable(extensionURL.path)
+        }
 """,
-        """            guard let executableName = extensionBundle.object(forInfoDictionaryKey: "CFBundleExecutable") as? String,
-                  !executableName.isEmpty else {
-                throw ExtensionRequestError.missingExtensionExecutable(extensionURL.path)
-            }
+        """        guard let executableName = extensionBundle.object(forInfoDictionaryKey: "CFBundleExecutable") as? String,
+              !executableName.isEmpty else {
+            throw ExtensionRequestError.missingExtensionExecutable(extensionURL.path)
+        }
 """,
         "host app should reject blank or untrimmed embedded extension Info.plist and CMIO metadata strings",
+    )
+
+
+def test_validator_rejects_missing_host_duplicate_extension_guard():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        """        guard extensionBundleURLs.count == 1 else {
+            throw ExtensionRequestError.multipleBundledExtensions(extensionBundleURLs.map(\\.lastPathComponent).joined(separator: ", "))
+        }
+
+""",
+        "",
+        "host app should reject ambiguous products with multiple bundled system extensions",
     )
 
 
@@ -1235,6 +1248,17 @@ validate_positive_integer "frame rate" "$EXPECTED_VIDEO_FRAME_RATE"
     )
 
 
+def test_validator_rejects_missing_build_product_duplicate_extension_guard():
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
+        """  verify_exactly_one_embedded_system_extension "$configuration" "$app_path"
+
+""",
+        "",
+        "build-product verifier should reject duplicate embedded system extensions",
+    )
+
+
 def test_validator_rejects_missing_make_gate_aliases():
     assert_validator_rejects_mutation(
         "Makefile",
@@ -1367,6 +1391,7 @@ def main():
     test_validator_rejects_bare_application_group_acceptance()
     test_validator_rejects_missing_extension_load_failure_detail_row()
     test_validator_rejects_missing_unsigned_build_configuration_guard()
+    test_validator_rejects_missing_host_duplicate_extension_guard()
     test_validator_rejects_raw_extension_executable_metadata()
     test_validator_rejects_untrimmed_host_info_plist_metadata()
     test_validator_rejects_raw_extension_cmio_metadata()
@@ -1387,6 +1412,7 @@ def main():
     test_validator_rejects_missing_build_product_python_resolver()
     test_validator_rejects_missing_build_product_configuration_guard()
     test_validator_rejects_missing_build_product_expected_video_metadata_guard()
+    test_validator_rejects_missing_build_product_duplicate_extension_guard()
     test_validator_rejects_missing_make_gate_aliases()
     test_validator_rejects_missing_build_product_info_plist_string_type_guard()
     test_validator_rejects_missing_build_product_blank_info_plist_guard()

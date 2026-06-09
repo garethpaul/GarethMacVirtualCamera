@@ -583,6 +583,28 @@ verify_aligned_bundle_versions() {
   fi
 }
 
+verify_exactly_one_embedded_system_extension() {
+  local configuration="$1"
+  local app_path="$2"
+  local system_extensions_path="$app_path/Contents/Library/SystemExtensions"
+  local extension_path="$system_extensions_path/$EXTENSION_NAME"
+  local extension_listing
+  local extension_count
+
+  if [ ! -d "$extension_path" ]; then
+    printf 'Missing %s embedded system extension: %s\n' "$configuration" "$extension_path" >&2
+    exit 1
+  fi
+
+  extension_listing="$(find "$system_extensions_path" -maxdepth 1 -type d -name '*.systemextension' -print | sort)"
+  extension_count="$(printf '%s\n' "$extension_listing" | /usr/bin/awk 'NF { count += 1 } END { print count + 0 }')"
+  if [ "$extension_count" != "1" ]; then
+    printf 'Unexpected %s embedded system extension count: %s\n' "$configuration" "$extension_count" >&2
+    printf '%s\n' "$extension_listing" >&2
+    exit 1
+  fi
+}
+
 for configuration in "${configurations[@]}"; do
   app_path="$PRODUCTS_PATH/$configuration/$APP_NAME"
   extension_path="$app_path/Contents/Library/SystemExtensions/$EXTENSION_NAME"
@@ -604,10 +626,7 @@ for configuration in "${configurations[@]}"; do
   verify_info_plist_value "$configuration" "app" "$app_path" "NSCameraUsageDescription" "$APP_CAMERA_USAGE_DESCRIPTION"
   verify_info_plist_value "$configuration" "app" "$app_path" "NSSystemExtensionUsageDescription" "$APP_SYSTEM_EXTENSION_USAGE_DESCRIPTION"
 
-  if [ ! -d "$extension_path" ]; then
-    printf 'Missing %s embedded system extension: %s\n' "$configuration" "$extension_path" >&2
-    exit 1
-  fi
+  verify_exactly_one_embedded_system_extension "$configuration" "$app_path"
 
   extension_bundle_identifier="$(read_bundle_identifier "$extension_path")"
   if [ "$extension_bundle_identifier" != "$EXTENSION_ID" ]; then
