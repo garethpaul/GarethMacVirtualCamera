@@ -347,14 +347,29 @@ read_boolean_entitlement_for_architecture() {
     return
   fi
 
-  if [ ! -x /usr/libexec/PlistBuddy ]; then
+  if ! entitlement_value="$(read_boolean_entitlement_from_entitlements_file "$entitlements_file" "$entitlement")"; then
     /bin/rm -f "$entitlements_file"
     printf 'unknown\n'
     return
   fi
+  /bin/rm -f "$entitlements_file"
+  printf '%s\n' "$entitlement_value"
+}
+
+read_boolean_entitlement_from_entitlements_file() {
+  local entitlements_file="$1"
+  local entitlement="$2"
+  local entitlement_value
+
+  if [ ! -x /usr/libexec/PlistBuddy ]; then
+    return 1
+  fi
+
+  if [ -x /usr/bin/plutil ]; then
+    /usr/bin/plutil -lint "$entitlements_file" >/dev/null 2>/dev/null || return 1
+  fi
 
   entitlement_value="$(/usr/libexec/PlistBuddy -c "Print :${entitlement}" "$entitlements_file" 2>/dev/null || true)"
-  /bin/rm -f "$entitlements_file"
 
   if [ "$entitlement_value" = "true" ]; then
     printf 'yes\n'
@@ -1174,11 +1189,20 @@ run_extension_host_entitlement_self_test() {
   local all_architectures_present=$'yes\nyes'
   local missing_architecture=$'yes\nno'
   local unreadable_architecture=$'yes\nunknown'
+  local temp_dir
+  local malformed_entitlements
+  local malformed_boolean_value
 
   printf 'Boolean entitlement all architectures present fixture: %s\n' "$(boolean_entitlement_all_architectures_value "$all_architectures_present")"
   printf 'Boolean entitlement missing architecture fixture: %s\n' "$(boolean_entitlement_all_architectures_value "$missing_architecture")"
   printf 'Boolean entitlement unreadable architecture fixture: %s\n' "$(boolean_entitlement_all_architectures_value "$unreadable_architecture")"
   printf 'Boolean entitlement empty architecture fixture: %s\n' "$(boolean_entitlement_all_architectures_value "")"
+  temp_dir="$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/gareth-boolean-entitlements.XXXXXX")" || return 1
+  malformed_entitlements="$temp_dir/bad-entitlements.plist"
+  printf 'not a plist' >"$malformed_entitlements"
+  malformed_boolean_value="$(read_boolean_entitlement_from_entitlements_file "$malformed_entitlements" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT" 2>/dev/null || printf 'unknown\n')"
+  printf 'Boolean entitlement malformed plist fixture: %s\n' "$malformed_boolean_value"
+  /bin/rm -rf "$temp_dir"
   printf 'Extension host entitlement valid absent fixture: %s\n' "$(extension_host_only_entitlement_absent_readiness_value "yes" "no")"
   printf 'Extension host entitlement valid present fixture: %s\n' "$(extension_host_only_entitlement_absent_readiness_value "yes" "yes")"
   printf 'Extension host entitlement invalid signature fixture: %s\n' "$(extension_host_only_entitlement_absent_readiness_value "no" "no")"

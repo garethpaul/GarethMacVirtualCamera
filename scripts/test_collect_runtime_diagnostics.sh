@@ -114,6 +114,7 @@ require_output "$extension_host_entitlement_output" "Boolean entitlement all arc
 require_output "$extension_host_entitlement_output" "Boolean entitlement missing architecture fixture: no"
 require_output "$extension_host_entitlement_output" "Boolean entitlement unreadable architecture fixture: unknown"
 require_output "$extension_host_entitlement_output" "Boolean entitlement empty architecture fixture: unknown"
+require_output "$extension_host_entitlement_output" "Boolean entitlement malformed plist fixture: unknown"
 require_output "$extension_host_entitlement_output" "Extension host entitlement valid absent fixture: yes"
 require_output "$extension_host_entitlement_output" "Extension host entitlement valid present fixture: no"
 require_output "$extension_host_entitlement_output" "Extension host entitlement invalid signature fixture: no"
