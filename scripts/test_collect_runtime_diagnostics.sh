@@ -139,6 +139,7 @@ require_output "$application_group_output" "Application group empty format fixtu
 require_output "$application_group_output" "Application group list format fixture: ABCDE12345.com.garethpaul.GarethVideoCam, ZYXWV98765.com.garethpaul.GarethVideoCam"
 require_output "$application_group_output" "Application group all architectures common fixture: ABCDE12345.com.garethpaul.GarethVideoCam"
 require_output "$application_group_output" "Application group missing architecture common fixture: none"
+require_output "$application_group_output" "Application group malformed entitlements readable fixture: no"
 
 require_output "$camera_device_output" "Camera device present fixture: yes"
 require_output "$camera_device_output" "Camera device missing fixture: no"

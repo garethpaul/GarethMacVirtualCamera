@@ -455,21 +455,35 @@ read_application_groups_for_architecture() {
   local bundle_path="$1"
   local architecture="$2"
   local entitlements_file
+  local groups_file
 
   entitlements_file="$(/usr/bin/mktemp -t gareth-entitlements.XXXXXX)" || return 1
+  groups_file="$(/usr/bin/mktemp -t gareth-application-groups.XXXXXX)" || {
+    /bin/rm -f "$entitlements_file"
+    return 1
+  }
 
   if [ -n "$architecture" ]; then
     if ! /usr/bin/codesign -d --architecture "$architecture" --entitlements :- "$bundle_path" >"$entitlements_file" 2>/dev/null; then
-      /bin/rm -f "$entitlements_file"
+      /bin/rm -f "$entitlements_file" "$groups_file"
       return 1
     fi
   elif ! /usr/bin/codesign -d --entitlements :- "$bundle_path" >"$entitlements_file" 2>/dev/null; then
-    /bin/rm -f "$entitlements_file"
+    /bin/rm -f "$entitlements_file" "$groups_file"
     return 1
   fi
 
-  read_application_groups_from_entitlements_file "$entitlements_file" | /usr/bin/sort -u
-  /bin/rm -f "$entitlements_file"
+  if ! read_application_groups_from_entitlements_file "$entitlements_file" >"$groups_file" 2>/dev/null; then
+    /bin/rm -f "$entitlements_file" "$groups_file"
+    return 1
+  fi
+
+  if ! /usr/bin/sort -u "$groups_file"; then
+    /bin/rm -f "$entitlements_file" "$groups_file"
+    return 1
+  fi
+
+  /bin/rm -f "$entitlements_file" "$groups_file"
 }
 
 read_application_groups_from_entitlements_file() {
@@ -479,7 +493,7 @@ read_application_groups_from_entitlements_file() {
   python_bin="$(python3_command)"
 
   if [ -n "$python_bin" ]; then
-    "$python_bin" - "$entitlements_file" "$APP_GROUP_ENTITLEMENT" <<'PY' || true
+    "$python_bin" - "$entitlements_file" "$APP_GROUP_ENTITLEMENT" <<'PY'
 import plistlib
 import sys
 
@@ -1185,6 +1199,9 @@ run_application_group_self_test() {
   local formatted_groups
   local common_groups
   local missing_common_groups
+  local temp_dir
+  local malformed_entitlements
+  local malformed_entitlements_status
 
   printf 'Application group direct fixture ready: %s\n' "$(application_groups_ready_value "$direct_group" "$direct_group")"
   printf 'Application group shared fixture ready: %s\n' "$(application_groups_ready_value "$shared_group" "$shared_group")"
@@ -1200,6 +1217,20 @@ run_application_group_self_test() {
   printf 'Application group all architectures common fixture: %s\n' "$(format_application_groups "$common_groups")"
   missing_common_groups="$(common_application_groups_for_architectures "$shared_group"$'\n'"$other_team_group" 2)"
   printf 'Application group missing architecture common fixture: %s\n' "$(format_application_groups "$missing_common_groups")"
+
+  temp_dir="$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/gareth-app-groups.XXXXXX")" || return 1
+  malformed_entitlements="$temp_dir/bad-entitlements.plist"
+  printf 'not a plist' >"$malformed_entitlements"
+  set +e
+  read_application_groups_from_entitlements_file "$malformed_entitlements" >/dev/null 2>/dev/null
+  malformed_entitlements_status=$?
+  set -e
+  if [ "$malformed_entitlements_status" -eq 0 ]; then
+    printf 'Application group malformed entitlements readable fixture: yes\n'
+  else
+    printf 'Application group malformed entitlements readable fixture: no\n'
+  fi
+  /bin/rm -rf "$temp_dir"
 }
 
 run_camera_device_self_test() {
