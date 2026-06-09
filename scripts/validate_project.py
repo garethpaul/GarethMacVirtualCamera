@@ -306,10 +306,10 @@ def main():
         if icon_filename:
             icon_entry = next(image for image in app_icon.get("images", []) if image.get("filename") == icon_filename)
             icon_path = ROOT / "GarethVideoCam/Assets.xcassets/AppIcon.appiconset" / icon_filename
-            require(icon_path.exists() and icon_path.stat().st_size > 0,
-                    f"app icon file is missing or empty: {icon_filename}",
+            require(icon_path.is_file() and icon_path.stat().st_size > 0,
+                    f"app icon file is missing, empty, or not a file: {icon_filename}",
                     failures)
-            if icon_path.exists():
+            if icon_path.is_file():
                 expected_size = expected_icon_pixel_size(icon_entry)
                 require(expected_size is not None and png_dimensions(icon_path) == (expected_size, expected_size),
                         f"app icon file has incorrect pixel dimensions: {icon_filename}",
@@ -1004,6 +1004,9 @@ def main():
             failures)
     require(validate_project_source.count("video_path.is_file()") >= 3 and "test_directory_video_fixture_reports_validation_failure" in validate_project_test_source and "test_validator_rejects_missing_source_video_file_guard" in validate_project_test_source,
             "project validator should reject non-file source video fixtures without a traceback",
+            failures)
+    require(validate_project_source.count("icon_path.is_file()") >= 3 and "test_directory_icon_fixture_reports_validation_failure" in validate_project_test_source and "test_validator_rejects_missing_icon_file_guard" in validate_project_test_source,
+            "project validator should reject non-file app icon fixtures without a traceback",
             failures)
     require("verify_exactly_one_embedded_system_extension" in verify_build_products_source and "Unexpected %s embedded system extension count" in verify_build_products_source and 'verify_exactly_one_embedded_system_extension "$configuration" "$app_path"' in verify_build_products_source and "test_validator_rejects_missing_build_product_duplicate_extension_guard" in validate_project_test_source,
             "build-product verifier should reject duplicate embedded system extensions",

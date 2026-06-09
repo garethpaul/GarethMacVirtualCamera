@@ -455,6 +455,37 @@ def test_validator_rejects_missing_source_video_file_guard():
     )
 
 
+def test_directory_icon_fixture_reports_validation_failure():
+    with tracked_fixture_repo() as fixture_root:
+        icon_path = fixture_root / "GarethVideoCam" / "Assets.xcassets" / "AppIcon.appiconset" / "AppIcon-16.png"
+        icon_path.unlink()
+        icon_path.mkdir()
+        status, output = run_validator(fixture_root)
+
+    if status == 0:
+        raise AssertionError("Validator accepted a directory in place of an app icon PNG.")
+
+    if "app icon file is missing, empty, or not a file: AppIcon-16.png" not in output:
+        raise AssertionError(f"Validator did not report the non-file app icon fixture cleanly.\n{output}")
+
+
+def test_validator_rejects_missing_icon_file_guard():
+    assert_validator_rejects_mutation(
+        "scripts/validate_project.py",
+        """            require(icon_path.is_file() and icon_path.stat().st_size > 0,
+                    f"app icon file is missing, empty, or not a file: {icon_filename}",
+                    failures)
+            if icon_path.is_file():
+""",
+        """            require(icon_path.exists() and icon_path.stat().st_size > 0,
+                    f"app icon file is missing or empty: {icon_filename}",
+                    failures)
+            if icon_path.exists():
+""",
+        "project validator should reject non-file app icon fixtures without a traceback",
+    )
+
+
 def test_validator_rejects_missing_indefinite_stream_duration_guard():
     assert_validator_rejects_mutation(
         "Extension/ExtensionProvider.swift",
@@ -1414,6 +1445,8 @@ def main():
     test_tracked_fixture_validates()
     test_directory_video_fixture_reports_validation_failure()
     test_validator_rejects_missing_source_video_file_guard()
+    test_directory_icon_fixture_reports_validation_failure()
+    test_validator_rejects_missing_icon_file_guard()
     test_validator_rejects_missing_indefinite_stream_duration_guard()
     test_validator_rejects_missing_non_finite_stream_duration_guard()
     test_validator_rejects_missing_non_finite_asset_duration_guard()
