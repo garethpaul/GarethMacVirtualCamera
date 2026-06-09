@@ -211,8 +211,11 @@ passing_outputs = {
     "activation-evidence": [
         "Runtime activation evidence result: active",
         "Runtime activation evidence checks ready: 3/3",
+        "Runtime activation evidence next action: open a camera picker and confirm Gareth Video Cam is selectable",
         "Runtime activation evidence result: blocked",
+        "Runtime activation evidence next action: resolve Extension registration entry present",
         "Runtime activation evidence result: incomplete",
+        "Runtime activation evidence checks ready: 0/3",
         "Runtime activation evidence checks unknown: 3",
         "Runtime activation evidence next action: inspect Extension registration activated enabled",
         "Runtime activation evidence next action: inspect Extension registration entry present",
@@ -337,7 +340,7 @@ stale_outputs = {
     ],
     "activation-evidence": [
         "Runtime activation evidence result: inactive",
-        "Runtime activation evidence checks ready: 0/3",
+        "Runtime activation evidence checks ready: 1/3",
         "Runtime activation evidence next action: none",
     ],
     "video-parser": [
