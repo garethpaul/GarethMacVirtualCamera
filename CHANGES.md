@@ -93,3 +93,4 @@
 - Printed raw signed entitlements per executable architecture slice in runtime diagnostics.
 - Flagged Xcode test-failed banners and testing-failed summaries in the build-log scanner.
 - Clarified CI and scanner output for Xcode log warnings, errors, and failures.
+- Rechecked Apple toolchain watch items on June 9, 2026 while keeping CI on stable Xcode 26.5.
