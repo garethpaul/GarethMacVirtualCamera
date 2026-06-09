@@ -867,7 +867,25 @@ def test_validator_rejects_raw_extension_executable_metadata():
                 throw ExtensionRequestError.missingExtensionExecutable(extensionURL.path)
             }
 """,
-        "host app should require trimmed string embedded extension executable and CMIO metadata",
+        "host app should reject blank or untrimmed embedded extension Info.plist and CMIO metadata strings",
+    )
+
+
+def test_validator_rejects_untrimmed_host_info_plist_metadata():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        """        let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedValue.isEmpty,
+              trimmedValue == value else {
+            return nil
+        }
+
+        return value
+""",
+        """        let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmedValue.isEmpty ? nil : trimmedValue
+""",
+        "host app should reject blank or untrimmed embedded extension Info.plist and CMIO metadata strings",
     )
 
 
@@ -875,11 +893,34 @@ def test_validator_rejects_raw_extension_cmio_metadata():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",
         """        let trimmedMachServiceName = machServiceName.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmedMachServiceName.isEmpty ? nil : trimmedMachServiceName
+        guard !trimmedMachServiceName.isEmpty,
+              trimmedMachServiceName == machServiceName else {
+            return nil
+        }
+
+        return machServiceName
 """,
         """        return machServiceName
 """,
-        "host app should require trimmed string embedded extension executable and CMIO metadata",
+        "host app should reject blank or untrimmed embedded extension Info.plist and CMIO metadata strings",
+    )
+
+
+def test_validator_rejects_untrimmed_host_cmio_metadata():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        """        let trimmedMachServiceName = machServiceName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedMachServiceName.isEmpty,
+              trimmedMachServiceName == machServiceName else {
+            return nil
+        }
+
+        return machServiceName
+""",
+        """        let trimmedMachServiceName = machServiceName.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmedMachServiceName.isEmpty ? nil : trimmedMachServiceName
+""",
+        "host app should reject blank or untrimmed embedded extension Info.plist and CMIO metadata strings",
     )
 
 
@@ -1152,7 +1193,9 @@ def main():
     test_validator_rejects_missing_extension_load_failure_detail_row()
     test_validator_rejects_missing_unsigned_build_configuration_guard()
     test_validator_rejects_raw_extension_executable_metadata()
+    test_validator_rejects_untrimmed_host_info_plist_metadata()
     test_validator_rejects_raw_extension_cmio_metadata()
+    test_validator_rejects_untrimmed_host_cmio_metadata()
     test_validator_rejects_missing_host_mp4_sample_count_guard()
     test_validator_rejects_missing_host_mp4_complete_stts_entry_guard()
     test_validator_rejects_missing_host_mp4_stsd_entry_count_guard()

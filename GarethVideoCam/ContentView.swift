@@ -603,7 +603,12 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
 
         let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmedValue.isEmpty ? nil : trimmedValue
+        guard !trimmedValue.isEmpty,
+              trimmedValue == value else {
+            return nil
+        }
+
+        return value
     }
 
     private static func extensionMachServiceName(in bundle: Bundle) -> String? {
@@ -613,7 +618,12 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
 
         let trimmedMachServiceName = machServiceName.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmedMachServiceName.isEmpty ? nil : trimmedMachServiceName
+        guard !trimmedMachServiceName.isEmpty,
+              trimmedMachServiceName == machServiceName else {
+            return nil
+        }
+
+        return machServiceName
     }
 
     private static func bundledRuntimeDiagnosticsScriptPath() -> String? {
