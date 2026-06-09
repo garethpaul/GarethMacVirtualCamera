@@ -16,12 +16,12 @@ struct GarethVideoCamApp: App {
                 Button("Install Camera Extension") {
                     systemExtensionRequestManager.install()
                 }
-                .disabled(systemExtensionRequestManager.isBusy || !systemExtensionRequestManager.canSubmitSystemExtensionRequests)
+                .disabled(systemExtensionRequestManager.isBusy || !systemExtensionRequestManager.canSubmitActivationRequest)
 
                 Button("Uninstall Camera Extension") {
                     systemExtensionRequestManager.uninstall()
                 }
-                .disabled(systemExtensionRequestManager.isBusy || !systemExtensionRequestManager.canSubmitSystemExtensionRequests)
+                .disabled(systemExtensionRequestManager.isBusy || !systemExtensionRequestManager.canSubmitDeactivationRequest)
 
                 Divider()
 

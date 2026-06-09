@@ -632,7 +632,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         return applicationIdentifierReadinessDetail == nil ? "Matches" : "Mismatch"
     }
 
-    var canSubmitSystemExtensionRequests: Bool {
+    var canSubmitActivationRequest: Bool {
         return applicationLocationReadinessDetail == nil
             && applicationIdentifierReadinessDetail == nil
             && applicationExecutableReadinessDetail == nil
@@ -647,6 +647,18 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             && extensionHostOnlyEntitlementReadinessDetail == nil
             && applicationGroupReadinessDetail == nil
             && signingTeamReadinessDetail == nil
+    }
+
+    var canSubmitDeactivationRequest: Bool {
+        return applicationLocationReadinessDetail == nil
+            && applicationIdentifierReadinessDetail == nil
+            && applicationExecutableReadinessDetail == nil
+            && appCodeSigningStatus.isValid
+            && appEntitlementReadinessDetail == nil
+    }
+
+    var canSubmitSystemExtensionRequests: Bool {
+        return canSubmitActivationRequest
     }
 
     var isRunningFromApplications: Bool {
@@ -1434,16 +1446,16 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     func uninstall() {
-        guard let extensionInfo = prepareForSystemExtensionRequest() else { return }
+        guard let extensionIdentifier = prepareForSystemExtensionDeactivationRequest() else { return }
 
         state = .deactivating
         pendingRequestKind = .deactivation
         lastFailureDetail = nil
         appendActivity(level: .info,
                        title: "Uninstall Requested",
-                       detail: extensionInfo.identifier)
+                       detail: extensionIdentifier)
 
-        let deactivationRequest = OSSystemExtensionRequest.deactivationRequest(forExtensionWithIdentifier: extensionInfo.identifier,
+        let deactivationRequest = OSSystemExtensionRequest.deactivationRequest(forExtensionWithIdentifier: extensionIdentifier,
                                                                                queue: .main)
         deactivationRequest.delegate = self
         OSSystemExtensionManager.shared.submitRequest(deactivationRequest)
@@ -1491,6 +1503,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         let previousState = state
         let previousReadinessDetail = requestReadinessDetail
         let previousCanSubmitRequests = canSubmitSystemExtensionRequests
+        let previousCanSubmitDeactivationRequest = canSubmitDeactivationRequest
 
         guard refreshExtensionInfo() else { return }
 
@@ -1498,6 +1511,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         let didChangeVisibleStatus = previousState != state
             || previousReadinessDetail != currentReadinessDetail
             || previousCanSubmitRequests != canSubmitSystemExtensionRequests
+            || previousCanSubmitDeactivationRequest != canSubmitDeactivationRequest
 
         guard didChangeVisibleStatus else { return }
 
@@ -1972,7 +1986,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
     }
 
-    private func prepareForSystemExtensionRequest() -> ExtensionInfo? {
+    @discardableResult
+    private func prepareForHostSystemExtensionRequest() -> Bool {
         appQuarantineStatus = Self.quarantineStatus(for: Bundle.main.bundleURL)
         appCodeSigningStatus = Self.evaluateCodeSigningStatus(for: Bundle.main.bundleURL,
                                                               validDetail: "The app bundle code signature is valid.")
@@ -1981,36 +1996,42 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             recordReadinessBlock(state: .needsApplicationLocation,
                                  title: "Move Required",
                                  detail: applicationLocationReadinessDetail)
-            return nil
+            return false
         }
 
         if let applicationIdentifierReadinessDetail {
             recordReadinessBlock(state: .needsBundleIdentifier,
                                  title: "App Identifier Required",
                                  detail: applicationIdentifierReadinessDetail)
-            return nil
+            return false
         }
 
         if let applicationExecutableReadinessDetail {
             recordReadinessBlock(state: .needsApplicationExecutable,
                                  title: "App Executable Required",
                                  detail: applicationExecutableReadinessDetail)
-            return nil
+            return false
         }
 
         guard appCodeSigningStatus.isValid else {
             recordReadinessBlock(state: .needsSigning,
                                  title: "Signing Required",
                                  detail: appCodeSigningStatus.detail)
-            return nil
+            return false
         }
 
         if let appEntitlementReadinessDetail {
             recordReadinessBlock(state: .needsSigning,
                                  title: "Entitlement Required",
                                  detail: appEntitlementReadinessDetail)
-            return nil
+            return false
         }
+
+        return true
+    }
+
+    private func prepareForSystemExtensionRequest() -> ExtensionInfo? {
+        guard prepareForHostSystemExtensionRequest() else { return nil }
 
         state = .locatingExtension
         let extensionInfo: ExtensionInfo
@@ -2085,6 +2106,12 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
 
         return extensionInfo
+    }
+
+    private func prepareForSystemExtensionDeactivationRequest() -> String? {
+        guard prepareForHostSystemExtensionRequest() else { return nil }
+
+        return expectedExtensionBundleIdentifier
     }
 
     private var readinessState: InstallState {
@@ -3030,7 +3057,7 @@ private struct ActionPanel: View {
             Label("Install", systemImage: "arrow.down.circle.fill")
         }
         .buttonStyle(.borderedProminent)
-        .disabled(manager.isBusy || !manager.canSubmitSystemExtensionRequests)
+        .disabled(manager.isBusy || !manager.canSubmitActivationRequest)
         .help("Submit a macOS system extension activation request.")
     }
 
@@ -3040,7 +3067,7 @@ private struct ActionPanel: View {
             Label("Uninstall", systemImage: "trash")
         }
         .buttonStyle(.bordered)
-        .disabled(manager.isBusy || !manager.canSubmitSystemExtensionRequests)
+        .disabled(manager.isBusy || !manager.canSubmitDeactivationRequest)
         .help("Submit a macOS system extension deactivation request.")
     }
 
