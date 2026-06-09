@@ -1401,7 +1401,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         3. Confirm the in-app readiness summary has no blocked checks, then choose Install.
         4. Approve the pending camera extension in System Settings if macOS requests approval.
         5. Run the Diagnostics Command below on the signed macOS host.
-        6. Confirm the diagnostics report the expected activation evidence.
+        6. Confirm the diagnostics report the expected signed-host evidence lines.
 
         Expected Diagnostics:
         \(runtimeEvidenceExpectedDiagnostics)
