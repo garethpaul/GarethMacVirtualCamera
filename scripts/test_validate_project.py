@@ -731,6 +731,15 @@ print(f"MP4 parser duration seconds = {metadata.get('duration_seconds') or ''}")
     )
 
 
+def test_validator_rejects_missing_runtime_diagnostics_checksum_failure_guard():
+    assert_validator_rejects_mutation(
+        "scripts/collect_runtime_diagnostics.sh",
+        """/usr/bin/shasum -a 256 "$file_path" 2>/dev/null | /usr/bin/awk '{ print $1 }' || true""",
+        """/usr/bin/shasum -a 256 "$file_path" | /usr/bin/awk '{ print $1 }'""",
+        "runtime diagnostics should report unknown video checksums without exiting when checksum commands fail",
+    )
+
+
 def test_validator_rejects_missing_runtime_diagnostics_all_architecture_application_groups():
     assert_validator_rejects_mutation(
         "scripts/collect_runtime_diagnostics.sh",
@@ -1202,6 +1211,7 @@ def main():
     test_validator_rejects_missing_runtime_diagnostics_info_plist_string_guard()
     test_validator_rejects_missing_runtime_diagnostics_blank_info_plist_guard()
     test_validator_rejects_missing_runtime_diagnostics_zero_parser_metadata_guard()
+    test_validator_rejects_missing_runtime_diagnostics_checksum_failure_guard()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_application_groups()
     test_validator_rejects_missing_runtime_diagnostics_non_string_app_group_guard()
     test_validator_rejects_missing_runtime_diagnostics_untrimmed_app_group_guard()

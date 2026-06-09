@@ -22,6 +22,8 @@
   readiness checks.
 - Preserved zero-duration MP4 parser diagnostics as blocked video metadata
   instead of unknown.
+- Reported unknown video checksums instead of aborting runtime diagnostics when
+  checksum commands cannot read a file.
 - Rejected numeric non-boolean signed entitlement values in host readiness
   checks.
 - Rejected non-string Info.plist bundle metadata in runtime diagnostics.

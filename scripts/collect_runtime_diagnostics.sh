@@ -1064,10 +1064,10 @@ print_file_sha256() {
   local checksum
 
   if [ -x /usr/bin/shasum ]; then
-    checksum="$(/usr/bin/shasum -a 256 "$file_path" | /usr/bin/awk '{ print $1 }')"
+    checksum="$(/usr/bin/shasum -a 256 "$file_path" 2>/dev/null | /usr/bin/awk '{ print $1 }' || true)"
     printf 'Video SHA-256: %s\n' "${checksum:-unknown}"
   elif command -v sha256sum >/dev/null 2>&1; then
-    checksum="$(sha256sum "$file_path" | /usr/bin/awk '{ print $1 }')"
+    checksum="$(sha256sum "$file_path" 2>/dev/null | /usr/bin/awk '{ print $1 }' || true)"
     printf 'Video SHA-256: %s\n' "${checksum:-unknown}"
   else
     printf 'Video SHA-256: checksum tool unavailable\n'
@@ -1668,6 +1668,7 @@ run_file_byte_count_self_test() {
 
   printf 'abcde' >"$fixture_path"
   printf 'File byte count fixture: %s\n' "$(file_byte_count "$fixture_path")"
+  print_file_sha256 "$temp_dir/missing-video.mp4"
 
   /bin/rm -rf "$temp_dir"
 }

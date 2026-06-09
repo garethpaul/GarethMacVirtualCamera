@@ -199,6 +199,7 @@ require_output "$video_metadata_output" "Video metadata zero duration fixture: n
 require_output "$video_metadata_output" "Video metadata negative duration fixture: no"
 
 require_output "$file_byte_count_output" "File byte count fixture: 5"
+require_output "$file_byte_count_output" "Video SHA-256: unknown"
 
 require_output "$video_parser_output" "Video parser pixel width fixture: 1280"
 require_output "$video_parser_output" "Video parser pixel height fixture: 720"
