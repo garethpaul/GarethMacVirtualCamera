@@ -23,6 +23,7 @@ bundle_version_output="$(GARETH_DIAGNOSTICS_SELF_TEST=bundle-version-match "$ROO
 executable_readiness_output="$(GARETH_DIAGNOSTICS_SELF_TEST=executable-readiness "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 application_identity_output="$(GARETH_DIAGNOSTICS_SELF_TEST=application-identity "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 team_id_output="$(GARETH_DIAGNOSTICS_SELF_TEST=team-id "$ROOT/scripts/collect_runtime_diagnostics.sh")"
+extension_host_entitlement_output="$(GARETH_DIAGNOSTICS_SELF_TEST=extension-host-entitlement "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 mach_service_output="$(GARETH_DIAGNOSTICS_SELF_TEST=mach-service "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 application_group_output="$(GARETH_DIAGNOSTICS_SELF_TEST=application-group "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 camera_device_output="$(GARETH_DIAGNOSTICS_SELF_TEST=camera-device "$ROOT/scripts/collect_runtime_diagnostics.sh")"
@@ -105,6 +106,10 @@ require_output "$team_id_output" "Team ID match fixture: yes"
 require_output "$team_id_output" "Team ID mismatch fixture: no"
 require_output "$team_id_output" "Team ID missing app fixture: no"
 require_output "$team_id_output" "Team ID missing extension fixture: no"
+
+require_output "$extension_host_entitlement_output" "Extension host entitlement valid absent fixture: yes"
+require_output "$extension_host_entitlement_output" "Extension host entitlement valid present fixture: no"
+require_output "$extension_host_entitlement_output" "Extension host entitlement invalid signature fixture: no"
 
 require_output "$mach_service_output" "Mach service direct fixture resolved: yes"
 require_output "$mach_service_output" "Mach service direct fixture matches expected: yes"

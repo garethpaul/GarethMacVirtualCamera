@@ -268,6 +268,11 @@ verify_app_diagnostics_resources() {
     "Team ID missing app fixture: no" \
     "Team ID missing extension fixture: no"
 
+  verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "extension-host-entitlement" "extension-host-entitlement" \
+    "Extension host entitlement valid absent fixture: yes" \
+    "Extension host entitlement valid present fixture: no" \
+    "Extension host entitlement invalid signature fixture: no"
+
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "application-identity" "application-identity" \
     "App path match fixture: yes" \
     "Application location missing fixture: no" \

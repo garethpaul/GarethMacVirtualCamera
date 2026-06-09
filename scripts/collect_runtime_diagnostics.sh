@@ -278,6 +278,17 @@ has_boolean_entitlement() {
   [ "$entitlement_value" = "true" ]
 }
 
+extension_host_only_entitlement_absent_readiness_value() {
+  local extension_signature_ready="$1"
+  local host_only_entitlement_present="$2"
+
+  if [ "$extension_signature_ready" = "yes" ] && [ "$host_only_entitlement_present" = "no" ]; then
+    printf 'yes\n'
+  else
+    printf 'no\n'
+  fi
+}
+
 read_application_groups() {
   local bundle_path="$1"
   local entitlements_file
@@ -921,6 +932,12 @@ run_team_identifier_self_test() {
   printf 'Team ID missing extension fixture: %s\n' "$(team_identifiers_match_value "ABCDE12345" "")"
 }
 
+run_extension_host_entitlement_self_test() {
+  printf 'Extension host entitlement valid absent fixture: %s\n' "$(extension_host_only_entitlement_absent_readiness_value "yes" "no")"
+  printf 'Extension host entitlement valid present fixture: %s\n' "$(extension_host_only_entitlement_absent_readiness_value "yes" "yes")"
+  printf 'Extension host entitlement invalid signature fixture: %s\n' "$(extension_host_only_entitlement_absent_readiness_value "no" "no")"
+}
+
 run_mach_service_self_test() {
   printf 'Mach service direct fixture resolved: %s\n' "$(mach_service_resolved_value "$EXTENSION_ID")"
   printf 'Mach service direct fixture matches expected: %s\n' "$(mach_service_matches_expected_value "$EXTENSION_ID" "$EXTENSION_ID")"
@@ -1083,6 +1100,10 @@ case "${GARETH_DIAGNOSTICS_SELF_TEST:-}" in
     ;;
   team-id)
     run_team_identifier_self_test
+    exit 0
+    ;;
+  extension-host-entitlement)
+    run_extension_host_entitlement_self_test
     exit 0
     ;;
   mach-service)
@@ -1458,19 +1479,19 @@ if [ -d "$EXTENSION_PATH" ]; then
   extension_bundle_identifier="$(read_bundle_identifier "$EXTENSION_PATH")"
   extension_executable="$(read_info_plist_value "$EXTENSION_PATH" CFBundleExecutable)"
   extension_mach_service_name="$(read_extension_mach_service_name)"
+  extension_signature_ready="no"
+  extension_host_only_entitlement_present="no"
   print_readiness_check "Extension bundle identifier ready" "$(bundle_identifier_matches_expected_value "$extension_bundle_identifier" "$EXTENSION_ID")"
 
   if /usr/bin/codesign --verify --strict "$EXTENSION_PATH" >/dev/null 2>&1; then
-    print_readiness_check "Extension signature ready" "yes"
-  else
-    print_readiness_check "Extension signature ready" "no"
+    extension_signature_ready="yes"
   fi
+  print_readiness_check "Extension signature ready" "$extension_signature_ready"
 
   if has_boolean_entitlement "$EXTENSION_PATH" "$HOST_SYSTEM_EXTENSION_ENTITLEMENT"; then
-    print_readiness_check "Extension host-only entitlement absent" "no"
-  else
-    print_readiness_check "Extension host-only entitlement absent" "yes"
+    extension_host_only_entitlement_present="yes"
   fi
+  print_readiness_check "Extension host-only entitlement absent" "$(extension_host_only_entitlement_absent_readiness_value "$extension_signature_ready" "$extension_host_only_entitlement_present")"
 
   print_readiness_check "Extension executable ready" "$(executable_readiness_value "$extension_executable" "${EXTENSION_PATH}/Contents/MacOS/${extension_executable}")"
 

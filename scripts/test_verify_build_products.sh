@@ -132,6 +132,11 @@ passing_outputs = {
         "Team ID missing app fixture: no",
         "Team ID missing extension fixture: no",
     ],
+    "extension-host-entitlement": [
+        "Extension host entitlement valid absent fixture: yes",
+        "Extension host entitlement valid present fixture: no",
+        "Extension host entitlement invalid signature fixture: no",
+    ],
     "application-identity": [
         "App path match fixture: yes",
         "Application location missing fixture: no",
@@ -216,6 +221,11 @@ stale_outputs = {
         "Team ID missing app fixture: unknown",
         "Team ID missing extension fixture: unknown",
     ],
+    "extension-host-entitlement": [
+        "Extension host entitlement valid absent fixture: yes",
+        "Extension host entitlement valid present fixture: yes",
+        "Extension host entitlement invalid signature fixture: yes",
+    ],
     "application-identity": [
         "App path match fixture: no",
         "Application location missing fixture: yes",
@@ -292,6 +302,12 @@ write_stale_team_id_diagnostics_fixture() {
   local products_path="$1"
   local configuration="$2"
   write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "team-id"
+}
+
+write_stale_extension_host_entitlement_diagnostics_fixture() {
+  local products_path="$1"
+  local configuration="$2"
+  write_diagnostics_fixture_script "$products_path/$configuration/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh" "extension-host-entitlement"
 }
 
 write_stale_resource_discovery_diagnostics_fixture() {
@@ -544,6 +560,7 @@ assert_stale_diagnostics_rejected "stale-missing-runtime-bundles-diagnostics" wr
 assert_stale_diagnostics_rejected "stale-bundle-version-diagnostics" write_stale_bundle_version_diagnostics_fixture "bundle-version" "bundle-version-match"
 assert_stale_diagnostics_rejected "stale-executable-readiness-diagnostics" write_stale_executable_readiness_diagnostics_fixture "executable-readiness" "executable-readiness"
 assert_stale_diagnostics_rejected "stale-team-id-diagnostics" write_stale_team_id_diagnostics_fixture "Team ID" "Team ID"
+assert_stale_diagnostics_rejected "stale-extension-host-entitlement-diagnostics" write_stale_extension_host_entitlement_diagnostics_fixture "extension-host-entitlement" "extension-host-entitlement"
 assert_stale_diagnostics_rejected "stale-application-identity-diagnostics" write_stale_application_identity_diagnostics_fixture "application-identity" "application-identity"
 assert_stale_diagnostics_rejected "stale-video-metadata-diagnostics" write_stale_video_metadata_diagnostics_fixture "video-metadata" "video-metadata"
 assert_stale_diagnostics_rejected "stale-application-group-diagnostics" write_stale_application_group_diagnostics_fixture "application-group" "application-group"
