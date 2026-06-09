@@ -896,6 +896,22 @@ if ! grep -q "Missing Debug app runtime diagnostics script" "$TMP_DIR/missing-di
   exit 1
 fi
 
+DIRECTORY_DIAGNOSTICS_PRODUCTS="$TMP_DIR/directory-diagnostics/Products"
+write_product_fixture "$DIRECTORY_DIAGNOSTICS_PRODUCTS" Debug
+rm "$DIRECTORY_DIAGNOSTICS_PRODUCTS/Debug/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh"
+mkdir "$DIRECTORY_DIAGNOSTICS_PRODUCTS/Debug/GarethVideoCam.app/Contents/Resources/collect_runtime_diagnostics.sh"
+
+if PRODUCTS_PATH="$DIRECTORY_DIAGNOSTICS_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/directory-diagnostics.out" 2>"$TMP_DIR/directory-diagnostics.err"; then
+  printf 'Expected verifier to reject a directory runtime diagnostics script.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug app runtime diagnostics script" "$TMP_DIR/directory-diagnostics.err"; then
+  printf 'Verifier failure did not explain the directory runtime diagnostics script.\n' >&2
+  cat "$TMP_DIR/directory-diagnostics.err" >&2
+  exit 1
+fi
+
 MISSING_DIAGNOSTICS_PARSER_PRODUCTS="$TMP_DIR/missing-diagnostics-parser/Products"
 write_product_fixture "$MISSING_DIAGNOSTICS_PARSER_PRODUCTS" Debug
 rm "$MISSING_DIAGNOSTICS_PARSER_PRODUCTS/Debug/GarethVideoCam.app/Contents/Resources/validate_project.py"
@@ -908,6 +924,22 @@ fi
 if ! grep -q "Missing Debug app runtime diagnostics parser" "$TMP_DIR/missing-diagnostics-parser.err"; then
   printf 'Verifier failure did not explain the missing runtime diagnostics parser.\n' >&2
   cat "$TMP_DIR/missing-diagnostics-parser.err" >&2
+  exit 1
+fi
+
+DIRECTORY_DIAGNOSTICS_PARSER_PRODUCTS="$TMP_DIR/directory-diagnostics-parser/Products"
+write_product_fixture "$DIRECTORY_DIAGNOSTICS_PARSER_PRODUCTS" Debug
+rm "$DIRECTORY_DIAGNOSTICS_PARSER_PRODUCTS/Debug/GarethVideoCam.app/Contents/Resources/validate_project.py"
+mkdir "$DIRECTORY_DIAGNOSTICS_PARSER_PRODUCTS/Debug/GarethVideoCam.app/Contents/Resources/validate_project.py"
+
+if PRODUCTS_PATH="$DIRECTORY_DIAGNOSTICS_PARSER_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/directory-diagnostics-parser.out" 2>"$TMP_DIR/directory-diagnostics-parser.err"; then
+  printf 'Expected verifier to reject a directory runtime diagnostics parser.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Missing Debug app runtime diagnostics parser" "$TMP_DIR/directory-diagnostics-parser.err"; then
+  printf 'Verifier failure did not explain the directory runtime diagnostics parser.\n' >&2
+  cat "$TMP_DIR/directory-diagnostics-parser.err" >&2
   exit 1
 fi
 

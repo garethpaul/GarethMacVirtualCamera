@@ -1395,6 +1395,33 @@ def test_validator_rejects_missing_build_product_video_file_guard():
     )
 
 
+def test_validator_rejects_missing_build_product_diagnostics_file_guards():
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
+        """  if [ ! -f "$script_path" ]; then
+    printf 'Missing %s app runtime diagnostics script: %s\\n' "$configuration" "$script_path" >&2
+    exit 1
+  fi""",
+        """  if [ ! -e "$script_path" ]; then
+    printf 'Missing %s app runtime diagnostics script: %s\\n' "$configuration" "$script_path" >&2
+    exit 1
+  fi""",
+        "build-product verifier should reject non-file runtime diagnostics resources",
+    )
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
+        """  if [ ! -f "$parser_path" ]; then
+    printf 'Missing %s app runtime diagnostics parser: %s\\n' "$configuration" "$parser_path" >&2
+    exit 1
+  fi""",
+        """  if [ ! -e "$parser_path" ]; then
+    printf 'Missing %s app runtime diagnostics parser: %s\\n' "$configuration" "$parser_path" >&2
+    exit 1
+  fi""",
+        "build-product verifier should reject non-file runtime diagnostics resources",
+    )
+
+
 def test_validator_rejects_missing_build_product_executable_name_guard():
     assert_validator_rejects_mutation(
         "scripts/verify_build_products.sh",
@@ -1572,6 +1599,7 @@ def main():
     test_validator_rejects_missing_build_product_duplicate_extension_guard()
     test_validator_rejects_directory_only_embedded_extension_count()
     test_validator_rejects_missing_build_product_video_file_guard()
+    test_validator_rejects_missing_build_product_diagnostics_file_guards()
     test_validator_rejects_missing_build_product_executable_name_guard()
     test_validator_rejects_missing_make_gate_aliases()
     test_validator_rejects_missing_build_product_info_plist_string_type_guard()

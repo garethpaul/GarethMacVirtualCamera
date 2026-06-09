@@ -2,6 +2,8 @@
 
 ## 2026-06-08 to 2026-06-09
 
+- Covered non-file bundled runtime diagnostics script and parser resources in
+  build-product verification.
 - Rejected non-file bundled runtime diagnostics script resources before
   exposing the copied signed-host command.
 - Rejected path-like `CFBundleExecutable` values in runtime diagnostics
