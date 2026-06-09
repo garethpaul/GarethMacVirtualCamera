@@ -612,7 +612,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     private static func isExecutableName(_ executableName: String) -> Bool {
-        return executableName != "."
+        return !executableName.isEmpty
+            && executableName != "."
             && executableName != ".."
             && !executableName.contains("/")
     }

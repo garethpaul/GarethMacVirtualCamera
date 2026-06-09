@@ -10,6 +10,8 @@
   warning on the same Xcode log line.
 - Added first-viewport Refresh and Copy Diagnostics actions to the host app
   header with responsive wrapping.
+- Made the host app executable-name helper reject blank embedded-extension
+  executable names before building readiness paths.
 - Rejected whitespace-padded app icon size and scale metadata before validating
   icon PNG dimensions.
 - Required app icon catalog scale metadata to use the expected `x` suffix before

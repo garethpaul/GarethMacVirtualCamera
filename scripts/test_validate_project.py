@@ -1117,12 +1117,29 @@ def test_validator_rejects_raw_extension_executable_metadata():
 def test_validator_rejects_missing_host_executable_name_shape_guard():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",
+        """    private static func isExecutableName(_ executableName: String) -> Bool {
+        return !executableName.isEmpty
+            && executableName != "."
+            && executableName != ".."
+            && !executableName.contains("/")
+    }
+""",
+        """    private static func isExecutableName(_ executableName: String) -> Bool {
+        return executableName != "."
+            && executableName != ".."
+            && !executableName.contains("/")
+    }
+""",
+        "host app should reject blank or path-like embedded extension executable names",
+    )
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
         """        guard Self.isExecutableName(executableName) else {
             throw ExtensionRequestError.invalidExtensionExecutableName(executableName, extensionURL.path)
         }
 """,
         "",
-        "host app should reject path-like embedded extension executable names",
+        "host app should reject blank or path-like embedded extension executable names",
     )
 
 
