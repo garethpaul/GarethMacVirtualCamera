@@ -163,6 +163,10 @@ passing_outputs = {
         "Team ID multiple extension fixture: no",
     ],
     "extension-host-entitlement": [
+        "Boolean entitlement all architectures present fixture: yes",
+        "Boolean entitlement missing architecture fixture: no",
+        "Boolean entitlement unreadable architecture fixture: unknown",
+        "Boolean entitlement empty architecture fixture: unknown",
         "Extension host entitlement valid absent fixture: yes",
         "Extension host entitlement valid present fixture: no",
         "Extension host entitlement invalid signature fixture: no",
@@ -315,6 +319,10 @@ stale_outputs = {
         "Team ID multiple extension fixture: yes",
     ],
     "extension-host-entitlement": [
+        "Boolean entitlement all architectures present fixture: no",
+        "Boolean entitlement missing architecture fixture: yes",
+        "Boolean entitlement unreadable architecture fixture: no",
+        "Boolean entitlement empty architecture fixture: yes",
         "Extension host entitlement valid absent fixture: yes",
         "Extension host entitlement valid present fixture: yes",
         "Extension host entitlement invalid signature fixture: yes",

@@ -171,6 +171,15 @@ def test_validator_rejects_missing_runtime_diagnostics_all_architecture_details(
     )
 
 
+def test_validator_rejects_missing_runtime_diagnostics_all_architecture_entitlements():
+    assert_validator_rejects_mutation(
+        "scripts/collect_runtime_diagnostics.sh",
+        '    if ! /usr/bin/codesign -d --architecture "$architecture" --entitlements :- "$bundle_path" >"$entitlements_file" 2>/dev/null; then',
+        '    if ! /usr/bin/codesign -d --entitlements :- "$bundle_path" >"$entitlements_file" 2>/dev/null; then',
+        "runtime diagnostics script should read boolean entitlements across all executable architecture slices",
+    )
+
+
 def test_validator_rejects_missing_extension_load_failure_detail_row():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",
@@ -196,6 +205,7 @@ def main():
     test_validator_rejects_missing_unknown_signature_state()
     test_validator_rejects_missing_all_architecture_signature_validation()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_details()
+    test_validator_rejects_missing_runtime_diagnostics_all_architecture_entitlements()
     test_validator_rejects_missing_extension_load_failure_detail_row()
     test_validator_rejects_missing_unsigned_build_configuration_guard()
     print("Project validator tests passed.")

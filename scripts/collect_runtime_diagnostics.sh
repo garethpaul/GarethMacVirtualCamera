@@ -137,6 +137,26 @@ executable_readiness_value() {
   fi
 }
 
+bundle_executable_path() {
+  local bundle_path="$1"
+  local executable_name
+
+  executable_name="$(read_info_plist_value "$bundle_path" CFBundleExecutable)"
+  if [ -n "$executable_name" ]; then
+    printf '%s\n' "${bundle_path}/Contents/MacOS/${executable_name}"
+  fi
+}
+
+bundle_executable_architectures() {
+  local bundle_path="$1"
+  local executable_path
+
+  executable_path="$(bundle_executable_path "$bundle_path")"
+  if [ -n "$executable_path" ] && [ -f "$executable_path" ] && [ -x /usr/bin/lipo ]; then
+    /usr/bin/lipo -archs "$executable_path" 2>/dev/null | /usr/bin/awk '{ for (arch_index = 1; arch_index <= NF; arch_index += 1) print $arch_index }' || true
+  fi
+}
+
 bundle_versions_match_readiness_value() {
   local app_short_version="$1"
   local app_build_version="$2"
@@ -276,6 +296,33 @@ team_identifiers_match_value() {
 boolean_entitlement_value() {
   local bundle_path="$1"
   local entitlement="$2"
+  local architectures
+  local architecture
+  local entitlement_values=""
+  local entitlement_value
+
+  architectures="$(bundle_executable_architectures "$bundle_path")"
+  if [ -z "$architectures" ]; then
+    read_boolean_entitlement_for_architecture "$bundle_path" "$entitlement" ""
+    return
+  fi
+
+  while IFS= read -r architecture; do
+    [ -n "$architecture" ] || continue
+    entitlement_value="$(read_boolean_entitlement_for_architecture "$bundle_path" "$entitlement" "$architecture")"
+    entitlement_values="${entitlement_values}${entitlement_value}
+"
+  done <<EOF
+$architectures
+EOF
+
+  boolean_entitlement_all_architectures_value "$entitlement_values"
+}
+
+read_boolean_entitlement_for_architecture() {
+  local bundle_path="$1"
+  local entitlement="$2"
+  local architecture="$3"
   local entitlements_file
   local entitlement_value
 
@@ -284,7 +331,19 @@ boolean_entitlement_value() {
     return
   }
 
-  if ! /usr/bin/codesign -d --entitlements :- "$bundle_path" >"$entitlements_file" 2>/dev/null; then
+  if [ -n "$architecture" ]; then
+    if ! /usr/bin/codesign -d --architecture "$architecture" --entitlements :- "$bundle_path" >"$entitlements_file" 2>/dev/null; then
+      /bin/rm -f "$entitlements_file"
+      printf 'unknown\n'
+      return
+    fi
+  elif ! /usr/bin/codesign -d --entitlements :- "$bundle_path" >"$entitlements_file" 2>/dev/null; then
+    /bin/rm -f "$entitlements_file"
+    printf 'unknown\n'
+    return
+  fi
+
+  if [ ! -x /usr/libexec/PlistBuddy ]; then
     /bin/rm -f "$entitlements_file"
     printf 'unknown\n'
     return
@@ -297,6 +356,39 @@ boolean_entitlement_value() {
     printf 'yes\n'
   else
     printf 'no\n'
+  fi
+}
+
+boolean_entitlement_all_architectures_value() {
+  local entitlement_values="$1"
+  local entitlement_value
+  local value_count=0
+  local saw_missing="no"
+  local saw_unknown="no"
+
+  while IFS= read -r entitlement_value; do
+    [ -n "$entitlement_value" ] || continue
+    value_count=$((value_count + 1))
+    case "$entitlement_value" in
+      yes)
+        ;;
+      no)
+        saw_missing="yes"
+        ;;
+      *)
+        saw_unknown="yes"
+        ;;
+    esac
+  done <<EOF
+$entitlement_values
+EOF
+
+  if [ "$value_count" -eq 0 ] || [ "$saw_unknown" = "yes" ]; then
+    printf 'unknown\n'
+  elif [ "$saw_missing" = "yes" ]; then
+    printf 'no\n'
+  else
+    printf 'yes\n'
   fi
 }
 
@@ -965,6 +1057,14 @@ run_team_identifier_self_test() {
 }
 
 run_extension_host_entitlement_self_test() {
+  local all_architectures_present=$'yes\nyes'
+  local missing_architecture=$'yes\nno'
+  local unreadable_architecture=$'yes\nunknown'
+
+  printf 'Boolean entitlement all architectures present fixture: %s\n' "$(boolean_entitlement_all_architectures_value "$all_architectures_present")"
+  printf 'Boolean entitlement missing architecture fixture: %s\n' "$(boolean_entitlement_all_architectures_value "$missing_architecture")"
+  printf 'Boolean entitlement unreadable architecture fixture: %s\n' "$(boolean_entitlement_all_architectures_value "$unreadable_architecture")"
+  printf 'Boolean entitlement empty architecture fixture: %s\n' "$(boolean_entitlement_all_architectures_value "")"
   printf 'Extension host entitlement valid absent fixture: %s\n' "$(extension_host_only_entitlement_absent_readiness_value "yes" "no")"
   printf 'Extension host entitlement valid present fixture: %s\n' "$(extension_host_only_entitlement_absent_readiness_value "yes" "yes")"
   printf 'Extension host entitlement invalid signature fixture: %s\n' "$(extension_host_only_entitlement_absent_readiness_value "no" "no")"

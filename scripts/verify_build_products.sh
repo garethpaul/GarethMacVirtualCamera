@@ -299,6 +299,10 @@ verify_app_diagnostics_resources() {
     "Team ID multiple extension fixture: no"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "extension-host-entitlement" "extension-host-entitlement" \
+    "Boolean entitlement all architectures present fixture: yes" \
+    "Boolean entitlement missing architecture fixture: no" \
+    "Boolean entitlement unreadable architecture fixture: unknown" \
+    "Boolean entitlement empty architecture fixture: unknown" \
     "Extension host entitlement valid absent fixture: yes" \
     "Extension host entitlement valid present fixture: no" \
     "Extension host entitlement invalid signature fixture: no" \
