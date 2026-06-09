@@ -596,6 +596,19 @@ print("yes" if value else "no")
     )
 
 
+def test_validator_rejects_missing_runtime_diagnostics_info_plist_string_guard():
+    assert_validator_rejects_mutation(
+        "scripts/collect_runtime_diagnostics.sh",
+        """if isinstance(value, str) and value:
+    print(value)
+""",
+        """if value:
+    print(value)
+""",
+        "runtime diagnostics should reject non-string Info.plist metadata values",
+    )
+
+
 def test_validator_rejects_missing_runtime_diagnostics_all_architecture_application_groups():
     assert_validator_rejects_mutation(
         "scripts/collect_runtime_diagnostics.sh",
@@ -890,6 +903,7 @@ def main():
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_details()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_entitlements()
     test_validator_rejects_missing_runtime_diagnostics_scalar_boolean_entitlement_guard()
+    test_validator_rejects_missing_runtime_diagnostics_info_plist_string_guard()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_application_groups()
     test_validator_rejects_missing_runtime_diagnostics_non_string_app_group_guard()
     test_validator_rejects_missing_runtime_diagnostics_fallback_scalar_app_group_guard()

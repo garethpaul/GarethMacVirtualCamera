@@ -102,6 +102,10 @@ require_output "$application_identity_output" "Application location mismatch fix
 require_output "$application_identity_output" "Bundle identifier match fixture: yes"
 require_output "$application_identity_output" "Bundle identifier mismatch fixture: no"
 require_output "$application_identity_output" "Bundle identifier missing fixture: no"
+require_output "$application_identity_output" "Info.plist string metadata fixture: com.example.StringMetadata"
+require_output "$application_identity_output" "Info.plist scalar metadata fixture: missing"
+require_output "$application_identity_output" "Info.plist nested string metadata fixture: com.example.StringMetadata.Extension"
+require_output "$application_identity_output" "Info.plist nested scalar metadata fixture: missing"
 
 require_output "$team_id_output" "Team ID match fixture: yes"
 require_output "$team_id_output" "Team ID mismatch fixture: no"

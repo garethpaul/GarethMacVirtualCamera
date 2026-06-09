@@ -53,27 +53,87 @@ python3_command() {
   fi
 }
 
+plist_xml_string_value() {
+  /usr/bin/awk '
+    /^[[:space:]]*<\?xml/ { next }
+    /^[[:space:]]*<!DOCTYPE/ { next }
+    /^[[:space:]]*<plist/ { next }
+    /^[[:space:]]*<\/plist>/ { next }
+    /^[[:space:]]*<string>.*<\/string>[[:space:]]*$/ {
+      if (saw_value) {
+        invalid = 1
+      }
+      value = $0
+      sub(/^[[:space:]]*<string>/, "", value)
+      sub(/<\/string>[[:space:]]*$/, "", value)
+      if (value != "") {
+        print value
+      }
+      saw_value = 1
+      next
+    }
+    NF { invalid = 1 }
+    END {
+      if (invalid || !saw_value) {
+        exit 1
+      }
+    }'
+}
+
+read_plist_string_value() {
+  local info_plist="$1"
+  local key_path="$2"
+  local python_bin=""
+  local plistbuddy_key_path
+  local value=""
+
+  if [ ! -f "$info_plist" ]; then
+    return 0
+  fi
+
+  python_bin="$(python3_command)"
+  if [ -n "$python_bin" ]; then
+    "$python_bin" - "$info_plist" "$key_path" 2>/dev/null <<'PY' || true
+import plistlib
+import sys
+
+with open(sys.argv[1], "rb") as info_file:
+    value = plistlib.load(info_file)
+
+for key in sys.argv[2].split("."):
+    if not isinstance(value, dict):
+        value = None
+        break
+    value = value.get(key)
+
+if isinstance(value, str) and value:
+    print(value)
+PY
+    return 0
+  fi
+
+  plistbuddy_key_path="${key_path//./:}"
+  if [ -x /usr/libexec/PlistBuddy ]; then
+    if [ -x /usr/bin/plutil ]; then
+      /usr/bin/plutil -lint "$info_plist" >/dev/null 2>/dev/null || return 0
+    fi
+
+    value="$(/usr/libexec/PlistBuddy -x -c "Print :${plistbuddy_key_path}" "$info_plist" 2>/dev/null | plist_xml_string_value || true)"
+  fi
+
+  if [ -z "$value" ] && [ -x /usr/bin/plutil ]; then
+    value="$(/usr/bin/plutil -extract "$key_path" xml1 -o - "$info_plist" 2>/dev/null | plist_xml_string_value || true)"
+  fi
+
+  printf '%s\n' "$value"
+}
+
 read_info_plist_value() {
   local bundle_path="$1"
   local key="$2"
   local info_plist="${bundle_path}/Contents/Info.plist"
-  local value=""
 
-  if [ -f "$info_plist" ]; then
-    if [ -x /usr/libexec/PlistBuddy ]; then
-      value="$(/usr/libexec/PlistBuddy -c "Print :${key}" "$info_plist" 2>/dev/null || true)"
-    fi
-
-    if [ -z "$value" ] && [ -x /usr/bin/plutil ]; then
-      value="$(/usr/bin/plutil -extract "$key" raw -o - "$info_plist" 2>/dev/null || true)"
-    fi
-  fi
-
-  if [ -z "$value" ] && [ -x /usr/bin/defaults ]; then
-    value="$(/usr/bin/defaults read "${bundle_path}/Contents/Info" "$key" 2>/dev/null || true)"
-  fi
-
-  printf '%s\n' "$value"
+  read_plist_string_value "$info_plist" "$key"
 }
 
 print_bundle_metadata() {
@@ -180,20 +240,7 @@ bundle_versions_match_readiness_value() {
 }
 
 read_extension_mach_service_name() {
-  local info_plist="$EXTENSION_INFO_PLIST"
-  local value=""
-
-  if [ -f "$info_plist" ]; then
-    if [ -x /usr/libexec/PlistBuddy ]; then
-      value="$(/usr/libexec/PlistBuddy -c "Print :CMIOExtension:CMIOExtensionMachServiceName" "$info_plist" 2>/dev/null || true)"
-    fi
-
-    if [ -z "$value" ] && [ -x /usr/bin/plutil ]; then
-      value="$(/usr/bin/plutil -extract CMIOExtension.CMIOExtensionMachServiceName raw -o - "$info_plist" 2>/dev/null || true)"
-    fi
-  fi
-
-  printf '%s\n' "$value"
+  read_plist_string_value "$EXTENSION_INFO_PLIST" "CMIOExtension.CMIOExtensionMachServiceName"
 }
 
 contains_unresolved_build_setting() {
@@ -1239,10 +1286,51 @@ run_executable_readiness_self_test() {
 run_application_identity_self_test() {
   local temp_dir
   local existing_app_path
+  local scalar_app_path
+  local scalar_info_value
+  local scalar_mach_service_value
+  local string_app_path
+  local string_info_value
+  local string_mach_service_value
 
   temp_dir="$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/gareth-app-location.XXXXXX")" || return 1
   existing_app_path="$temp_dir/GarethVideoCam.app"
+  string_app_path="$temp_dir/StringMetadata.app"
+  scalar_app_path="$temp_dir/ScalarMetadata.app"
   /bin/mkdir -p "$existing_app_path"
+  /bin/mkdir -p "$string_app_path/Contents" "$scalar_app_path/Contents"
+
+  cat >"$string_app_path/Contents/Info.plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleIdentifier</key>
+  <string>com.example.StringMetadata</string>
+  <key>CMIOExtension</key>
+  <dict>
+    <key>CMIOExtensionMachServiceName</key>
+    <string>com.example.StringMetadata.Extension</string>
+  </dict>
+</dict>
+</plist>
+PLIST
+
+  cat >"$scalar_app_path/Contents/Info.plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleIdentifier</key>
+  <true/>
+  <key>CMIOExtension</key>
+  <dict>
+    <key>CMIOExtensionMachServiceName</key>
+    <true/>
+  </dict>
+</dict>
+</plist>
+PLIST
 
   printf 'App path match fixture: %s\n' "$(path_matches_expected_value "/Applications/GarethVideoCam.app" "/Applications/GarethVideoCam.app")"
   printf 'App path mismatch fixture: %s\n' "$(path_matches_expected_value "/Users/example/GarethVideoCam.app" "/Applications/GarethVideoCam.app")"
@@ -1252,6 +1340,16 @@ run_application_identity_self_test() {
   printf 'Bundle identifier match fixture: %s\n' "$(bundle_identifier_matches_expected_value "$APP_ID" "$APP_ID")"
   printf 'Bundle identifier mismatch fixture: %s\n' "$(bundle_identifier_matches_expected_value "com.example.WrongApp" "$APP_ID")"
   printf 'Bundle identifier missing fixture: %s\n' "$(bundle_identifier_matches_expected_value "" "$APP_ID")"
+  string_info_value="$(read_info_plist_value "$string_app_path" CFBundleIdentifier)"
+  scalar_info_value="$(read_info_plist_value "$scalar_app_path" CFBundleIdentifier)"
+  local EXTENSION_INFO_PLIST="$string_app_path/Contents/Info.plist"
+  string_mach_service_value="$(read_extension_mach_service_name)"
+  EXTENSION_INFO_PLIST="$scalar_app_path/Contents/Info.plist"
+  scalar_mach_service_value="$(read_extension_mach_service_name)"
+  printf 'Info.plist string metadata fixture: %s\n' "${string_info_value:-missing}"
+  printf 'Info.plist scalar metadata fixture: %s\n' "${scalar_info_value:-missing}"
+  printf 'Info.plist nested string metadata fixture: %s\n' "${string_mach_service_value:-missing}"
+  printf 'Info.plist nested scalar metadata fixture: %s\n' "${scalar_mach_service_value:-missing}"
 
   /bin/rm -rf "$temp_dir"
 }

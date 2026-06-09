@@ -360,7 +360,11 @@ verify_app_diagnostics_resources() {
     "Application location mismatch fixture: no" \
     "Bundle identifier match fixture: yes" \
     "Bundle identifier mismatch fixture: no" \
-    "Bundle identifier missing fixture: no"
+    "Bundle identifier missing fixture: no" \
+    "Info.plist string metadata fixture: com.example.StringMetadata" \
+    "Info.plist scalar metadata fixture: missing" \
+    "Info.plist nested string metadata fixture: com.example.StringMetadata.Extension" \
+    "Info.plist nested scalar metadata fixture: missing"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "video-metadata" "video-metadata" \
     "Video metadata parsed width fixture: 1280" \
