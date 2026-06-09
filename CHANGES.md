@@ -97,3 +97,4 @@
 - Used guarded absolute macOS tool paths in runtime diagnostics self-test setup and cleanup.
 - Logged selected macOS, Xcode, Swift, and SDK evidence in CI.
 - Clarified the change-log maintenance window across June 8-9, 2026.
+- Scanned any captured Xcode build logs in CI, including partial logs from failed build steps.

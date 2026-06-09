@@ -60,7 +60,8 @@ jobs:
         run: ./scripts/verify_build_products.sh
 
       - name: Scan Xcode logs for warnings and failures
-        run: ./scripts/scan_build_log.py build-Debug.log build-Release.log
+        if: always() && hashFiles('build-*.log') != ''
+        run: ./scripts/scan_build_log.py build-*.log
 
       - name: Upload Xcode build logs
         if: always()

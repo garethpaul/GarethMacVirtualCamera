@@ -820,7 +820,7 @@ def main():
     require("CI-equivalent unsigned compile" in readme_text and "./scripts/build_unsigned.sh" in readme_text and "./scripts/scan_build_log.py build-Debug.log build-Release.log" in readme_text and ".build/Xcode" in readme_text and "BUILD_OUTPUT_PATH" in readme_text,
             "README should document the CI-equivalent unsigned Debug and Release target builds with log scanning",
             failures)
-    require("runs `make check`, performs unsigned Debug and Release target builds" in readme_text and "verifies the built app products contain the embedded system extension, aligned bundle versions, declared executables, display metadata, product-specific privacy usage strings, bundled runtime diagnostics self-tests, resolved CoreMediaIO extension metadata, and bundled-video metadata" in readme_text and "build-failed and test-failed banners" in readme_text,
+    require("runs `make check`, performs unsigned Debug and Release target builds" in readme_text and "verifies the built app products contain the embedded system extension, aligned bundle versions, declared executables, display metadata, product-specific privacy usage strings, bundled runtime diagnostics self-tests, resolved CoreMediaIO extension metadata, and bundled-video metadata" in readme_text and "scans any captured `build-*.log` output including partial logs from failed builds" in readme_text and "build-failed and test-failed banners" in readme_text,
             "README should document CI build-product verification and log scanning failure modes",
             failures)
     require("parseable dimensions, frame rate, and positive video duration" in readme_text,
@@ -1145,11 +1145,11 @@ def main():
         require("configurations=(Debug Release)" in build_unsigned_source,
                 "unsigned build script should build both Debug and Release configurations",
                 failures)
-        require("build-Debug.log" in workflow_text and "build-Release.log" in workflow_text,
-                "macOS build workflow should capture separate Debug and Release logs",
+        require("configurations=(Debug Release)" in build_unsigned_source and "build-${configuration}.log" in build_unsigned_source,
+                "unsigned build script should capture separate Debug and Release logs",
                 failures)
-        require("Scan Xcode logs for warnings and failures" in workflow_text and "./scripts/scan_build_log.py build-Debug.log build-Release.log" in workflow_text,
-                "macOS build workflow should scan captured Debug and Release xcodebuild output",
+        require("Scan Xcode logs for warnings and failures" in workflow_text and "if: always() && hashFiles('build-*.log') != ''" in workflow_text and "./scripts/scan_build_log.py build-*.log" in workflow_text,
+                "macOS build workflow should scan any captured Debug or Release xcodebuild output even after failed build steps",
                 failures)
         require("actions/upload-artifact@v7.0.1" in workflow_text and "xcode-build-logs" in workflow_text and "path: build-*.log" in workflow_text and "if-no-files-found: ignore" in workflow_text,
                 "macOS build workflow should upload captured Xcode build logs for later inspection",
