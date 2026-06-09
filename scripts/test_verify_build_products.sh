@@ -221,6 +221,9 @@ passing_outputs = {
         "Runtime activation evidence next action: inspect Extension registration entry present",
     ],
     "video-parser": [
+        "Video parser pixel width fixture: 1280",
+        "Video parser pixel height fixture: 720",
+        "Video parser frame rate fixture: 24",
         "Video parser metadata ready fixture: yes",
     ],
 }
@@ -344,6 +347,9 @@ stale_outputs = {
         "Runtime activation evidence next action: none",
     ],
     "video-parser": [
+        "Video parser pixel width fixture: 640",
+        "Video parser pixel height fixture: 360",
+        "Video parser frame rate fixture: 30",
         "Video parser metadata ready fixture: no",
     ],
 }

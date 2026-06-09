@@ -75,3 +75,4 @@
 - Verified packaged application-group diagnostics cover direct, missing, mismatched, wrong-suffix, unresolved, and formatted values.
 - Verified packaged video-metadata diagnostics cover parser fallback, decimal, invalid, missing, and non-positive duration fixtures.
 - Verified packaged activation-evidence diagnostics cover ready counts and active, blocked, and unknown next actions.
+- Verified packaged MP4 parser diagnostics cover expected parsed dimensions and frame rate.

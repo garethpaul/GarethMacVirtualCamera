@@ -357,6 +357,9 @@ verify_app_diagnostics_resources() {
     "Runtime activation evidence next action: inspect Extension registration entry present"
 
   verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "video-parser" "parser" \
+    "Video parser pixel width fixture: 1280" \
+    "Video parser pixel height fixture: 720" \
+    "Video parser frame rate fixture: 24" \
     "Video parser metadata ready fixture: yes"
 }
 
