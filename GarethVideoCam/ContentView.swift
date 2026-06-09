@@ -729,6 +729,42 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         return canSubmitSystemExtensionRequests ? "Ready" : "Blocked"
     }
 
+    var activationRequestReadinessStatus: String {
+        return canSubmitActivationRequest ? "Ready" : "Blocked"
+    }
+
+    var activationRequestReadinessDetail: String {
+        return requestReadinessDetail ?? "Activation requests can be submitted."
+    }
+
+    var deactivationRequestReadinessStatus: String {
+        return canSubmitDeactivationRequest ? "Ready" : "Blocked"
+    }
+
+    var deactivationRequestReadinessDetail: String {
+        if let applicationLocationReadinessDetail {
+            return applicationLocationReadinessDetail
+        }
+
+        if let applicationIdentifierReadinessDetail {
+            return applicationIdentifierReadinessDetail
+        }
+
+        if let applicationExecutableReadinessDetail {
+            return applicationExecutableReadinessDetail
+        }
+
+        if !appCodeSigningStatus.isValid {
+            return appCodeSigningStatus.detail
+        }
+
+        if let appEntitlementReadinessDetail {
+            return appEntitlementReadinessDetail
+        }
+
+        return "Deactivation requests can be submitted."
+    }
+
     var pendingRequestStatus: String {
         return pendingRequestKind?.diagnosticTitle ?? "None"
     }
@@ -1281,6 +1317,10 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         Request Readiness: \(requestReadinessStatus)
         Request Readiness Detail: \(requestReadinessDetail ?? "System extension requests can be submitted.")
         Request Readiness Next Action: \(requestReadinessNextAction)
+        Activation Request Readiness: \(activationRequestReadinessStatus)
+        Activation Request Detail: \(activationRequestReadinessDetail)
+        Deactivation Request Readiness: \(deactivationRequestReadinessStatus)
+        Deactivation Request Detail: \(deactivationRequestReadinessDetail)
         Runtime Diagnostics Command Source: \(runtimeDiagnosticsCommandSource)
         Runtime Diagnostics Command: \(runtimeDiagnosticsCommand)
         Expected Runtime Evidence:
@@ -3195,6 +3235,10 @@ private struct DetailsPanel: View {
                 DetailRow(title: "App Quarantine", value: manager.appQuarantineStatus.title)
                 DetailRow(title: "App Quarantine Detail", value: manager.appQuarantineStatus.detail, monospaced: true)
                 DetailRow(title: "Request Readiness", value: manager.requestReadinessStatus)
+                DetailRow(title: "Activation Request Readiness", value: manager.activationRequestReadinessStatus)
+                DetailRow(title: "Activation Request Detail", value: manager.activationRequestReadinessDetail)
+                DetailRow(title: "Deactivation Request Readiness", value: manager.deactivationRequestReadinessStatus)
+                DetailRow(title: "Deactivation Request Detail", value: manager.deactivationRequestReadinessDetail)
                 DetailRow(title: "Runtime Command Source", value: manager.runtimeDiagnosticsCommandSource)
                 DetailRow(title: "Pending Request", value: manager.pendingRequestStatus)
                 if let stateGuidanceDetail = manager.stateGuidanceDetail {

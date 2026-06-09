@@ -57,3 +57,4 @@
 - Reported missing app or extension signing Team IDs as blocked runtime diagnostics readiness.
 - Required a valid extension signature before runtime diagnostics can report the host-only extension entitlement as absent.
 - Split install and uninstall readiness so deactivation can still be submitted when only activation packaging checks fail.
+- Added activation and deactivation request readiness details to copied diagnostics and the host details panel.
