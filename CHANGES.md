@@ -102,3 +102,4 @@
 - Reported selected developer directory, Swift, and macOS SDK evidence in runtime diagnostics.
 - Resolved one explicit Python interpreter for build-product verification and covered bad `PYTHON3_BIN` overrides.
 - Reported directory build-log arguments as scanner usage errors instead of Python open failures.
+- Reported missing `xcodebuild` as an explicit unsigned-build preflight failure.

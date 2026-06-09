@@ -133,6 +133,32 @@ fi
 
 require_file_contains "$FAIL_WORK_DIR/build-Debug.log" "xcodebuild fixture failure for Debug"
 
+MISSING_XCODEBUILD_WORK_DIR="$TMP_DIR/missing-xcodebuild-work"
+MISSING_XCODEBUILD_BIN="$TMP_DIR/missing-xcodebuild-bin"
+mkdir -p "$MISSING_XCODEBUILD_WORK_DIR" "$MISSING_XCODEBUILD_BIN"
+
+set +e
+(
+  cd "$MISSING_XCODEBUILD_WORK_DIR"
+  PATH="$MISSING_XCODEBUILD_BIN" \
+    PROJECT_PATH="Fixture.xcodeproj" \
+    TARGET_NAME="FixtureCamera" \
+    BUILD_ARCH="arm64" \
+    BUILD_OUTPUT_PATH="$TMP_DIR/MissingXcodebuildProducts" \
+    /bin/bash "$ROOT/scripts/build_unsigned.sh" Debug >"$TMP_DIR/build-unsigned-missing-xcodebuild.out" 2>"$TMP_DIR/build-unsigned-missing-xcodebuild.err"
+)
+missing_xcodebuild_status=$?
+set -e
+
+if [ "$missing_xcodebuild_status" -ne 127 ]; then
+  printf 'Expected unsigned build script to reject a missing xcodebuild with exit 127, got %s.\n' "$missing_xcodebuild_status" >&2
+  cat "$TMP_DIR/build-unsigned-missing-xcodebuild.out" >&2
+  cat "$TMP_DIR/build-unsigned-missing-xcodebuild.err" >&2
+  exit 1
+fi
+
+require_file_contains "$TMP_DIR/build-unsigned-missing-xcodebuild.err" "xcodebuild is required to build GarethVideoCam"
+
 INVALID_WORK_DIR="$TMP_DIR/invalid-work"
 INVALID_CALL_LOG="$TMP_DIR/xcodebuild-invalid-calls.log"
 mkdir -p "$INVALID_WORK_DIR"
