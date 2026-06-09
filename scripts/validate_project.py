@@ -856,6 +856,9 @@ def main():
     require("signed app-group values and match readiness that mark unreadable app-group entitlements as unknown and use only values present across architecture slices" in readme_text,
             "README should document all-architecture runtime diagnostics app-group checks",
             failures)
+    require("app executable metadata and architecture slices" in readme_text and "embedded system-extension executable metadata and architecture slices" in readme_text,
+            "README should document runtime diagnostics executable architecture reporting",
+            failures)
     require("ACTIONABLE_PATTERN" in build_log_scanner_source and "BUILD FAILED" in build_log_scanner_source and "the following build commands failed:" in build_log_scanner_source and "IGNORED_LINE_TOKEN_GROUPS" in build_log_scanner_source and "all(token.lower() in normalized_line" in build_log_scanner_source,
             "build-log scanner should fail on warnings, errors, build-failed banners, build command failure summaries, and nonzero Xcode command failures while narrowly ignoring known Xcode AppIntents metadata noise",
             failures)
@@ -993,6 +996,9 @@ def main():
             failures)
     require("executable_readiness_value" in runtime_diagnostics_source and "run_executable_readiness_self_test" in runtime_diagnostics_source and "executable-readiness" in runtime_diagnostics_source and "Executable ready fixture: %s" in runtime_diagnostics_source and "App executable ready\" \"$(executable_readiness_value" in runtime_diagnostics_source and "Extension executable ready\" \"$(executable_readiness_value" in runtime_diagnostics_source,
             "runtime diagnostics script should test and reuse executable readiness comparisons",
+            failures)
+    require("bundle_executable_architectures" in runtime_diagnostics_source and "App executable architectures:" in runtime_diagnostics_source and "Extension executable architectures:" in runtime_diagnostics_source,
+            "runtime diagnostics script should report app and extension executable architecture slices",
             failures)
     require("path_matches_expected_value" in runtime_diagnostics_source and "application_location_readiness_value" in runtime_diagnostics_source and "bundle_identifier_matches_expected_value" in runtime_diagnostics_source and "run_application_identity_self_test" in runtime_diagnostics_source and "application-identity" in runtime_diagnostics_source and "Application location ready\" \"$(application_location_readiness_value" in runtime_diagnostics_source and "App bundle identifier ready\" \"$(bundle_identifier_matches_expected_value" in runtime_diagnostics_source and "Extension bundle identifier ready\" \"$(bundle_identifier_matches_expected_value" in runtime_diagnostics_source,
             "runtime diagnostics script should test and reuse application path and bundle identifier readiness comparisons",

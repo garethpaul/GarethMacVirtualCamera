@@ -89,3 +89,4 @@
 - Printed runtime diagnostics code-signing details across all architecture slices.
 - Checked runtime diagnostics boolean entitlements across all executable architecture slices.
 - Required runtime diagnostics app-group values to be present across all executable architecture slices.
+- Printed detected app and extension executable architecture slices in runtime diagnostics.

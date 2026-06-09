@@ -1400,6 +1400,7 @@ section "Application Runtime Metadata"
 if [ -d "$APP_PATH" ]; then
   app_executable="$(read_info_plist_value "$APP_PATH" CFBundleExecutable)"
   app_executable_path="${APP_PATH}/Contents/MacOS/${app_executable}"
+  app_executable_architectures="$(bundle_executable_architectures "$APP_PATH")"
 
   printf 'App CFBundleExecutable: %s\n' "${app_executable:-unknown}"
   if [ -n "$app_executable" ]; then
@@ -1419,6 +1420,12 @@ if [ -d "$APP_PATH" ]; then
     printf 'App executable path: unknown\n'
     printf 'App executable exists: unknown\n'
     printf 'App executable is executable: unknown\n'
+  fi
+
+  if [ -n "$app_executable_architectures" ]; then
+    printf 'App executable architectures: %s\n' "$(format_line_values "$app_executable_architectures")"
+  else
+    printf 'App executable architectures: unknown\n'
   fi
 else
   printf 'Application runtime metadata requires the app bundle.\n'
@@ -1445,6 +1452,7 @@ printf 'Extension Info.plist path: %s\n' "$EXTENSION_INFO_PLIST"
 if [ -d "$EXTENSION_PATH" ]; then
   extension_executable="$(read_info_plist_value "$EXTENSION_PATH" CFBundleExecutable)"
   extension_executable_path="${EXTENSION_PATH}/Contents/MacOS/${extension_executable}"
+  extension_executable_architectures="$(bundle_executable_architectures "$EXTENSION_PATH")"
   extension_mach_service_name="$(read_extension_mach_service_name)"
 
   printf 'Extension CFBundleExecutable: %s\n' "${extension_executable:-unknown}"
@@ -1465,6 +1473,11 @@ if [ -d "$EXTENSION_PATH" ]; then
     printf 'Extension executable path: unknown\n'
     printf 'Extension executable exists: unknown\n'
     printf 'Extension executable is executable: unknown\n'
+  fi
+  if [ -n "$extension_executable_architectures" ]; then
+    printf 'Extension executable architectures: %s\n' "$(format_line_values "$extension_executable_architectures")"
+  else
+    printf 'Extension executable architectures: unknown\n'
   fi
   printf 'Extension CMIO Mach service: %s\n' "${extension_mach_service_name:-unknown}"
   printf 'Extension CMIO Mach service resolved: %s\n' "$(mach_service_resolved_value "$extension_mach_service_name")"
