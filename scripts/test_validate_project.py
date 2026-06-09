@@ -33,6 +33,12 @@ def write_metadata_fixture(mp4_data):
         return Path(fixture.name)
 
 
+def write_png_fixture(png_data):
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as fixture:
+        fixture.write(png_data)
+        return Path(fixture.name)
+
+
 @contextlib.contextmanager
 def tracked_fixture_repo():
     with tempfile.TemporaryDirectory() as temporary_directory:
@@ -337,6 +343,33 @@ def test_zero_stsd_entry_count_does_not_report_dimensions():
 
     if metadata["dimensions"] is not None:
         raise AssertionError(f"Unexpected dimensions for zero-entry stsd table: {metadata}")
+
+
+def test_truncated_png_signature_does_not_raise():
+    validator = load_validator()
+    fixture_path = write_png_fixture(b"\x89PNG\r\n\x1a\n" + b"\0" * 8)
+
+    try:
+        dimensions = validator.png_dimensions(fixture_path)
+    finally:
+        fixture_path.unlink(missing_ok=True)
+
+    if dimensions is not None:
+        raise AssertionError(f"Unexpected dimensions for truncated PNG header: {dimensions}")
+
+
+def test_non_ihdr_png_header_does_not_report_dimensions():
+    validator = load_validator()
+    png_header = b"\x89PNG\r\n\x1a\n" + struct.pack(">I4sII", 13, b"IDAT", 128, 128)
+    fixture_path = write_png_fixture(png_header)
+
+    try:
+        dimensions = validator.png_dimensions(fixture_path)
+    finally:
+        fixture_path.unlink(missing_ok=True)
+
+    if dimensions is not None:
+        raise AssertionError(f"Unexpected dimensions for non-IHDR PNG header: {dimensions}")
 
 
 def test_tracked_fixture_validates():
@@ -688,6 +721,18 @@ def test_validator_rejects_missing_host_mp4_stsd_entry_count_guard():
     )
 
 
+def test_validator_rejects_missing_png_ihdr_guard():
+    assert_validator_rejects_mutation(
+        "scripts/validate_project.py",
+        """    if len(header) < 24 or struct.unpack(">I", header[8:12])[0] != 13 or header[12:16] != b"IHDR":
+        return None
+
+""",
+        "",
+        "app icon validator should reject malformed PNG headers without raising",
+    )
+
+
 def test_validator_rejects_missing_host_mp4_mdhd_version_guard():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",
@@ -806,6 +851,8 @@ def main():
     test_zero_sample_count_stts_does_not_report_frame_rate()
     test_truncated_stts_entry_count_does_not_report_frame_rate()
     test_zero_stsd_entry_count_does_not_report_dimensions()
+    test_truncated_png_signature_does_not_raise()
+    test_non_ihdr_png_header_does_not_report_dimensions()
     test_tracked_fixture_validates()
     test_validator_rejects_missing_indefinite_stream_duration_guard()
     test_validator_rejects_missing_non_finite_sample_time_guard()
@@ -828,6 +875,7 @@ def main():
     test_validator_rejects_missing_host_mp4_sample_count_guard()
     test_validator_rejects_missing_host_mp4_complete_stts_entry_guard()
     test_validator_rejects_missing_host_mp4_stsd_entry_count_guard()
+    test_validator_rejects_missing_png_ihdr_guard()
     test_validator_rejects_missing_host_mp4_mdhd_version_guard()
     test_validator_rejects_missing_host_mp4_full_box_version_guards()
     test_validator_rejects_missing_host_mp4_video_track_dimension_gate()

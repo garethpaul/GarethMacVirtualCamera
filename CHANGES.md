@@ -141,3 +141,4 @@
 - Validated host-app signing Team IDs before readiness comparison.
 - Rejected scalar signed app-group entitlements during readiness checks.
 - Rejected incomplete MP4 timing and sample-description tables in bundled-video metadata parsing.
+- Rejected malformed PNG headers during app-icon metadata validation.
