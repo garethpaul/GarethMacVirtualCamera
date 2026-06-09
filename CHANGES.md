@@ -4,6 +4,8 @@
 
 - Hardened the MP4 metadata parser against malformed empty `mdhd` atoms and
   added validator unit coverage to `make check`.
+- Added `make lint`, `make test`, and `make build` aliases so local validation
+  has the expected gate targets in addition to `make check`.
 - Retimed emitted camera-extension sample buffers into the advertised host-time
   clock domain and rejected non-finite CoreMedia sample timing before send.
 - Rejected numeric non-boolean signed entitlement values in host readiness

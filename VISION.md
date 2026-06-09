@@ -21,7 +21,8 @@ Priority:
 - Keep build-log scanning strict for warnings, errors, failed Xcode commands,
   and build/archive/test failure banners
 - Keep unsigned build script inputs constrained before log files are written
-- Keep `make check` aligned with `./scripts/check_project.sh`
+- Keep `make lint`, `make test`, `make build`, and `make check` aligned with
+  `./scripts/check_project.sh`
 - Make runtime activation blockers clear to users
 
 Next priorities:

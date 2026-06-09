@@ -679,6 +679,15 @@ done
     )
 
 
+def test_validator_rejects_missing_make_gate_aliases():
+    assert_validator_rejects_mutation(
+        "Makefile",
+        "\nlint test build: check\n",
+        "\n",
+        "Makefile should expose lint, test, build, and check validation entry points",
+    )
+
+
 def test_validator_rejects_missing_packaged_file_byte_count_verifier():
     assert_validator_rejects_mutation(
         "scripts/verify_build_products.sh",
@@ -726,6 +735,7 @@ def main():
     test_validator_rejects_root_level_unsigned_build_logs()
     test_validator_rejects_missing_build_product_python_resolver()
     test_validator_rejects_missing_build_product_configuration_guard()
+    test_validator_rejects_missing_make_gate_aliases()
     test_validator_rejects_missing_packaged_file_byte_count_verifier()
     print("Project validator tests passed.")
     return 0

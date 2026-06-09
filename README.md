@@ -32,10 +32,17 @@ This workspace does not require Xcode for local validation checks:
 The same baseline is available through the conventional repository entry point:
 
 ```sh
+make lint
+make test
+make build
 make check
 ```
 
-The check script runs project metadata validation, validator mutation tests for recent runtime-readiness guardrails, build-log scanner tests, unsigned build script tests, runtime diagnostics tests, build-product verifier tests, shell syntax checks, and whitespace checks. The build-product verifier checks bundle identifiers, aligned bundle versions, declared executables, display metadata, product-specific privacy usage strings, bundled runtime diagnostics self-tests, resolved CoreMediaIO extension metadata, and bundled-video resource metadata. The validator also checks exact host and extension entitlement keys, shared app-group values, Xcode entitlement file bindings, the bundled `Extension/video.mp4` for parseable dimensions, frame rate, and positive video duration, and the extension's decoded pixel-buffer and host-clock sample-timing guards so resource and stream-format regressions fail before runtime activation.
+The `lint`, `test`, and `build` targets currently delegate to `make check` so
+the same validator, mutation tests, script checks, and whitespace checks run
+through every local gate entry point.
+
+The check script runs project metadata validation, validator mutation tests for recent runtime-readiness guardrails, build-log scanner tests, unsigned build script tests, runtime diagnostics tests, build-product verifier tests, shell syntax checks, and whitespace checks. The build-product verifier checks bundle identifiers, aligned bundle versions, declared executables, display metadata, product-specific privacy usage strings, bundled runtime diagnostics self-tests, resolved CoreMediaIO extension metadata, and bundled-video resource metadata. The validator also checks exact host and extension entitlement keys, shared app-group values, Xcode entitlement file bindings, the Makefile gate targets, the bundled `Extension/video.mp4` for parseable dimensions, frame rate, and positive video duration, and the extension's decoded pixel-buffer and host-clock sample-timing guards so resource and stream-format regressions fail before runtime activation.
 
 The build-product verifier prefers `/usr/bin/python3` for plist and bundled-video metadata parsing and accepts `PYTHON3_BIN` when CI or a local runner needs an explicit interpreter path.
 
