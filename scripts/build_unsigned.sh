@@ -3,7 +3,7 @@ set -euo pipefail
 
 PROJECT_PATH="${PROJECT_PATH:-GarethVideoCam.xcodeproj}"
 TARGET_NAME="${TARGET_NAME:-GarethVideoCam}"
-BUILD_ARCH="${BUILD_ARCH:-$(uname -m)}"
+BUILD_ARCH="${BUILD_ARCH:-}"
 BUILD_OUTPUT_PATH="${BUILD_OUTPUT_PATH:-.build/Xcode}"
 
 if [ "$#" -gt 0 ]; then
@@ -24,6 +24,10 @@ validate_configuration_name() {
 for configuration in "${configurations[@]}"; do
   validate_configuration_name "$configuration"
 done
+
+if [ -z "$BUILD_ARCH" ]; then
+  BUILD_ARCH="$(/usr/bin/uname -m)"
+fi
 
 if ! command -v xcodebuild >/dev/null 2>&1; then
   printf 'xcodebuild is required to build GarethVideoCam; install Xcode and select it with xcode-select.\n' >&2

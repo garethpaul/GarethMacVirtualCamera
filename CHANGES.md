@@ -104,3 +104,4 @@
 - Reported directory build-log arguments as scanner usage errors instead of Python open failures.
 - Reported missing `xcodebuild` as an explicit unsigned-build preflight failure.
 - Kept unsigned build configuration-name validation ahead of the `xcodebuild` preflight.
+- Deferred unsigned-build architecture detection until after configuration-name validation.

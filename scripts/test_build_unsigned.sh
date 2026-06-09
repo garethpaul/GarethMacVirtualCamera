@@ -168,7 +168,6 @@ set +e
   PATH="$MISSING_XCODEBUILD_BIN" \
     PROJECT_PATH="Fixture.xcodeproj" \
     TARGET_NAME="FixtureCamera" \
-    BUILD_ARCH="arm64" \
     BUILD_OUTPUT_PATH="$TMP_DIR/MissingXcodebuildInvalidProducts" \
     /bin/bash "$ROOT/scripts/build_unsigned.sh" "../Release" >"$TMP_DIR/build-unsigned-missing-xcodebuild-invalid.out" 2>"$TMP_DIR/build-unsigned-missing-xcodebuild-invalid.err"
 )
