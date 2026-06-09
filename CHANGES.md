@@ -105,3 +105,4 @@
 - Reported missing `xcodebuild` as an explicit unsigned-build preflight failure.
 - Kept unsigned build configuration-name validation ahead of the `xcodebuild` preflight.
 - Deferred unsigned-build architecture detection until after configuration-name validation.
+- Rejected invalid build-product verifier configuration names before resolving Python or product paths.

@@ -39,13 +39,26 @@ python3_command() {
   fi
 }
 
-PYTHON3_BIN="$(python3_command)"
+validate_configuration_name() {
+  local configuration="$1"
+
+  if [[ ! "$configuration" =~ ^[A-Za-z0-9_.-]+$ ]]; then
+    printf 'Invalid Xcode configuration name: %s\n' "$configuration" >&2
+    exit 2
+  fi
+}
 
 if [ "$#" -gt 0 ]; then
   configurations=("$@")
 else
   configurations=(Debug Release)
 fi
+
+for configuration in "${configurations[@]}"; do
+  validate_configuration_name "$configuration"
+done
+
+PYTHON3_BIN="$(python3_command)"
 
 read_info_plist_string() {
   local bundle_path="$1"

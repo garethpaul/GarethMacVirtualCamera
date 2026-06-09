@@ -628,6 +628,24 @@ if ! grep -q "Configured PYTHON3_BIN is not executable or not found" "$TMP_DIR/b
   exit 1
 fi
 
+set +e
+PYTHON3_BIN="$TMP_DIR/missing-python3" PRODUCTS_PATH="$GOOD_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" "../Debug" >"$TMP_DIR/invalid-configuration.out" 2>"$TMP_DIR/invalid-configuration.err"
+invalid_configuration_status=$?
+set -e
+
+if [ "$invalid_configuration_status" -ne 2 ]; then
+  printf 'Expected verifier to reject an invalid configuration before resolving Python, got %s.\n' "$invalid_configuration_status" >&2
+  cat "$TMP_DIR/invalid-configuration.out" >&2
+  cat "$TMP_DIR/invalid-configuration.err" >&2
+  exit 1
+fi
+
+if ! grep -q "Invalid Xcode configuration name: ../Debug" "$TMP_DIR/invalid-configuration.err"; then
+  printf 'Verifier failure did not explain the invalid configuration name.\n' >&2
+  cat "$TMP_DIR/invalid-configuration.err" >&2
+  exit 1
+fi
+
 MISSING_APP_PRODUCTS="$TMP_DIR/missing-app/Products"
 mkdir -p "$MISSING_APP_PRODUCTS/Debug"
 
