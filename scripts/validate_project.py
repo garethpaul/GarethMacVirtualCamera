@@ -859,6 +859,9 @@ def main():
     require("app executable metadata and architecture slices" in readme_text and "embedded system-extension executable metadata and architecture slices" in readme_text,
             "README should document runtime diagnostics executable architecture reporting",
             failures)
+    require("signed entitlements across architecture slices" in readme_text,
+            "README should document runtime diagnostics per-architecture signed entitlement dumps",
+            failures)
     require("ACTIONABLE_PATTERN" in build_log_scanner_source and "BUILD FAILED" in build_log_scanner_source and "the following build commands failed:" in build_log_scanner_source and "IGNORED_LINE_TOKEN_GROUPS" in build_log_scanner_source and "all(token.lower() in normalized_line" in build_log_scanner_source,
             "build-log scanner should fail on warnings, errors, build-failed banners, build command failure summaries, and nonzero Xcode command failures while narrowly ignoring known Xcode AppIntents metadata noise",
             failures)
@@ -999,6 +1002,9 @@ def main():
             failures)
     require("bundle_executable_architectures" in runtime_diagnostics_source and "App executable architectures:" in runtime_diagnostics_source and "Extension executable architectures:" in runtime_diagnostics_source,
             "runtime diagnostics script should report app and extension executable architecture slices",
+            failures)
+    require("print_signed_entitlements" in runtime_diagnostics_source and "%s signed entitlements architecture: %s" in runtime_diagnostics_source and 'print_signed_entitlements "App" "$APP_PATH"' in runtime_diagnostics_source and 'print_signed_entitlements "Extension" "$EXTENSION_PATH"' in runtime_diagnostics_source,
+            "runtime diagnostics script should print signed entitlements per executable architecture slice",
             failures)
     require("path_matches_expected_value" in runtime_diagnostics_source and "application_location_readiness_value" in runtime_diagnostics_source and "bundle_identifier_matches_expected_value" in runtime_diagnostics_source and "run_application_identity_self_test" in runtime_diagnostics_source and "application-identity" in runtime_diagnostics_source and "Application location ready\" \"$(application_location_readiness_value" in runtime_diagnostics_source and "App bundle identifier ready\" \"$(bundle_identifier_matches_expected_value" in runtime_diagnostics_source and "Extension bundle identifier ready\" \"$(bundle_identifier_matches_expected_value" in runtime_diagnostics_source,
             "runtime diagnostics script should test and reuse application path and bundle identifier readiness comparisons",

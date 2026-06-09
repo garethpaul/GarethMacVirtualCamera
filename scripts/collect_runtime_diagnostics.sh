@@ -359,6 +359,27 @@ read_boolean_entitlement_for_architecture() {
   fi
 }
 
+print_signed_entitlements() {
+  local label="$1"
+  local bundle_path="$2"
+  local architectures
+  local architecture
+
+  architectures="$(bundle_executable_architectures "$bundle_path")"
+  if [ -z "$architectures" ]; then
+    /usr/bin/codesign -d --entitlements :- "$bundle_path" 2>&1 || true
+    return
+  fi
+
+  while IFS= read -r architecture; do
+    [ -n "$architecture" ] || continue
+    printf '%s signed entitlements architecture: %s\n' "$label" "$architecture"
+    /usr/bin/codesign -d --architecture "$architecture" --entitlements :- "$bundle_path" 2>&1 || true
+  done <<EOF
+$architectures
+EOF
+}
+
 boolean_entitlement_all_architectures_value() {
   local entitlement_values="$1"
   local entitlement_value
@@ -1371,7 +1392,7 @@ printf 'App path: %s\n' "$APP_PATH"
 if [ -d "$APP_PATH" ]; then
   /usr/bin/codesign --verify --all-architectures --deep --strict --verbose=2 "$APP_PATH" 2>&1 || true
   /usr/bin/codesign -d --all-architectures -v "$APP_PATH" 2>&1 || true
-  /usr/bin/codesign -d --entitlements :- "$APP_PATH" 2>&1 || true
+  print_signed_entitlements "App" "$APP_PATH"
   run_if_available spctl --assess --type execute --verbose=4 "$APP_PATH"
   print_bundle_metadata "$APP_PATH"
 else
@@ -1440,7 +1461,7 @@ printf 'Extension path: %s\n' "$EXTENSION_PATH"
 if [ -d "$EXTENSION_PATH" ]; then
   /usr/bin/codesign --verify --all-architectures --strict --verbose=2 "$EXTENSION_PATH" 2>&1 || true
   /usr/bin/codesign -d --all-architectures -v "$EXTENSION_PATH" 2>&1 || true
-  /usr/bin/codesign -d --entitlements :- "$EXTENSION_PATH" 2>&1 || true
+  print_signed_entitlements "Extension" "$EXTENSION_PATH"
   run_if_available spctl --assess --type execute --verbose=4 "$EXTENSION_PATH"
   print_bundle_metadata "$EXTENSION_PATH"
 else
