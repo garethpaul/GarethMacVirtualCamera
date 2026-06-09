@@ -1444,8 +1444,11 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         return """
         Gareth Video Cam Signed Runtime Activation Checklist
         Generated At: \(diagnosticGeneratedAt)
-        Current Request Readiness: \(requestReadinessStatus)
+        Current Request Readiness: \(activationRequestReadinessStatus)
+        Current Request Detail: \(activationRequestReadinessDetail)
         Current Next Action: \(requestReadinessNextAction)
+        Current Readiness Summary: \(readinessProgressSummary)
+        Last Failure: \(lastFailureDetail ?? "No failure recorded.")
         App Path: \(applicationBundlePath)
         Expected App Path: \(expectedApplicationPath)
         Extension ID: \(extensionInfo?.identifier ?? expectedExtensionIdentifier)
@@ -1562,7 +1565,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     func copyDiagnostics() {
-        refreshExtensionInfo()
+        let didRefresh = refreshExtensionInfo()
 
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
@@ -1571,7 +1574,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         if didCopyDiagnostics {
             appendActivity(level: .success,
                            title: "Diagnostics Copied",
-                           detail: "Copied current app and extension status to the clipboard.")
+                           detail: copySuccessDetail("Copied current app and extension status to the clipboard.",
+                                                     didRefresh: didRefresh))
         } else {
             appendActivity(level: .error,
                            title: "Diagnostics Copy Failed",
@@ -1580,7 +1584,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     func copyActivationChecklist() {
-        refreshExtensionInfo()
+        let didRefresh = refreshExtensionInfo()
 
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
@@ -1589,7 +1593,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         if didCopyChecklist {
             appendActivity(level: .success,
                            title: "Checklist Copied",
-                           detail: "Copied the signed runtime activation checklist to the clipboard.")
+                           detail: copySuccessDetail("Copied the signed runtime activation checklist to the clipboard.",
+                                                     didRefresh: didRefresh))
         } else {
             appendActivity(level: .error,
                            title: "Checklist Copy Failed",
@@ -1598,7 +1603,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     func copyRuntimeDiagnosticsCommand() {
-        refreshExtensionInfo()
+        let didRefresh = refreshExtensionInfo()
 
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
@@ -1607,7 +1612,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         if didCopyCommand {
             appendActivity(level: .success,
                            title: "Diagnostics Command Copied",
-                           detail: runtimeDiagnosticsCommand)
+                           detail: copySuccessDetail(runtimeDiagnosticsCommand,
+                                                     didRefresh: didRefresh))
         } else {
             appendActivity(level: .error,
                            title: "Diagnostics Command Copy Failed",
@@ -1616,7 +1622,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     func copyRuntimeEvidenceExpectedDiagnostics() {
-        refreshExtensionInfo()
+        let didRefresh = refreshExtensionInfo()
 
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
@@ -1625,7 +1631,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         if didCopyExpectedDiagnostics {
             appendActivity(level: .success,
                            title: "Expected Evidence Copied",
-                           detail: "Copied the expected signed-host diagnostics lines to the clipboard.")
+                           detail: copySuccessDetail("Copied the expected signed-host diagnostics lines to the clipboard.",
+                                                     didRefresh: didRefresh))
         } else {
             appendActivity(level: .error,
                            title: "Expected Evidence Copy Failed",
@@ -2692,6 +2699,15 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
             state = .failed(message)
             appendActivity(level: .error, title: "Readiness Failed", detail: message)
         }
+    }
+
+    private func copySuccessDetail(_ detail: String, didRefresh: Bool) -> String {
+        guard !didRefresh else {
+            return detail
+        }
+
+        let refreshDetail = lastFailureDetail ?? requestReadinessDetail ?? "Readiness could not be refreshed."
+        return "\(detail)\nRefresh found: \(refreshDetail)"
     }
 
     private func recordReadinessBlock(state: InstallState, title: String, detail: String) {
