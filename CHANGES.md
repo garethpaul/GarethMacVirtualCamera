@@ -1,6 +1,6 @@
 # Changes
 
-## 2026-06-08
+## 2026-06-08 to 2026-06-09
 
 - Hardened the MP4 metadata parser against malformed empty `mdhd` atoms and
   added validator unit coverage to `make check`.
@@ -96,3 +96,4 @@
 - Rechecked Apple toolchain watch items on June 9, 2026 while keeping CI on stable Xcode 26.5.
 - Used guarded absolute macOS tool paths in runtime diagnostics self-test setup and cleanup.
 - Logged selected macOS, Xcode, Swift, and SDK evidence in CI.
+- Clarified the change-log maintenance window across June 8-9, 2026.
