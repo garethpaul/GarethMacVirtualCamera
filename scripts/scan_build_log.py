@@ -44,6 +44,9 @@ def main():
         if not build_log_path.exists():
             print(f"Build log not found: {build_log_path}", file=sys.stderr)
             return 2
+        if not build_log_path.is_file():
+            print(f"Build log is not a regular file: {build_log_path}", file=sys.stderr)
+            return 2
 
         actionable_lines.extend(actionable_lines_in(build_log_path))
 

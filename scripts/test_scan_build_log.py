@@ -120,6 +120,23 @@ def test_fails_on_missing_build_log():
     require(f"Build log not found: {missing_build_log}" in result.stderr, result.stderr)
 
 
+def test_fails_on_directory_build_log():
+    with tempfile.TemporaryDirectory() as temporary_directory:
+        directory_build_log = Path(temporary_directory)
+
+        result = subprocess.run(
+            [sys.executable, str(SCANNER), str(directory_build_log)],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+    require(result.returncode == 2, result.stdout + result.stderr)
+    require(f"Build log is not a regular file: {directory_build_log}" in result.stderr, result.stderr)
+    require("Traceback" not in result.stderr, result.stderr)
+
+
 def test_requires_build_log_argument():
     result = subprocess.run(
         [sys.executable, str(SCANNER)],
@@ -145,6 +162,7 @@ def main():
     test_fails_on_test_failed_banner()
     test_scans_multiple_build_logs()
     test_fails_on_missing_build_log()
+    test_fails_on_directory_build_log()
     test_requires_build_log_argument()
     print("Build-log scanner tests passed.")
     return 0
