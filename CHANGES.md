@@ -6,6 +6,7 @@
   added validator unit coverage to `make check`.
 - Added `make lint`, `make test`, and `make build` aliases so local validation
   has the expected gate targets in addition to `make check`.
+- Rejected non-finite stream frame-duration writes in the camera extension.
 - Retimed emitted camera-extension sample buffers into the advertised host-time
   clock domain and rejected non-finite CoreMedia sample timing before send.
 - Rejected non-finite adjusted decode timestamps while retiming emitted sample

@@ -699,7 +699,8 @@ final class ExtensionStreamSource: NSObject, CMIOExtensionStreamSource {
         }
 
         if let frameDuration = streamProperties.frameDuration {
-            guard frameDuration.flags.contains(.valid),
+            guard frameDuration.isNumeric,
+                  frameDuration.flags.contains(.valid),
                   !frameDuration.flags.contains(.indefinite),
                   CMTimeCompare(frameDuration, CameraExtensionConfiguration.frameDuration) == 0 else {
                 logger.error("Invalid frame duration: \(frameDuration.value, privacy: .public)/\(frameDuration.timescale, privacy: .public)")

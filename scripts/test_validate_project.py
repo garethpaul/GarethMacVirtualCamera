@@ -399,13 +399,31 @@ def test_validator_rejects_missing_indefinite_stream_duration_guard():
     assert_validator_rejects_mutation(
         "Extension/ExtensionProvider.swift",
         """        if let frameDuration = streamProperties.frameDuration {
-            guard frameDuration.flags.contains(.valid),
+            guard frameDuration.isNumeric,
+                  frameDuration.flags.contains(.valid),
+                  !frameDuration.flags.contains(.indefinite),
+                  CMTimeCompare(frameDuration, CameraExtensionConfiguration.frameDuration) == 0 else {""",
+        """        if let frameDuration = streamProperties.frameDuration {
+            guard frameDuration.isNumeric,
+                  frameDuration.flags.contains(.valid),
+                  CMTimeCompare(frameDuration, CameraExtensionConfiguration.frameDuration) == 0 else {""",
+        "extension stream should reject unsupported, indefinite, or non-finite frame-duration requests",
+    )
+
+
+def test_validator_rejects_missing_non_finite_stream_duration_guard():
+    assert_validator_rejects_mutation(
+        "Extension/ExtensionProvider.swift",
+        """        if let frameDuration = streamProperties.frameDuration {
+            guard frameDuration.isNumeric,
+                  frameDuration.flags.contains(.valid),
                   !frameDuration.flags.contains(.indefinite),
                   CMTimeCompare(frameDuration, CameraExtensionConfiguration.frameDuration) == 0 else {""",
         """        if let frameDuration = streamProperties.frameDuration {
             guard frameDuration.flags.contains(.valid),
+                  !frameDuration.flags.contains(.indefinite),
                   CMTimeCompare(frameDuration, CameraExtensionConfiguration.frameDuration) == 0 else {""",
-        "extension stream should reject unsupported or indefinite frame-duration requests",
+        "extension stream should reject unsupported, indefinite, or non-finite frame-duration requests",
     )
 
 
@@ -966,6 +984,7 @@ def main():
     test_malformed_icon_size_metadata_does_not_raise()
     test_tracked_fixture_validates()
     test_validator_rejects_missing_indefinite_stream_duration_guard()
+    test_validator_rejects_missing_non_finite_stream_duration_guard()
     test_validator_rejects_missing_non_finite_sample_time_guard()
     test_validator_rejects_missing_adjusted_decode_time_guard()
     test_validator_rejects_missing_host_time_sample_retiming()
