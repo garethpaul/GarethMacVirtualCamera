@@ -104,10 +104,14 @@ def mp4_video_metadata(path):
     def parse_hdlr(payload_start, payload_end):
         if payload_start + 12 > payload_end:
             return None
+        if data[payload_start] != 0:
+            return None
         return data[payload_start + 8:payload_start + 12].decode("latin1")
 
     def parse_stts(payload_start, payload_end):
         if payload_start + 8 > payload_end:
+            return []
+        if data[payload_start] != 0:
             return []
 
         entry_count = struct.unpack(">I", data[payload_start + 4:payload_start + 8])[0]
@@ -133,6 +137,11 @@ def mp4_video_metadata(path):
         return []
 
     def parse_stsd_dimensions(payload_start, payload_end):
+        if payload_start + 8 > payload_end:
+            return None
+        if data[payload_start] != 0:
+            return None
+
         for atom_type, sample_start, sample_end in iter_atoms(payload_start + 8, payload_end):
             if atom_type in {"avc1", "hvc1", "hev1", "mp4v"} and sample_start + 28 <= sample_end:
                 return struct.unpack(">HH", data[sample_start + 24:sample_start + 28])
@@ -700,7 +709,7 @@ def main():
     require("missingExtensionExecutable" in host_source and "invalidExtensionExecutable" in host_source and "missingExtensionMachService" in host_source and "missingBundledVideoResource" in host_source and "emptyBundledVideoResource" in host_source and "unreadableBundledVideoMetadata" in host_source and "bundledVideoByteCount" in host_source and "bundledVideoMetadata(at:" in host_source and "expectedBundledVideoWidth" in host_source and "expectedBundledVideoHeight" in host_source and "expectedBundledVideoFrameRate" in host_source and "parseable video dimensions" in host_source and "parseable constant video frame rate" in host_source and "positive video duration" in host_source,
             "host app should fail readiness when embedded extension metadata or video resource metadata is missing or unexpected",
             failures)
-    require("MP4Atom" in host_source and "atoms(in data:" in host_source and "atomType(in data:" in host_source and "readUInt16" in host_source and "readUInt32" in host_source and "readUInt64" in host_source and "parseMdhd" in host_source and "guard version == 0 else" in host_source and "version != 0" in validate_project_source and "parseHdlr" in host_source and "parseStts" in host_source and "findSttsEntries" in host_source and "parseStsdDimensions" in host_source and "avc1" in host_source and "hvc1" in host_source and "hev1" in host_source and "mp4v" in host_source,
+    require("MP4Atom" in host_source and "atoms(in data:" in host_source and "atomType(in data:" in host_source and "readUInt16" in host_source and "readUInt32" in host_source and "readUInt64" in host_source and "parseMdhd" in host_source and "guard version == 0 else" in host_source and "version != 0" in validate_project_source and "parseHdlr" in host_source and "parseStts" in host_source and "findSttsEntries" in host_source and "parseStsdDimensions" in host_source and host_source.count("guard data[payloadStart] == 0 else") >= 3 and validate_project_source.count("data[payload_start] != 0") >= 3 and "avc1" in host_source and "hvc1" in host_source and "hev1" in host_source and "mp4v" in host_source,
             "host app should parse bundled MP4 video dimensions, frame rate, and duration for readiness",
             failures)
     require("sampleCount > 0" in host_source and "sample_count, sample_delta = sample_durations[0]" in validate_project_source and "sample_count and sample_delta" in validate_project_source and "test_zero_sample_count_stts_does_not_report_frame_rate" in validate_project_test_source and "test_validator_rejects_missing_host_mp4_sample_count_guard" in validate_project_test_source,
@@ -1068,7 +1077,7 @@ def main():
     require(validate_project_test_path.exists() and validate_project_test_path.stat().st_mode & 0o111,
             "validate_project unit test script should exist and be executable",
             failures)
-    require("sys.dont_write_bytecode = True" in validate_project_test_source and "malformed mdhd" in validate_project_test_source and "test_unsupported_mdhd_version_does_not_report_duration" in validate_project_test_source and "mp4_video_metadata" in validate_project_test_source and "assert_validator_rejects_mutation" in validate_project_test_source and "test_validator_rejects_missing_indefinite_stream_duration_guard" in validate_project_test_source and "test_validator_rejects_missing_unknown_signature_state" in validate_project_test_source and "test_validator_rejects_missing_all_architecture_signature_validation" in validate_project_test_source and "test_validator_rejects_missing_extension_load_failure_detail_row" in validate_project_test_source and "test_validator_rejects_missing_host_mp4_mdhd_version_guard" in validate_project_test_source and "test_validator_rejects_missing_host_mp4_sample_count_guard" in validate_project_test_source and "test_validator_rejects_missing_partial_ci_log_scan" in validate_project_test_source and "test_validator_rejects_missing_build_product_python_resolver" in validate_project_test_source and "test_validator_rejects_missing_build_product_configuration_guard" in validate_project_test_source and "test_validator_rejects_missing_packaged_file_byte_count_verifier" in validate_project_test_source,
+    require("sys.dont_write_bytecode = True" in validate_project_test_source and "malformed mdhd" in validate_project_test_source and "test_unsupported_mdhd_version_does_not_report_duration" in validate_project_test_source and "test_unsupported_hdlr_version_does_not_report_duration" in validate_project_test_source and "test_unsupported_stts_version_does_not_report_frame_rate" in validate_project_test_source and "test_unsupported_stsd_version_does_not_report_dimensions" in validate_project_test_source and "mp4_video_metadata" in validate_project_test_source and "assert_validator_rejects_mutation" in validate_project_test_source and "test_validator_rejects_missing_indefinite_stream_duration_guard" in validate_project_test_source and "test_validator_rejects_missing_unknown_signature_state" in validate_project_test_source and "test_validator_rejects_missing_all_architecture_signature_validation" in validate_project_test_source and "test_validator_rejects_missing_extension_load_failure_detail_row" in validate_project_test_source and "test_validator_rejects_missing_host_mp4_mdhd_version_guard" in validate_project_test_source and "test_validator_rejects_missing_host_mp4_full_box_version_guards" in validate_project_test_source and "test_validator_rejects_missing_host_mp4_sample_count_guard" in validate_project_test_source and "test_validator_rejects_missing_partial_ci_log_scan" in validate_project_test_source and "test_validator_rejects_missing_build_product_python_resolver" in validate_project_test_source and "test_validator_rejects_missing_build_product_configuration_guard" in validate_project_test_source and "test_validator_rejects_missing_packaged_file_byte_count_verifier" in validate_project_test_source,
             "validate_project unit tests should cover malformed MP4 metadata parsing and mutation rejection for recent runtime-readiness guardrails",
             failures)
     require("test_validator_rejects_missing_runtime_diagnostics_all_architecture_details" in validate_project_test_source,

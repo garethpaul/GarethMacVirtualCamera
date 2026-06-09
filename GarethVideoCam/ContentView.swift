@@ -1955,7 +1955,13 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     private static func parseHdlr(in data: Data, payloadStart: Int, payloadEnd: Int) -> String? {
-        guard payloadStart + 12 <= payloadEnd else {
+        guard payloadStart >= 0,
+              payloadStart + 12 <= payloadEnd,
+              payloadEnd <= data.count else {
+            return nil
+        }
+
+        guard data[payloadStart] == 0 else {
             return nil
         }
 
@@ -1964,7 +1970,14 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     private static func parseStts(in data: Data, payloadStart: Int, payloadEnd: Int) -> [(sampleCount: UInt32, sampleDelta: UInt32)] {
-        guard let entryCount = readUInt32(data, at: payloadStart + 4, end: payloadEnd) else {
+        guard payloadStart >= 0,
+              payloadStart + 8 <= payloadEnd,
+              payloadEnd <= data.count,
+              let entryCount = readUInt32(data, at: payloadStart + 4, end: payloadEnd) else {
+            return []
+        }
+
+        guard data[payloadStart] == 0 else {
             return []
         }
 
@@ -2006,7 +2019,13 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     }
 
     private static func parseStsdDimensions(in data: Data, payloadStart: Int, payloadEnd: Int) -> VideoDimensions? {
-        guard payloadStart + 8 <= payloadEnd else {
+        guard payloadStart >= 0,
+              payloadStart + 8 <= payloadEnd,
+              payloadEnd <= data.count else {
+            return nil
+        }
+
+        guard data[payloadStart] == 0 else {
             return nil
         }
 

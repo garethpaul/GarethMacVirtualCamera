@@ -27,6 +27,12 @@ def atom(atom_type, payload=b""):
     return struct.pack(">I4s", 8 + len(payload), atom_type.encode("ascii")) + payload
 
 
+def write_metadata_fixture(mp4_data):
+    with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as fixture:
+        fixture.write(mp4_data)
+        return Path(fixture.name)
+
+
 @contextlib.contextmanager
 def tracked_fixture_repo():
     with tempfile.TemporaryDirectory() as temporary_directory:
@@ -93,9 +99,7 @@ def test_malformed_mdhd_atom_does_not_raise():
     validator = load_validator()
     malformed_mp4 = atom("moov", atom("trak", atom("mdia", atom("mdhd"))))
 
-    with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as fixture:
-        fixture.write(malformed_mp4)
-        fixture_path = Path(fixture.name)
+    fixture_path = write_metadata_fixture(malformed_mp4)
 
     try:
         metadata = validator.mp4_video_metadata(fixture_path)
@@ -121,9 +125,7 @@ def test_unsupported_mdhd_version_does_not_report_duration():
         ),
     )
 
-    with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as fixture:
-        fixture.write(minimal_mp4)
-        fixture_path = Path(fixture.name)
+    fixture_path = write_metadata_fixture(minimal_mp4)
 
     try:
         metadata = validator.mp4_video_metadata(fixture_path)
@@ -132,6 +134,91 @@ def test_unsupported_mdhd_version_does_not_report_duration():
 
     if metadata["duration_seconds"] is not None:
         raise AssertionError(f"Unexpected duration for unsupported mdhd version: {metadata}")
+
+
+def test_unsupported_hdlr_version_does_not_report_duration():
+    validator = load_validator()
+    mdhd_payload = b"\0\0\0\0" + b"\0" * 8 + struct.pack(">II", 24_000, 24_000)
+    hdlr_payload = b"\1\0\0\0" + b"\0" * 4 + b"vide"
+    minimal_mp4 = atom(
+        "moov",
+        atom(
+            "trak",
+            atom(
+                "mdia",
+                atom("mdhd", mdhd_payload) + atom("hdlr", hdlr_payload),
+            ),
+        ),
+    )
+
+    fixture_path = write_metadata_fixture(minimal_mp4)
+
+    try:
+        metadata = validator.mp4_video_metadata(fixture_path)
+    finally:
+        fixture_path.unlink(missing_ok=True)
+
+    if metadata["duration_seconds"] is not None:
+        raise AssertionError(f"Unexpected duration for unsupported hdlr version: {metadata}")
+
+
+def test_unsupported_stts_version_does_not_report_frame_rate():
+    validator = load_validator()
+    mdhd_payload = b"\0\0\0\0" + b"\0" * 8 + struct.pack(">II", 24_000, 24_000)
+    hdlr_payload = b"\0" * 8 + b"vide"
+    stts_payload = b"\1\0\0\0" + struct.pack(">I", 1) + struct.pack(">II", 24, 1_000)
+    minimal_mp4 = atom(
+        "moov",
+        atom(
+            "trak",
+            atom(
+                "mdia",
+                atom("mdhd", mdhd_payload)
+                + atom("hdlr", hdlr_payload)
+                + atom("minf", atom("stbl", atom("stts", stts_payload))),
+            ),
+        ),
+    )
+
+    fixture_path = write_metadata_fixture(minimal_mp4)
+
+    try:
+        metadata = validator.mp4_video_metadata(fixture_path)
+    finally:
+        fixture_path.unlink(missing_ok=True)
+
+    if metadata["frame_rate"] is not None:
+        raise AssertionError(f"Unexpected frame rate for unsupported stts version: {metadata}")
+
+
+def test_unsupported_stsd_version_does_not_report_dimensions():
+    validator = load_validator()
+    mdhd_payload = b"\0\0\0\0" + b"\0" * 8 + struct.pack(">II", 24_000, 24_000)
+    hdlr_payload = b"\0" * 8 + b"vide"
+    sample_description = atom("avc1", b"\0" * 24 + struct.pack(">HH", 1280, 720))
+    stsd_payload = b"\1\0\0\0" + struct.pack(">I", 1) + sample_description
+    minimal_mp4 = atom(
+        "moov",
+        atom(
+            "trak",
+            atom(
+                "mdia",
+                atom("mdhd", mdhd_payload)
+                + atom("hdlr", hdlr_payload)
+                + atom("minf", atom("stbl", atom("stsd", stsd_payload))),
+            ),
+        ),
+    )
+
+    fixture_path = write_metadata_fixture(minimal_mp4)
+
+    try:
+        metadata = validator.mp4_video_metadata(fixture_path)
+    finally:
+        fixture_path.unlink(missing_ok=True)
+
+    if metadata["dimensions"] is not None:
+        raise AssertionError(f"Unexpected dimensions for unsupported stsd version: {metadata}")
 
 
 def test_zero_sample_count_stts_does_not_report_frame_rate():
@@ -152,9 +239,7 @@ def test_zero_sample_count_stts_does_not_report_frame_rate():
         ),
     )
 
-    with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as fixture:
-        fixture.write(minimal_mp4)
-        fixture_path = Path(fixture.name)
+    fixture_path = write_metadata_fixture(minimal_mp4)
 
     try:
         metadata = validator.mp4_video_metadata(fixture_path)
@@ -300,6 +385,21 @@ def test_validator_rejects_missing_host_mp4_mdhd_version_guard():
     )
 
 
+def test_validator_rejects_missing_host_mp4_full_box_version_guards():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        """        guard data[payloadStart] == 0 else {
+            return nil
+        }
+
+        return String(data: data.subdata(in: (payloadStart + 8)..<(payloadStart + 12)),
+                      encoding: .isoLatin1)""",
+        """        return String(data: data.subdata(in: (payloadStart + 8)..<(payloadStart + 12)),
+                      encoding: .isoLatin1)""",
+        "host app should parse bundled MP4 video dimensions, frame rate, and duration for readiness",
+    )
+
+
 def test_validator_rejects_missing_partial_ci_log_scan():
     assert_validator_rejects_mutation(
         ".github/workflows/macos-build.yml",
@@ -356,6 +456,9 @@ def test_validator_rejects_missing_packaged_file_byte_count_verifier():
 def main():
     test_malformed_mdhd_atom_does_not_raise()
     test_unsupported_mdhd_version_does_not_report_duration()
+    test_unsupported_hdlr_version_does_not_report_duration()
+    test_unsupported_stts_version_does_not_report_frame_rate()
+    test_unsupported_stsd_version_does_not_report_dimensions()
     test_zero_sample_count_stts_does_not_report_frame_rate()
     test_tracked_fixture_validates()
     test_validator_rejects_missing_indefinite_stream_duration_guard()
@@ -368,6 +471,7 @@ def main():
     test_validator_rejects_missing_unsigned_build_configuration_guard()
     test_validator_rejects_missing_host_mp4_sample_count_guard()
     test_validator_rejects_missing_host_mp4_mdhd_version_guard()
+    test_validator_rejects_missing_host_mp4_full_box_version_guards()
     test_validator_rejects_missing_partial_ci_log_scan()
     test_validator_rejects_root_level_unsigned_build_logs()
     test_validator_rejects_missing_build_product_python_resolver()
