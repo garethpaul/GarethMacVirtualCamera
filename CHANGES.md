@@ -79,3 +79,4 @@
 - Verified packaged readiness-rollup diagnostics cover blocked, unknown, ready, and missing-bundle counts.
 - Verified packaged resource-discovery diagnostics cover bundled script and parser paths.
 - Verified packaged MP4 parser diagnostics cover expected parsed duration.
+- Flagged Xcode build command failure summaries in the build-log scanner.
