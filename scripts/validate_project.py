@@ -589,8 +589,8 @@ def main():
         case invalid(String)
         case unknown(String)
 """
-    require("import Security" in host_source and code_signing_unknown_state in host_source and "isUnknown" in host_source and "SecStaticCodeCheckValidityWithErrors" in host_source and "kSecCSCheckAllArchitectures" in host_source,
-            "host app should distinguish unknown and invalid code-signing states and validate all architecture slices before submitting system-extension requests",
+    require("import Security" in host_source and code_signing_unknown_state in host_source and "isUnknown" in host_source and "SecStaticCodeCheckValidityWithErrors" in host_source and "kSecCSCheckAllArchitectures" in host_source and "validationError" in host_source and "takeRetainedValue" in host_source and "CFErrorCopyDescription" in host_source,
+            "host app should distinguish unknown and invalid code-signing states, validate all architecture slices, and preserve detailed validation errors before submitting system-extension requests",
             failures)
     require("appCodeSigningStatus" in host_source and "extensionCodeSigningStatus" in host_source and "Extension Signing Required" in host_source and "The embedded system extension code signature is valid across all architecture slices." in host_source and "System extension signature has not been checked because the embedded extension could not be loaded." in host_source,
             "host app should validate both the container app and embedded system-extension signatures before submitting requests",

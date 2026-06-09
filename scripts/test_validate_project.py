@@ -142,7 +142,7 @@ def test_validator_rejects_missing_unknown_signature_state():
         case invalid(String)
 
 """,
-        "host app should distinguish unknown and invalid code-signing states and validate all architecture slices before submitting system-extension requests",
+        "host app should distinguish unknown and invalid code-signing states, validate all architecture slices, and preserve detailed validation errors before submitting system-extension requests",
     )
 
 
@@ -150,9 +150,15 @@ def test_validator_rejects_missing_all_architecture_signature_validation():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",
         """        let validationFlags = SecCSFlags(rawValue: kSecCSCheckAllArchitectures)
-        let checkStatus = SecStaticCodeCheckValidityWithErrors(staticCode, validationFlags, nil, nil)""",
+        var validationError: Unmanaged<CFError>?
+        let checkStatus = SecStaticCodeCheckValidityWithErrors(staticCode, validationFlags, nil, &validationError)
+        guard checkStatus == errSecSuccess else {
+            let validationErrorDetail = validationError?.takeRetainedValue()
+            return .invalid(errorMessage(for: checkStatus, error: validationErrorDetail))
+        }
+        validationError?.release()""",
         """        let checkStatus = SecStaticCodeCheckValidityWithErrors(staticCode, SecCSFlags(), nil, nil)""",
-        "host app should distinguish unknown and invalid code-signing states and validate all architecture slices before submitting system-extension requests",
+        "host app should distinguish unknown and invalid code-signing states, validate all architecture slices, and preserve detailed validation errors before submitting system-extension requests",
     )
 
 

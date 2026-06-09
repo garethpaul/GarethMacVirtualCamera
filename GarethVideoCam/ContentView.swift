@@ -2505,10 +2505,13 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         }
 
         let validationFlags = SecCSFlags(rawValue: kSecCSCheckAllArchitectures)
-        let checkStatus = SecStaticCodeCheckValidityWithErrors(staticCode, validationFlags, nil, nil)
+        var validationError: Unmanaged<CFError>?
+        let checkStatus = SecStaticCodeCheckValidityWithErrors(staticCode, validationFlags, nil, &validationError)
         guard checkStatus == errSecSuccess else {
-            return .invalid(errorMessage(for: checkStatus))
+            let validationErrorDetail = validationError?.takeRetainedValue()
+            return .invalid(errorMessage(for: checkStatus, error: validationErrorDetail))
         }
+        validationError?.release()
 
         let signingDictionary = signingInformation(for: staticCode)
         return .valid(validDetail,
@@ -2517,9 +2520,20 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
                       applicationGroupIdentifiers(in: signingDictionary))
     }
 
-    private static func errorMessage(for status: OSStatus) -> String {
+    private static func errorMessage(for status: OSStatus, error: CFError? = nil) -> String {
         let fallback = "Code-signing check failed with OSStatus \(status)."
-        return SecCopyErrorMessageString(status, nil) as String? ?? fallback
+        let statusMessage = SecCopyErrorMessageString(status, nil) as String? ?? fallback
+        guard let error else {
+            return statusMessage
+        }
+
+        let errorDescription = (CFErrorCopyDescription(error) as String)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !errorDescription.isEmpty else {
+            return statusMessage
+        }
+
+        return "\(statusMessage) \(errorDescription)"
     }
 
     private static func signingInformation(for staticCode: SecStaticCode) -> [String: Any]? {
