@@ -146,6 +146,16 @@ def test_validator_rejects_missing_unknown_signature_state():
     )
 
 
+def test_validator_rejects_missing_all_architecture_signature_validation():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        """        let validationFlags = SecCSFlags(rawValue: kSecCSCheckAllArchitectures)
+        let checkStatus = SecStaticCodeCheckValidityWithErrors(staticCode, validationFlags, nil, nil)""",
+        """        let checkStatus = SecStaticCodeCheckValidityWithErrors(staticCode, SecCSFlags(), nil, nil)""",
+        "host app should distinguish unknown and invalid code-signing states and validate all architecture slices before submitting system-extension requests",
+    )
+
+
 def test_validator_rejects_missing_extension_load_failure_detail_row():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",
@@ -160,6 +170,7 @@ def main():
     test_tracked_fixture_validates()
     test_validator_rejects_missing_indefinite_stream_duration_guard()
     test_validator_rejects_missing_unknown_signature_state()
+    test_validator_rejects_missing_all_architecture_signature_validation()
     test_validator_rejects_missing_extension_load_failure_detail_row()
     print("Project validator tests passed.")
     return 0
