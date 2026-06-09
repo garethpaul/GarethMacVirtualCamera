@@ -38,6 +38,7 @@ private enum CameraExtensionError: LocalizedError {
     case missingBundledVideo
     case missingVideoTrack
     case invalidVideoDuration
+    case invalidVideoDimensions
     case unableToAddTrackOutput
     case assetReaderFailedToStart(String)
     case unexpectedDeviceSource
@@ -58,6 +59,8 @@ private enum CameraExtensionError: LocalizedError {
             return "The bundled loop video does not contain a video track."
         case .invalidVideoDuration:
             return "The bundled loop video does not report a valid duration."
+        case .invalidVideoDimensions:
+            return "The bundled loop video does not report finite, usable dimensions."
         case .unableToAddTrackOutput:
             return "The bundled loop video could not be connected to an asset reader output."
         case .assetReaderFailedToStart(let detail):
@@ -309,8 +312,10 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
     private func validateVideoTrack(naturalSize: CGSize,
                                     preferredTransform: CGAffineTransform,
                                     nominalFrameRate: Float) throws {
-        let displayDimensions = Self.displayDimensions(naturalSize: naturalSize,
-                                                       preferredTransform: preferredTransform)
+        guard let displayDimensions = Self.displayDimensions(naturalSize: naturalSize,
+                                                             preferredTransform: preferredTransform) else {
+            throw CameraExtensionError.invalidVideoDimensions
+        }
 
         guard displayDimensions.width == CameraExtensionConfiguration.dimensions.width,
               displayDimensions.height == CameraExtensionConfiguration.dimensions.height else {
@@ -324,10 +329,19 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
     }
 
     private static func displayDimensions(naturalSize: CGSize,
-                                          preferredTransform: CGAffineTransform) -> CMVideoDimensions {
+                                          preferredTransform: CGAffineTransform) -> CMVideoDimensions? {
         let displayRect = CGRect(origin: .zero, size: naturalSize).applying(preferredTransform)
-        return CMVideoDimensions(width: Int32(abs(displayRect.width).rounded()),
-                                 height: Int32(abs(displayRect.height).rounded()))
+        let roundedWidth = abs(displayRect.width).rounded()
+        let roundedHeight = abs(displayRect.height).rounded()
+        guard roundedWidth.isFinite,
+              roundedHeight.isFinite,
+              roundedWidth <= CGFloat(Int32.max),
+              roundedHeight <= CGFloat(Int32.max) else {
+            return nil
+        }
+
+        return CMVideoDimensions(width: Int32(roundedWidth),
+                                 height: Int32(roundedHeight))
     }
 
     private func makeAssetReader(asset: AVAsset, videoTrack: AVAssetTrack) throws -> AssetReaderState {

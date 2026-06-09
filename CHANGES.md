@@ -12,6 +12,8 @@
 - Rejected non-finite adjusted decode timestamps while retiming emitted sample
   buffers.
 - Rejected non-finite bundled-video asset durations before stream loop timing.
+- Rejected non-finite or out-of-range bundled-video dimensions before integer
+  conversion.
 - Rejected numeric non-boolean signed entitlement values in host readiness
   checks.
 - Rejected non-string Info.plist bundle metadata in runtime diagnostics.

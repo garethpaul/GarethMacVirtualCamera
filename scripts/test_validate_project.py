@@ -441,6 +441,36 @@ def test_validator_rejects_missing_non_finite_asset_duration_guard():
     )
 
 
+def test_validator_rejects_missing_video_dimension_unwrap_guard():
+    assert_validator_rejects_mutation(
+        "Extension/ExtensionProvider.swift",
+        """        guard let displayDimensions = Self.displayDimensions(naturalSize: naturalSize,
+                                                             preferredTransform: preferredTransform) else {
+            throw CameraExtensionError.invalidVideoDimensions
+        }
+""",
+        """        let displayDimensions = Self.displayDimensions(naturalSize: naturalSize,
+                                                        preferredTransform: preferredTransform)!""",
+        "extension should reject non-finite or out-of-range bundled-video dimensions before integer conversion",
+    )
+
+
+def test_validator_rejects_missing_finite_video_dimension_guard():
+    assert_validator_rejects_mutation(
+        "Extension/ExtensionProvider.swift",
+        """        guard roundedWidth.isFinite,
+              roundedHeight.isFinite,
+              roundedWidth <= CGFloat(Int32.max),
+              roundedHeight <= CGFloat(Int32.max) else {
+            return nil
+        }
+
+""",
+        "",
+        "extension should reject non-finite or out-of-range bundled-video dimensions before integer conversion",
+    )
+
+
 def test_validator_rejects_missing_non_finite_sample_time_guard():
     assert_validator_rejects_mutation(
         "Extension/ExtensionProvider.swift",
@@ -1073,6 +1103,8 @@ def main():
     test_validator_rejects_missing_indefinite_stream_duration_guard()
     test_validator_rejects_missing_non_finite_stream_duration_guard()
     test_validator_rejects_missing_non_finite_asset_duration_guard()
+    test_validator_rejects_missing_video_dimension_unwrap_guard()
+    test_validator_rejects_missing_finite_video_dimension_guard()
     test_validator_rejects_missing_non_finite_sample_time_guard()
     test_validator_rejects_missing_adjusted_decode_time_guard()
     test_validator_rejects_missing_host_time_sample_retiming()
