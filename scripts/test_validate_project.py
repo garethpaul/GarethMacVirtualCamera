@@ -300,6 +300,18 @@ done
     )
 
 
+def test_validator_rejects_missing_packaged_file_byte_count_verifier():
+    assert_validator_rejects_mutation(
+        "scripts/verify_build_products.sh",
+        """  verify_app_diagnostics_self_test "$configuration" "$app_path" "$script_path" "file-byte-count" "file-byte-count" \\
+    "File byte count fixture: 5"
+
+""",
+        "",
+        "build-product verifier should run the bundled runtime diagnostics file-byte-count self-test",
+    )
+
+
 def main():
     test_malformed_mdhd_atom_does_not_raise()
     test_zero_sample_count_stts_does_not_report_frame_rate()
@@ -317,6 +329,7 @@ def main():
     test_validator_rejects_root_level_unsigned_build_logs()
     test_validator_rejects_missing_build_product_python_resolver()
     test_validator_rejects_missing_build_product_configuration_guard()
+    test_validator_rejects_missing_packaged_file_byte_count_verifier()
     print("Project validator tests passed.")
     return 0
 
