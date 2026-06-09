@@ -178,5 +178,6 @@
 - Rejected malformed PNG headers during app-icon metadata validation.
 - Rejected malformed app-icon catalog size and scale metadata during validation.
 - Rejected non-string CMIO Mach-service metadata during build-product verification.
+- Covered extension CoreMedia sample-retiming failure guards in validator mutation tests.
 - Kept the AppIntents build-log ignore rule scoped to the known warning notice.
 - Documented the Xcode 27 beta Swift 6.4, macOS 27 SDK, and Apple silicon installer watch item.

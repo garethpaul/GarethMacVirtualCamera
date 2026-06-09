@@ -544,6 +544,49 @@ def test_validator_rejects_missing_adjusted_decode_time_guard():
     )
 
 
+def test_validator_rejects_missing_sample_count_retiming_guard():
+    assert_validator_rejects_mutation(
+        "Extension/ExtensionProvider.swift",
+        """        guard CMSampleBufferGetNumSamples(sampleBuffer) == 1 else {
+            logger.error("Skipping sample buffer with unexpected sample count")
+            return nil
+        }
+
+""",
+        "",
+        "extension should require one-sample buffers and CoreMedia retiming calls to succeed before streaming",
+    )
+
+
+def test_validator_rejects_missing_sample_timing_status_guard():
+    assert_validator_rejects_mutation(
+        "Extension/ExtensionProvider.swift",
+        """        guard timingStatus == noErr else {
+            logger.error("Failed to read sample timing info: \\(timingStatus, privacy: .public)")
+            return nil
+        }""",
+        """        if timingStatus != noErr {
+            logger.error("Failed to read sample timing info: \\(timingStatus, privacy: .public)")
+        }""",
+        "extension should require one-sample buffers and CoreMedia retiming calls to succeed before streaming",
+    )
+
+
+def test_validator_rejects_missing_retimed_copy_status_guard():
+    assert_validator_rejects_mutation(
+        "Extension/ExtensionProvider.swift",
+        """        guard copyStatus == noErr, let retimedSampleBuffer = copiedSampleBuffer else {
+            logger.error("Failed to retime sample buffer: \\(copyStatus, privacy: .public)")
+            return nil
+        }""",
+        """        guard let retimedSampleBuffer = copiedSampleBuffer else {
+            logger.error("Failed to retime sample buffer: \\(copyStatus, privacy: .public)")
+            return nil
+        }""",
+        "extension should require one-sample buffers and CoreMedia retiming calls to succeed before streaming",
+    )
+
+
 def test_validator_rejects_missing_host_time_sample_retiming():
     assert_validator_rejects_mutation(
         "Extension/ExtensionProvider.swift",
@@ -1298,6 +1341,9 @@ def main():
     test_validator_rejects_missing_non_finite_video_frame_rate_guard()
     test_validator_rejects_missing_non_finite_sample_time_guard()
     test_validator_rejects_missing_adjusted_decode_time_guard()
+    test_validator_rejects_missing_sample_count_retiming_guard()
+    test_validator_rejects_missing_sample_timing_status_guard()
+    test_validator_rejects_missing_retimed_copy_status_guard()
     test_validator_rejects_missing_host_time_sample_retiming()
     test_validator_rejects_missing_unknown_signature_state()
     test_validator_rejects_missing_all_architecture_signature_validation()
