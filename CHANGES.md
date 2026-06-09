@@ -2,6 +2,7 @@
 
 ## 2026-06-08 to 2026-06-09
 
+- Flagged Xcode install-failed banners in the build-log scanner.
 - Rejected path-like unsigned build architecture overrides before resolving
   `xcodebuild` or writing build logs.
 - Rejected permissive signed or underscore-separated app icon size and scale

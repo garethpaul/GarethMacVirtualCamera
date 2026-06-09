@@ -1494,7 +1494,16 @@ def test_validator_rejects_broad_appintents_log_ignore():
         "Metadata extraction skipped. No AppIntents.framework dependency found.",
     ),
 """,
-        "build-log scanner should fail on warnings, errors, build/analyze/clean/test-failed banners, build/test failure summaries, and nonzero Xcode command failures while narrowly ignoring known Xcode AppIntents metadata noise",
+        "build-log scanner should fail on warnings, errors, build/analyze/clean/install/test-failed banners, build/test failure summaries, and nonzero Xcode command failures while narrowly ignoring known Xcode AppIntents metadata noise",
+    )
+
+
+def test_validator_rejects_missing_install_failed_banner_scan():
+    assert_validator_rejects_mutation(
+        "scripts/scan_build_log.py",
+        r"""    r"warning:|error:|failed with a nonzero exit code|the following build commands failed:|testing failed:|\*\* BUILD FAILED \*\*|\*\* ARCHIVE FAILED \*\*|\*\* ANALYZE FAILED \*\*|\*\* CLEAN FAILED \*\*|\*\* INSTALL FAILED \*\*|\*\* TEST FAILED \*\*",""",
+        r"""    r"warning:|error:|failed with a nonzero exit code|the following build commands failed:|testing failed:|\*\* BUILD FAILED \*\*|\*\* ARCHIVE FAILED \*\*|\*\* ANALYZE FAILED \*\*|\*\* CLEAN FAILED \*\*|\*\* TEST FAILED \*\*",""",
+        "build-log scanner should fail on warnings, errors, build/analyze/clean/install/test-failed banners, build/test failure summaries, and nonzero Xcode command failures while narrowly ignoring known Xcode AppIntents metadata noise",
     )
 
 
@@ -1513,8 +1522,8 @@ def test_validator_rejects_missing_appintents_ignore_disqualifier():
 def test_validator_rejects_missing_appintents_same_line_warning_disqualifier():
     assert_validator_rejects_mutation(
         "scripts/scan_build_log.py",
-        r"""    r"warning:.*warning:|error:|failed with a nonzero exit code|the following build commands failed:|testing failed:|\*\* BUILD FAILED \*\*|\*\* ARCHIVE FAILED \*\*|\*\* ANALYZE FAILED \*\*|\*\* CLEAN FAILED \*\*|\*\* TEST FAILED \*\*",""",
-        r"""    r"error:|failed with a nonzero exit code|the following build commands failed:|testing failed:|\*\* BUILD FAILED \*\*|\*\* ARCHIVE FAILED \*\*|\*\* ANALYZE FAILED \*\*|\*\* CLEAN FAILED \*\*|\*\* TEST FAILED \*\*",""",
+        r"""    r"warning:.*warning:|error:|failed with a nonzero exit code|the following build commands failed:|testing failed:|\*\* BUILD FAILED \*\*|\*\* ARCHIVE FAILED \*\*|\*\* ANALYZE FAILED \*\*|\*\* CLEAN FAILED \*\*|\*\* INSTALL FAILED \*\*|\*\* TEST FAILED \*\*",""",
+        r"""    r"error:|failed with a nonzero exit code|the following build commands failed:|testing failed:|\*\* BUILD FAILED \*\*|\*\* ARCHIVE FAILED \*\*|\*\* ANALYZE FAILED \*\*|\*\* CLEAN FAILED \*\*|\*\* INSTALL FAILED \*\*|\*\* TEST FAILED \*\*",""",
         "build-log scanner should not hide additional warnings or failures on ignored AppIntents warning lines",
     )
 
