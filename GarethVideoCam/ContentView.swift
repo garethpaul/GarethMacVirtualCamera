@@ -519,6 +519,7 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
     @Published var extensionLoadFailureDetail: String?
     @Published var lastFailureDetail: String?
 
+    private let maximumActivityItems = 20
     private var pendingRequestKind: RequestKind?
 
     var logText: String {
@@ -2853,8 +2854,8 @@ final class SystemExtensionRequestManager: NSObject, ObservableObject {
         let item = ActivityItem(level: level, title: title, detail: detail)
         activity.insert(item, at: 0)
 
-        if activity.count > 20 {
-            activity.removeLast(activity.count - 20)
+        if activity.count > maximumActivityItems {
+            activity.removeLast(activity.count - maximumActivityItems)
         }
     }
 }

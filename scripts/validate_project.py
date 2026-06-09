@@ -877,6 +877,9 @@ def main():
     require("func refreshAfterAppBecameActive()" in host_source and "previousState = state" in host_source and "didChangeVisibleStatus" in host_source and "Status Updated" in host_source,
             "host app should record automatic foreground refreshes only when visible readiness changes",
             failures)
+    require("private let maximumActivityItems = 20" in host_source and "if activity.count > maximumActivityItems" in host_source and "activity.removeLast(activity.count - maximumActivityItems)" in host_source and "test_validator_rejects_missing_activity_limit" in validate_project_test_source,
+            "host app should cap request activity so long troubleshooting sessions stay bounded",
+            failures)
     require("didCompleteInitialAppearance" in host_source and "guard didCompleteInitialAppearance else" in host_source,
             "host app should avoid duplicating the manager startup refresh on first view appearance",
             failures)

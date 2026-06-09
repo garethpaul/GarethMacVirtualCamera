@@ -12,6 +12,8 @@
   header with responsive wrapping.
 - Made the host app executable-name helper reject blank embedded-extension
   executable names before building readiness paths.
+- Named and pinned the host app activity cap so repeated troubleshooting actions
+  keep the Activity view bounded.
 - Rejected whitespace-padded app icon size and scale metadata before validating
   icon PNG dimensions.
 - Required app icon catalog scale metadata to use the expected `x` suffix before

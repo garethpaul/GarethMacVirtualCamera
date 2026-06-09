@@ -1085,6 +1085,18 @@ def test_validator_rejects_missing_header_action_buttons():
     )
 
 
+def test_validator_rejects_missing_activity_limit():
+    assert_validator_rejects_mutation(
+        "GarethVideoCam/ContentView.swift",
+        """        if activity.count > maximumActivityItems {
+            activity.removeLast(activity.count - maximumActivityItems)
+        }
+""",
+        "",
+        "host app should cap request activity so long troubleshooting sessions stay bounded",
+    )
+
+
 def test_validator_rejects_missing_unsigned_build_configuration_guard():
     assert_validator_rejects_mutation(
         "scripts/build_unsigned.sh",
@@ -1698,6 +1710,7 @@ def main():
     test_validator_rejects_bare_application_group_acceptance()
     test_validator_rejects_missing_extension_load_failure_detail_row()
     test_validator_rejects_missing_header_action_buttons()
+    test_validator_rejects_missing_activity_limit()
     test_validator_rejects_missing_unsigned_build_configuration_guard()
     test_validator_rejects_missing_host_duplicate_extension_guard()
     test_validator_rejects_directory_runtime_diagnostics_script_resource()
