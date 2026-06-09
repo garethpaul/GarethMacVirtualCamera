@@ -69,6 +69,12 @@ def test_fails_on_nonzero_command_failure():
     require("Command SwiftCompile failed with a nonzero exit code" in result.stdout, result.stdout)
 
 
+def test_fails_on_build_failed_banner():
+    result = run_scanner("** BUILD FAILED **\n")
+    require(result.returncode == 1, result.stdout + result.stderr)
+    require("** BUILD FAILED **" in result.stdout, result.stdout)
+
+
 def test_scans_multiple_build_logs():
     result = run_scanner(
         "note: harmless debug build output\n",
@@ -114,6 +120,7 @@ def main():
     test_fails_on_other_appintents_warning()
     test_fails_on_actionable_error()
     test_fails_on_nonzero_command_failure()
+    test_fails_on_build_failed_banner()
     test_scans_multiple_build_logs()
     test_fails_on_missing_build_log()
     test_requires_build_log_argument()

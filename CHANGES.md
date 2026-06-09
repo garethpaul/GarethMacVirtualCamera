@@ -66,3 +66,4 @@
 - Included refresh-failure context in copied host diagnostics and activation checklist activity.
 - Separated host extension-load failures from unknown or invalid extension signature status.
 - Rejected indefinite stream frame-duration writes in the camera extension.
+- Flagged Xcode build-failed banners in the build-log scanner.
