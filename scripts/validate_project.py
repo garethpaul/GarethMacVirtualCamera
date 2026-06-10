@@ -1350,8 +1350,8 @@ def main():
         require("runs-on: macos-26" in workflow_text,
                 "macOS build workflow should run on the macOS 26 runner",
                 failures)
-        require("actions/checkout@v6" in workflow_text,
-                "macOS build workflow should use a Node 24-capable checkout action",
+        require("actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" in workflow_text,
+                "macOS build workflow should pin the Node 24-capable checkout action",
                 failures)
         require("FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true" in workflow_text,
                 "macOS build workflow should opt JavaScript actions into Node 24",
@@ -1398,7 +1398,7 @@ def main():
         require("Scan Xcode logs for warnings and failures" in workflow_text and "if: always() && hashFiles('.build/Xcode/Logs/build-*.log') != ''" in workflow_text and "./scripts/scan_build_log.py .build/Xcode/Logs/build-*.log" in workflow_text,
                 "macOS build workflow should scan any captured Debug or Release xcodebuild output even after failed build steps",
                 failures)
-        require("actions/upload-artifact@v7.0.1" in workflow_text and "xcode-build-logs" in workflow_text and "path: .build/Xcode/Logs/build-*.log" in workflow_text and "if-no-files-found: ignore" in workflow_text,
+        require("actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" in workflow_text and "xcode-build-logs" in workflow_text and "path: .build/Xcode/Logs/build-*.log" in workflow_text and "if-no-files-found: ignore" in workflow_text,
                 "macOS build workflow should upload captured Xcode build logs for later inspection",
                 failures)
 

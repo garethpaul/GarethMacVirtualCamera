@@ -1538,6 +1538,24 @@ def test_validator_rejects_missing_partial_ci_log_scan():
     )
 
 
+def test_validator_rejects_floating_checkout_action():
+    assert_validator_rejects_mutation(
+        ".github/workflows/macos-build.yml",
+        "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10",
+        "actions/checkout@v6",
+        "macOS build workflow should pin the Node 24-capable checkout action",
+    )
+
+
+def test_validator_rejects_floating_artifact_action():
+    assert_validator_rejects_mutation(
+        ".github/workflows/macos-build.yml",
+        "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "actions/upload-artifact@v7.0.1",
+        "macOS build workflow should upload captured Xcode build logs for later inspection",
+    )
+
+
 def test_validator_rejects_missing_unreadable_build_log_guard():
     assert_validator_rejects_mutation(
         "scripts/scan_build_log.py",

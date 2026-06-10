@@ -2,6 +2,9 @@
 
 ## 2026-06-08 to 2026-06-09
 
+- Pinned checkout and artifact-upload actions by commit and added validator
+  mutation tests that reject floating workflow tags. See
+  `docs/plans/2026-06-10-pin-ci-actions.md`.
 - Flagged Xcode install-failed banners in the build-log scanner.
 - Rejected path-like unsigned build architecture overrides before resolving
   `xcodebuild` or writing build logs.

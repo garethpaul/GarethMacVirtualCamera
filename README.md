@@ -64,6 +64,10 @@ architecture tokens before `xcodebuild` is resolved or build logs are created.
 
 Pushes and pull requests to `main` also run `.github/workflows/macos-build.yml` on GitHub's `macos-26` runner. That workflow records the selected macOS, Xcode, Swift, and macOS SDK evidence, runs `make check`, performs unsigned Debug and Release target builds, verifies the built app products contain the embedded system extension, aligned bundle versions, declared executables, display metadata, product-specific privacy usage strings, bundled runtime diagnostics self-tests, resolved CoreMediaIO extension metadata, and bundled-video metadata, captures the Xcode logs under `.build/Xcode/Logs`, scans any captured `build-*.log` output including partial logs from failed builds, and fails on source warnings, errors, build-failed, archive-failed, analyze-failed, clean-failed, install-failed, and test-failed banners, build or test failure summaries, or nonzero Xcode command failures. Xcode 26.5 currently emits an AppIntents metadata processor notice for targets without AppIntents; CI filters only that known tool notice.
 
+Third-party workflow actions are pinned to reviewed commit SHAs, and validator
+mutation tests reject regressions to floating release tags.
+See `docs/plans/2026-06-10-pin-ci-actions.md` for the supply-chain guard.
+
 ## Runtime Activation
 
 Runtime activation still requires a macOS host with a valid Apple Developer signing identity, the System Extension entitlement, and user approval in System Settings. The app must run from `/Applications/GarethVideoCam.app`; the shared Xcode scheme replaces the app there before launch for local testing.

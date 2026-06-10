@@ -53,6 +53,8 @@ Good-faith research is welcome when it stays within these boundaries:
 This repository does not use a root package dependency manifest. If dependencies are added later, use trusted package managers, keep lockfiles in sync when lockfiles exist, and avoid committing credentials, private keys, tokens, generated secrets, or machine-local configuration.
 
 Build and validation changes should keep `./scripts/check_project.sh`, `.github/workflows/macos-build.yml`, `./scripts/build_unsigned.sh`, `./scripts/verify_build_products.sh`, and `./scripts/scan_build_log.py` aligned so local and CI evidence stay comparable.
+Keep third-party workflow actions pinned to reviewed commit SHAs; update the
+validator and mutation tests with any intentional action upgrade.
 Unsigned-build architecture overrides should remain single architecture tokens
 so local and CI builds do not write ambiguous `ARCHS` values into evidence.
 

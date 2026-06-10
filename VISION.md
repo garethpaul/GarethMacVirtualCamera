@@ -18,6 +18,8 @@ Priority:
 - Preserve the host app and embedded camera extension relationship
 - Keep build-product, entitlement, signing, and bundled-video validation strong
 - Maintain local checks and CI-equivalent unsigned build paths
+- Keep third-party CI actions pinned to reviewed commit SHAs and covered by
+  validator mutation tests
 - Keep build-log scanning strict for warnings, errors, failed Xcode commands,
   and build/archive/analyze/clean/install/test failure banners
 - Keep unsigned build configuration and architecture inputs constrained before
