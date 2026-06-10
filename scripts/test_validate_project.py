@@ -539,6 +539,32 @@ def test_validator_rejects_missing_non_finite_asset_duration_guard():
     )
 
 
+def test_validator_rejects_reader_loop_while_reading():
+    assert_validator_rejects_mutation(
+        "Extension/ExtensionProvider.swift",
+        """        case .reading:
+            return
+        case .completed:""",
+        """        case .reading:
+            break
+        case .completed:""",
+        "extension should loop bundled video only after the asset reader completes",
+    )
+
+
+def test_validator_rejects_reader_loop_before_completion():
+    assert_validator_rejects_mutation(
+        "Extension/ExtensionProvider.swift",
+        """        case .completed:
+            break
+        case .failed:""",
+        """        case .completed:
+            return
+        case .failed:""",
+        "extension should loop bundled video only after the asset reader completes",
+    )
+
+
 def test_validator_rejects_missing_video_dimension_unwrap_guard():
     assert_validator_rejects_mutation(
         "Extension/ExtensionProvider.swift",
@@ -1848,6 +1874,8 @@ def main():
     test_validator_rejects_missing_indefinite_stream_duration_guard()
     test_validator_rejects_missing_non_finite_stream_duration_guard()
     test_validator_rejects_missing_non_finite_asset_duration_guard()
+    test_validator_rejects_reader_loop_while_reading()
+    test_validator_rejects_reader_loop_before_completion()
     test_validator_rejects_missing_video_dimension_unwrap_guard()
     test_validator_rejects_missing_finite_video_dimension_guard()
     test_validator_rejects_missing_non_finite_video_frame_rate_guard()

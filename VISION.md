@@ -24,6 +24,8 @@ Priority:
   and build/archive/analyze/clean/install/test failure banners
 - Keep unsigned build configuration and architecture inputs constrained before
   log files are written
+- Loop bundled video only after asset-reader completion; wait while reads are
+  active and stop on cancelled or invalid reader states
 - Keep `make lint`, `make test`, `make build`, and `make check` aligned with
   `./scripts/check_project.sh`
 - Make runtime activation blockers clear to users

@@ -596,6 +596,17 @@ def main():
     require("Unable to loop the bundled video: \\(error.localizedDescription" in extension_source,
             "extension should log loop restart failures with actionable error details",
             failures)
+    require("guard let assetReader else" in extension_source and
+            "case .reading:\n            return" in extension_source and
+            "case .completed:\n            break" in extension_source and
+            "case .failed:" in extension_source and
+            "case .cancelled:\n            logger.error(\"Asset reader was cancelled while streaming\")\n            stopStreamingSession()" in extension_source and
+            "case .unknown:\n            logger.error(\"Asset reader entered an unknown state while streaming\")\n            stopStreamingSession()" in extension_source and
+            "@unknown default:" in extension_source and
+            "test_validator_rejects_reader_loop_while_reading" in validate_project_test_source and
+            "test_validator_rejects_reader_loop_before_completion" in validate_project_test_source,
+            "extension should loop bundled video only after the asset reader completes",
+            failures)
     require("CMSampleBufferDataIsReady(sampleBuffer)" in extension_source and "Skipping sample buffer that is not ready" in extension_source,
             "extension should skip asset-reader sample buffers that are not ready",
             failures)

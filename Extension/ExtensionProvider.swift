@@ -409,8 +409,31 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
             return
         }
 
-        if assetReader?.status == .failed {
-            logger.error("Asset reader failed while streaming: \(self.assetReader?.error?.localizedDescription ?? "unknown error", privacy: .public)")
+        guard let assetReader else {
+            logger.error("Unable to continue streaming because no asset reader is available")
+            stopStreamingSession()
+            return
+        }
+
+        switch assetReader.status {
+        case .reading:
+            return
+        case .completed:
+            break
+        case .failed:
+            logger.error("Asset reader failed while streaming: \(assetReader.error?.localizedDescription ?? "unknown error", privacy: .public)")
+            stopStreamingSession()
+            return
+        case .cancelled:
+            logger.error("Asset reader was cancelled while streaming")
+            stopStreamingSession()
+            return
+        case .unknown:
+            logger.error("Asset reader entered an unknown state while streaming")
+            stopStreamingSession()
+            return
+        @unknown default:
+            logger.error("Asset reader entered an unsupported state while streaming")
             stopStreamingSession()
             return
         }
