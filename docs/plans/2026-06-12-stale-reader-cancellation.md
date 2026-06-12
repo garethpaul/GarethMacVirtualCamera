@@ -54,3 +54,24 @@ unnecessary file and decoder work and makes stream teardown ownership clear.
 - Mutations removing cancellation from the task-cancelled, released-source, or
   stale-completion path must fail.
 - Hosted macOS/Xcode unsigned Debug and Release builds must pass.
+
+## Work Completed
+
+- Cancelled prepared readers when task cancellation is observed after reader
+  creation, when the device source has been released, and when a queued
+  completion no longer matches the active stream generation.
+- Preserved active reader installation, loop restart, timer ownership, and
+  multi-client stream accounting.
+- Added validator mutations for all three abandoned-reader cleanup paths and
+  updated the maintenance documentation.
+
+## Verification Completed
+
+- `./scripts/test_validate_project.py`, `./scripts/check_project.sh`, all four
+  Make gates, and `git diff --check` passed locally. The validator suite
+  rejected removal of each of the three required `cancelReading()` calls.
+- Pull-request run `27393152277` passed at commit
+  `d23f0c0a60abc46250feef451d21f3093d8e93f1`, including the local validation
+  baseline, Xcode 26.5 unsigned build, product verification, and build-log scan.
+- Post-merge push run `27393226357` and CodeQL run `27402321140` passed at
+  default-branch merge commit `26b6799887daff57c3df00c56da9b8eb16e3d665`.
