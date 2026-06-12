@@ -638,6 +638,23 @@ def main():
     require("Ignoring stale stream preparation completion" in extension_source and "Ignoring stale stream preparation failure" in extension_source,
             "extension should log ignored stale asynchronous stream preparation results",
             failures)
+    require("""            if Task.isCancelled {
+                readerState.assetReader.cancelReading()
+                return
+            }""" in extension_source,
+            "extension should cancel a prepared asset reader when stream preparation is cancelled",
+            failures)
+    require("""                guard let self else {
+                    readerState.assetReader.cancelReading()
+                    return
+                }""" in extension_source,
+            "extension should cancel a prepared asset reader when its device source is released",
+            failures)
+    require("""                guard self.isCurrentStreamPreparation(generation: generation, videoURL: videoURL) else {
+                    readerState.assetReader.cancelReading()
+                    logger.debug("Ignoring stale stream preparation completion")""" in extension_source,
+            "extension should cancel a prepared asset reader when its queued completion becomes stale",
+            failures)
     require("tooManyStreamingClients" in extension_source and "_streamingCounter < UInt32.max" in extension_source,
             "extension should guard the active streaming client counter from overflow",
             failures)
