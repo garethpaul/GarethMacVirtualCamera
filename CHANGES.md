@@ -6,7 +6,9 @@
   reads remain active and stopping on cancelled or invalid reader states. See
   `docs/plans/2026-06-10-reader-status-loop-guard.md`.
 - Pinned checkout and artifact-upload actions by commit and added validator
-  mutation tests that reject floating workflow tags. See
+  mutation tests that reject floating workflow tags. Checkout now disables
+  persisted credentials, and structural tests reject duplicate checkout steps
+  plus missing, duplicate, relocated, or contradictory credential settings. See
   `docs/plans/2026-06-10-pin-ci-actions.md`.
 - Flagged Xcode install-failed banners in the build-log scanner.
 - Rejected path-like unsigned build architecture overrides before resolving

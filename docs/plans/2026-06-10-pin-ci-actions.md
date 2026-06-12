@@ -10,10 +10,14 @@ executed with the workflow token.
 
 ## Changes
 
-- Pinned `actions/checkout` v6.0.2 and `actions/upload-artifact` v7.0.1 to their
+- Pinned `actions/checkout` v6.0.3 and `actions/upload-artifact` v7.0.1 to their
   official commit SHAs.
+- Disabled persisted checkout credentials so later build and validation steps
+  cannot reuse the workflow token through the local Git configuration.
 - Updated project validation to require those exact action commits.
-- Added mutation tests that reject regressions to floating action tags.
+- Added dependency-free structural workflow validation and mutation tests that
+  reject floating or duplicate checkout actions plus missing, duplicate,
+  relocated, or contradictory credential settings.
 
 ## Verification
 

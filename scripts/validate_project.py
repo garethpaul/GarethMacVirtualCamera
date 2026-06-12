@@ -25,6 +25,87 @@ EXPECTED_EXTENSION_ENTITLEMENT_KEYS = {
     APP_SANDBOX_ENTITLEMENT,
     APP_GROUP_ENTITLEMENT,
 }
+CHECKOUT_ACTION = "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10"
+CHECKOUT_RELEASE = "v6.0.3"
+
+
+def workflow_steps(workflow_text):
+    lines = workflow_text.splitlines()
+    steps = []
+
+    for header_index, line in enumerate(lines):
+        header_match = re.fullmatch(r"(\s*)steps:\s*", line)
+        if not header_match:
+            continue
+
+        header_indent = len(header_match.group(1))
+        step_starts = []
+        index = header_index + 1
+
+        while index < len(lines):
+            current_line = lines[index]
+            if current_line.strip():
+                current_indent = len(current_line) - len(current_line.lstrip())
+                if current_indent <= header_indent:
+                    break
+                if current_indent == header_indent + 2 and re.match(r"\s*-\s+", current_line):
+                    step_starts.append(index)
+            index += 1
+
+        for position, start in enumerate(step_starts):
+            end = step_starts[position + 1] if position + 1 < len(step_starts) else index
+            steps.append({"start": start, "end": end, "lines": lines[start:end]})
+
+    return steps
+
+
+def workflow_action_references(step):
+    references = []
+
+    for offset, line in enumerate(step["lines"]):
+        match = re.fullmatch(r"\s*(?:-\s*)?uses:\s*([^\s#]+)(?:\s+#\s*(.*?))?\s*", line)
+        if match:
+            references.append({
+                "line": step["start"] + offset,
+                "reference": match.group(1),
+                "annotation": match.group(2) or "",
+                "step": step,
+            })
+
+    return references
+
+
+def workflow_key_occurrences(workflow_text, key):
+    occurrences = []
+    pattern = re.compile(rf"(\s*){re.escape(key)}:\s*([^\s#]+)\s*(?:#.*)?")
+
+    for line_number, line in enumerate(workflow_text.splitlines()):
+        match = pattern.fullmatch(line)
+        if match:
+            occurrences.append({
+                "line": line_number,
+                "indent": len(match.group(1)),
+                "value": match.group(2),
+            })
+
+    return occurrences
+
+
+def workflow_key_is_direct_step_input(step, occurrence):
+    relative_line = occurrence["line"] - step["start"]
+    if relative_line < 0 or relative_line >= len(step["lines"]):
+        return False
+
+    for index in range(relative_line - 1, -1, -1):
+        line = step["lines"][index]
+        if not line.strip():
+            continue
+        indent = len(line) - len(line.lstrip())
+        if indent >= occurrence["indent"]:
+            continue
+        return line.strip() == "with:" and occurrence["indent"] == indent + 2
+
+    return False
 
 
 def load_plist(relative_path):
@@ -1358,11 +1439,37 @@ def main():
             failures)
     if workflow_path.exists():
         workflow_text = workflow_path.read_text()
+        checkout_references = [
+            reference
+            for step in workflow_steps(workflow_text)
+            for reference in workflow_action_references(step)
+            if reference["reference"].startswith("actions/checkout@")
+        ]
+        require(len(checkout_references) == 1,
+                "macOS build workflow should contain exactly one checkout action step",
+                failures)
+        if len(checkout_references) == 1:
+            checkout_reference = checkout_references[0]
+            require(checkout_reference["reference"] == CHECKOUT_ACTION,
+                    "macOS build workflow should pin the Node 24-capable checkout action",
+                    failures)
+            require(checkout_reference["annotation"] == CHECKOUT_RELEASE,
+                    "macOS build workflow should label the checkout action with its exact release",
+                    failures)
+            credential_occurrences = workflow_key_occurrences(workflow_text, "persist-credentials")
+            checkout_credentials = [
+                occurrence
+                for occurrence in credential_occurrences
+                if checkout_reference["step"]["start"] <= occurrence["line"] < checkout_reference["step"]["end"]
+                and workflow_key_is_direct_step_input(checkout_reference["step"], occurrence)
+            ]
+            require(len(credential_occurrences) == 1
+                    and len(checkout_credentials) == 1
+                    and checkout_credentials[0]["value"] == "false",
+                    "macOS build workflow checkout should disable persisted credentials exactly once in the checkout step",
+                    failures)
         require("runs-on: macos-26" in workflow_text,
                 "macOS build workflow should run on the macOS 26 runner",
-                failures)
-        require("actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" in workflow_text,
-                "macOS build workflow should pin the Node 24-capable checkout action",
                 failures)
         require("FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true" in workflow_text,
                 "macOS build workflow should opt JavaScript actions into Node 24",

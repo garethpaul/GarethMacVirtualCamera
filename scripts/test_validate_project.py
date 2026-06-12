@@ -1573,6 +1573,84 @@ def test_validator_rejects_floating_checkout_action():
     )
 
 
+def test_validator_rejects_duplicate_checkout_action():
+    assert_validator_rejects_mutation(
+        ".github/workflows/macos-build.yml",
+        """      - name: Select Xcode 26.5
+""",
+        """      - name: Duplicate checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Select Xcode 26.5
+""",
+        "macOS build workflow should contain exactly one checkout action step",
+    )
+
+
+def test_validator_rejects_incorrect_checkout_release_annotation():
+    assert_validator_rejects_mutation(
+        ".github/workflows/macos-build.yml",
+        "# v6.0.3",
+        "# v6.0.2",
+        "macOS build workflow should label the checkout action with its exact release",
+    )
+
+
+def test_validator_rejects_missing_checkout_credential_guard():
+    assert_validator_rejects_mutation(
+        ".github/workflows/macos-build.yml",
+        """        with:
+          persist-credentials: false
+""",
+        "",
+        "macOS build workflow checkout should disable persisted credentials exactly once in the checkout step",
+    )
+
+
+def test_validator_rejects_duplicate_checkout_credential_guard():
+    assert_validator_rejects_mutation(
+        ".github/workflows/macos-build.yml",
+        """        with:
+          persist-credentials: false
+""",
+        """        with:
+          persist-credentials: false
+          persist-credentials: false
+""",
+        "macOS build workflow checkout should disable persisted credentials exactly once in the checkout step",
+    )
+
+
+def test_validator_rejects_relocated_checkout_credential_guard():
+    assert_validator_rejects_mutation(
+        ".github/workflows/macos-build.yml",
+        """env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+""",
+        """env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  persist-credentials: false
+""",
+        "macOS build workflow checkout should disable persisted credentials exactly once in the checkout step",
+    )
+
+
+def test_validator_rejects_contradictory_checkout_credential_guard():
+    assert_validator_rejects_mutation(
+        ".github/workflows/macos-build.yml",
+        """        with:
+          persist-credentials: false
+""",
+        """        with:
+          persist-credentials: false
+          persist-credentials: true
+""",
+        "macOS build workflow checkout should disable persisted credentials exactly once in the checkout step",
+    )
+
+
 def test_validator_rejects_floating_artifact_action():
     assert_validator_rejects_mutation(
         ".github/workflows/macos-build.yml",
@@ -1941,6 +2019,14 @@ def main():
     test_validator_rejects_missing_appintents_ignore_disqualifier()
     test_validator_rejects_missing_appintents_same_line_warning_disqualifier()
     test_validator_rejects_missing_partial_ci_log_scan()
+    test_validator_rejects_floating_checkout_action()
+    test_validator_rejects_duplicate_checkout_action()
+    test_validator_rejects_incorrect_checkout_release_annotation()
+    test_validator_rejects_missing_checkout_credential_guard()
+    test_validator_rejects_duplicate_checkout_credential_guard()
+    test_validator_rejects_relocated_checkout_credential_guard()
+    test_validator_rejects_contradictory_checkout_credential_guard()
+    test_validator_rejects_floating_artifact_action()
     test_validator_rejects_missing_unreadable_build_log_guard()
     test_validator_rejects_root_level_unsigned_build_logs()
     test_validator_rejects_missing_build_product_python_resolver()
