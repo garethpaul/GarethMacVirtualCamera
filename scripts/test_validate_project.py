@@ -565,6 +565,46 @@ def test_validator_rejects_reader_loop_before_completion():
     )
 
 
+def test_validator_rejects_missing_cancelled_preparation_reader_cleanup():
+    assert_validator_rejects_mutation(
+        "Extension/ExtensionProvider.swift",
+        """            if Task.isCancelled {
+                readerState.assetReader.cancelReading()
+                return
+            }""",
+        """            if Task.isCancelled {
+                return
+            }""",
+        "extension should cancel a prepared asset reader when stream preparation is cancelled",
+    )
+
+
+def test_validator_rejects_missing_stale_completion_reader_cleanup():
+    assert_validator_rejects_mutation(
+        "Extension/ExtensionProvider.swift",
+        """                guard self.isCurrentStreamPreparation(generation: generation, videoURL: videoURL) else {
+                    readerState.assetReader.cancelReading()
+                    logger.debug("Ignoring stale stream preparation completion")""",
+        """                guard self.isCurrentStreamPreparation(generation: generation, videoURL: videoURL) else {
+                    logger.debug("Ignoring stale stream preparation completion")""",
+        "extension should cancel a prepared asset reader when its queued completion becomes stale",
+    )
+
+
+def test_validator_rejects_missing_released_source_reader_cleanup():
+    assert_validator_rejects_mutation(
+        "Extension/ExtensionProvider.swift",
+        """                guard let self else {
+                    readerState.assetReader.cancelReading()
+                    return
+                }""",
+        """                guard let self else {
+                    return
+                }""",
+        "extension should cancel a prepared asset reader when its device source is released",
+    )
+
+
 def test_validator_rejects_missing_video_dimension_unwrap_guard():
     assert_validator_rejects_mutation(
         "Extension/ExtensionProvider.swift",
@@ -1954,6 +1994,9 @@ def main():
     test_validator_rejects_missing_non_finite_asset_duration_guard()
     test_validator_rejects_reader_loop_while_reading()
     test_validator_rejects_reader_loop_before_completion()
+    test_validator_rejects_missing_cancelled_preparation_reader_cleanup()
+    test_validator_rejects_missing_stale_completion_reader_cleanup()
+    test_validator_rejects_missing_released_source_reader_cleanup()
     test_validator_rejects_missing_video_dimension_unwrap_guard()
     test_validator_rejects_missing_finite_video_dimension_guard()
     test_validator_rejects_missing_non_finite_video_frame_rate_guard()

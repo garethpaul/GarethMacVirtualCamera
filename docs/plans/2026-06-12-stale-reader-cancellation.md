@@ -1,6 +1,6 @@
 # Stale Asset Reader Cancellation
 
-status: planned
+status: completed
 
 ## Context
 
@@ -25,8 +25,8 @@ unnecessary file and decoder work and makes stream teardown ownership clear.
 
 1. Cancel a newly created reader when task cancellation is observed after
    `makeAssetReader` succeeds.
-2. Cancel the reader when its queued completion fails the stream-generation
-   guard.
+2. Cancel the reader when its queued completion finds that the device source
+   was released or fails the stream-generation guard.
 3. Preserve active reader installation, loop restart, timer, and multi-client
    counter behavior.
 4. Extend project validation, mutation coverage, and maintenance docs.
@@ -35,7 +35,8 @@ unnecessary file and decoder work and makes stream teardown ownership clear.
 
 - Call `readerState.assetReader.cancelReading()` before returning from the
   post-reader task-cancellation branch.
-- Cancel the same reader inside the stale-completion guard on `_timerQueue`.
+- Cancel the same reader when the queued completion has no live device source
+  and inside the stale-completion guard on `_timerQueue`.
 - Keep stale preparation failures unchanged because they do not carry a started
   reader state.
 - Update `validate_project.py`, its mutation suite, README, SECURITY, VISION,
@@ -50,6 +51,6 @@ unnecessary file and decoder work and makes stream teardown ownership clear.
 - `make test`
 - `make build`
 - `git diff --check`
-- Mutations removing cancellation from either the task-cancelled or stale
-  completion path must fail.
+- Mutations removing cancellation from the task-cancelled, released-source, or
+  stale-completion path must fail.
 - Hosted macOS/Xcode unsigned Debug and Release builds must pass.

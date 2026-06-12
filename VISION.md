@@ -26,6 +26,8 @@ Priority:
   log files are written
 - Loop bundled video only after asset-reader completion; wait while reads are
   active and stop on cancelled or invalid reader states
+- Cancel prepared asset readers when asynchronous startup is cancelled, loses
+  its device source, or is superseded before the reader is installed
 - Keep `make lint`, `make test`, `make build`, and `make check` aligned with
   `./scripts/check_project.sh`
 - Make runtime activation blockers clear to users

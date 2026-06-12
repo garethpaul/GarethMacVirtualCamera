@@ -243,12 +243,19 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
 
             let readerState = try makeAssetReader(asset: loadedAsset.asset,
                                                   videoTrack: loadedAsset.videoTrack)
-            if Task.isCancelled { return }
+            if Task.isCancelled {
+                readerState.assetReader.cancelReading()
+                return
+            }
 
             _timerQueue.async { [weak self] in
-                guard let self else { return }
+                guard let self else {
+                    readerState.assetReader.cancelReading()
+                    return
+                }
 
                 guard self.isCurrentStreamPreparation(generation: generation, videoURL: videoURL) else {
+                    readerState.assetReader.cancelReading()
                     logger.debug("Ignoring stale stream preparation completion")
                     return
                 }

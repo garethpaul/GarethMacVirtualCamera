@@ -33,6 +33,8 @@ Security-sensitive surfaces include:
 - shared app-group configuration between the host app and embedded extension
 - bundled-video parsing, metadata validation, and pixel-buffer stream-format checks
 - completed-reader-only bundled-video loop handling
+- explicit cancellation of prepared asset readers abandoned by stream startup
+  cancellation or stale generation checks
 - runtime diagnostics that collect signing, entitlement, process, camera inventory, and unified-log evidence
 - shell scripts and CI workflows that build, verify, or scan project artifacts
 

@@ -2,6 +2,9 @@
 
 ## 2026-06-08 to 2026-06-09
 
+- Cancelled prepared asset readers when asynchronous stream startup is
+  cancelled, loses its device source, or becomes stale before installation. See
+  `docs/plans/2026-06-12-stale-reader-cancellation.md`.
 - Looped the bundled video only after `AVAssetReader` completion, waiting while
   reads remain active and stopping on cancelled or invalid reader states. See
   `docs/plans/2026-06-10-reader-status-loop-guard.md`.
