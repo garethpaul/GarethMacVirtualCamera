@@ -605,6 +605,24 @@ def test_validator_rejects_missing_released_source_reader_cleanup():
     )
 
 
+def test_validator_rejects_stale_reader_plan_status_regression():
+    assert_validator_rejects_mutation(
+        "docs/plans/2026-06-12-stale-reader-cancellation.md",
+        "status: completed",
+        "status: planned",
+        "stale reader cancellation plan should record completed status and actual verification",
+    )
+
+
+def test_validator_rejects_stale_reader_plan_evidence_regression():
+    assert_validator_rejects_mutation(
+        "docs/plans/2026-06-12-stale-reader-cancellation.md",
+        "Pull-request run `27393152277`",
+        "Pull-request run `00000000000`",
+        "stale reader cancellation plan should record completed status and actual verification",
+    )
+
+
 def test_validator_rejects_missing_video_dimension_unwrap_guard():
     assert_validator_rejects_mutation(
         "Extension/ExtensionProvider.swift",
@@ -1997,6 +2015,8 @@ def main():
     test_validator_rejects_missing_cancelled_preparation_reader_cleanup()
     test_validator_rejects_missing_stale_completion_reader_cleanup()
     test_validator_rejects_missing_released_source_reader_cleanup()
+    test_validator_rejects_stale_reader_plan_status_regression()
+    test_validator_rejects_stale_reader_plan_evidence_regression()
     test_validator_rejects_missing_video_dimension_unwrap_guard()
     test_validator_rejects_missing_finite_video_dimension_guard()
     test_validator_rejects_missing_non_finite_video_frame_rate_guard()

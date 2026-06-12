@@ -442,6 +442,8 @@ def main():
     changes_text = changes_path.read_text() if changes_path.exists() else ""
     plan_path = ROOT / "docs/plans/2026-06-08-make-check-baseline.md"
     plan_text = plan_path.read_text() if plan_path.exists() else ""
+    stale_reader_plan_path = ROOT / "docs/plans/2026-06-12-stale-reader-cancellation.md"
+    stale_reader_plan_text = stale_reader_plan_path.read_text() if stale_reader_plan_path.exists() else ""
     docs_plan_paths = sorted((ROOT / "docs/plans").glob("*.md"))
     check_project_path = ROOT / "scripts/check_project.sh"
     check_project_source = check_project_path.read_text()
@@ -502,6 +504,23 @@ def main():
         require("make check" in docs_plan_text,
                 f"{docs_plan_path.relative_to(ROOT)} should document make check verification",
                 failures)
+    stale_reader_statuses = re.findall(r"^status: .+$", stale_reader_plan_text, flags=re.MULTILINE)
+    stale_reader_sections = stale_reader_plan_text.split("## Verification Completed\n", 1)
+    stale_reader_verification = stale_reader_sections[1] if len(stale_reader_sections) == 2 else ""
+    stale_reader_required_evidence = (
+        "`./scripts/test_validate_project.py`, `./scripts/check_project.sh`, all four",
+        "Pull-request run `27393152277`",
+        "push run `27393226357`",
+        "CodeQL run `27402321140`",
+        "three required `cancelReading()` calls",
+    )
+    require(stale_reader_statuses == ["status: completed"]
+            and all(item in stale_reader_verification for item in stale_reader_required_evidence)
+            and re.search(r"\b(?:pending|todo|tbd)\b", stale_reader_verification, re.IGNORECASE) is None
+            and "test_validator_rejects_stale_reader_plan_status_regression" in validate_project_test_source
+            and "test_validator_rejects_stale_reader_plan_evidence_regression" in validate_project_test_source,
+            "stale reader cancellation plan should record completed status and actual verification",
+            failures)
     require(changes_path.exists() and "make lint" in changes_text and "make test" in changes_text and "make build" in changes_text and "make check" in changes_text and "docs/plans/" in changes_text,
             "CHANGES should record the Makefile validation gate baseline",
             failures)
