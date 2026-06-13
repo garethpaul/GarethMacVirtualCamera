@@ -28,6 +28,8 @@ Priority:
   active and stop on cancelled or invalid reader states
 - Cancel prepared asset readers when asynchronous startup is cancelled, loses
   its device source, or is superseded before the reader is installed
+- Commit loop offset, presentation-time, and host-timebase state only after a
+  camera sample is successfully retimed
 - Keep `make lint`, `make test`, `make build`, and `make check` aligned with
   `./scripts/check_project.sh`
 - Make runtime activation blockers clear to users

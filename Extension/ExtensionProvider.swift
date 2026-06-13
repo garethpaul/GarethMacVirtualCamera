@@ -481,12 +481,12 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
             return
         }
 
-        if let lastPresentationTime = lastPresentationTime, presentationTime < lastPresentationTime {
-            timestampOffset = CMTimeAdd(timestampOffset, assetDuration)
+        var candidateTimestampOffset = timestampOffset
+        if let lastPresentationTime, presentationTime < lastPresentationTime {
+            candidateTimestampOffset = CMTimeAdd(candidateTimestampOffset, assetDuration)
         }
-        lastPresentationTime = presentationTime
 
-        let assetPresentationTime = CMTimeAdd(presentationTime, timestampOffset)
+        let assetPresentationTime = CMTimeAdd(presentationTime, candidateTimestampOffset)
         guard Self.isFiniteTime(assetPresentationTime) else {
             logger.error("Skipping sample buffer with non-finite adjusted presentation timestamp")
             return
@@ -505,23 +505,27 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
             return
         }
 
-        guard let adjustedPresentationTime = hostPresentationTime(for: hostScaledAssetPresentationTime,
-                                                                  currentHostTime: currentHostTime) else {
+        guard let hostTiming = hostPresentationTime(for: hostScaledAssetPresentationTime,
+                                                    currentHostTime: currentHostTime,
+                                                    timebase: hostPresentationTimebase) else {
             logger.error("Skipping sample buffer with non-finite host presentation timestamp")
             return
         }
 
-        guard let hostTimeInNanoseconds = hostTimeInNanoseconds(from: adjustedPresentationTime) else {
+        guard let hostTimeInNanoseconds = hostTimeInNanoseconds(from: hostTiming.presentationTime) else {
             logger.error("Skipping sample buffer with non-finite host-time nanoseconds")
             return
         }
 
         guard let retimedSampleBuffer = retimedSampleBuffer(from: sampleBuffer,
-                                                           adjustedPresentationTime: adjustedPresentationTime,
+                                                           adjustedPresentationTime: hostTiming.presentationTime,
                                                            originalPresentationTime: presentationTime) else {
             return
         }
 
+        timestampOffset = candidateTimestampOffset
+        lastPresentationTime = presentationTime
+        hostPresentationTimebase = hostTiming.timebase
         _streamSource.stream.send(retimedSampleBuffer,
                                   discontinuity: [],
                                   hostTimeInNanoseconds: hostTimeInNanoseconds)
@@ -618,15 +622,16 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
     }
 
     private func hostPresentationTime(for assetPresentationTime: CMTime,
-                                      currentHostTime: CMTime) -> CMTime? {
-        if let hostPresentationTimebase {
-            let hostPresentationTime = CMTimeAdd(hostPresentationTimebase, assetPresentationTime)
+                                      currentHostTime: CMTime,
+                                      timebase: CMTime?) -> (presentationTime: CMTime, timebase: CMTime)? {
+        if let timebase {
+            let hostPresentationTime = CMTimeAdd(timebase, assetPresentationTime)
             guard Self.isFiniteTime(hostPresentationTime),
                   CMTimeCompare(hostPresentationTime, .zero) > 0 else {
                 return nil
             }
 
-            return hostPresentationTime
+            return (hostPresentationTime, timebase)
         }
 
         let basePresentationTime = CMTimeSubtract(currentHostTime, assetPresentationTime)
@@ -634,8 +639,7 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
             return nil
         }
 
-        hostPresentationTimebase = basePresentationTime
-        return currentHostTime
+        return (currentHostTime, basePresentationTime)
     }
 
     private func hostTimeInNanoseconds(from hostTime: CMTime) -> UInt64? {

@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-13
+
+- Kept rejected camera samples from committing loop offset, presentation-time,
+  or host-timebase state before sample retiming succeeds. See
+  `docs/plans/2026-06-13-transactional-sample-timing.md`.
+
 ## 2026-06-08 to 2026-06-09
 
 - Cancelled prepared asset readers when asynchronous stream startup is

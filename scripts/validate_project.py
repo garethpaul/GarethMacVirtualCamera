@@ -444,6 +444,8 @@ def main():
     plan_text = plan_path.read_text() if plan_path.exists() else ""
     stale_reader_plan_path = ROOT / "docs/plans/2026-06-12-stale-reader-cancellation.md"
     stale_reader_plan_text = stale_reader_plan_path.read_text() if stale_reader_plan_path.exists() else ""
+    transactional_timing_plan_path = ROOT / "docs/plans/2026-06-13-transactional-sample-timing.md"
+    transactional_timing_plan_text = transactional_timing_plan_path.read_text() if transactional_timing_plan_path.exists() else ""
     docs_plan_paths = sorted((ROOT / "docs/plans").glob("*.md"))
     check_project_path = ROOT / "scripts/check_project.sh"
     check_project_source = check_project_path.read_text()
@@ -520,6 +522,26 @@ def main():
             and "test_validator_rejects_stale_reader_plan_status_regression" in validate_project_test_source
             and "test_validator_rejects_stale_reader_plan_evidence_regression" in validate_project_test_source,
             "stale reader cancellation plan should record completed status and actual verification",
+            failures)
+    transactional_timing_statuses = re.findall(r"^status: .+$", transactional_timing_plan_text, flags=re.MULTILINE)
+    transactional_timing_sections = transactional_timing_plan_text.split("## Verification Completed\n", 1)
+    transactional_timing_verification = transactional_timing_sections[1] if len(transactional_timing_sections) == 2 else ""
+    transactional_timing_required_evidence = (
+        "`./scripts/test_validate_project.py`",
+        "`./scripts/validate_project.py`",
+        "`./scripts/check_project.sh`",
+        "All four Make gates",
+        "early timestamp offset mutation failed",
+        "early last presentation mutation failed",
+        "validator removal mutation failed",
+        "hosted pull-request check",
+    )
+    require(transactional_timing_statuses == ["status: completed"]
+            and all(item in transactional_timing_verification for item in transactional_timing_required_evidence)
+            and re.search(r"\b(?:pending|todo|tbd|not run)\b", transactional_timing_verification, re.IGNORECASE) is None
+            and "test_validator_rejects_transactional_timing_plan_status_regression" in validate_project_test_source
+            and "test_validator_rejects_transactional_timing_plan_evidence_regression" in validate_project_test_source,
+            "transactional sample timing plan should record completed status and actual verification",
             failures)
     require(changes_path.exists() and "make lint" in changes_text and "make test" in changes_text and "make build" in changes_text and "make check" in changes_text and "docs/plans/" in changes_text,
             "CHANGES should record the Makefile validation gate baseline",
@@ -781,9 +803,30 @@ def main():
     require("CMSampleBufferGetNumSamples(sampleBuffer) == 1" in extension_source and "Skipping sample buffer with unexpected sample count" in extension_source and "let timingStatus = CMSampleBufferGetSampleTimingInfo" in extension_source and "guard timingStatus == noErr else" in extension_source and "Failed to read sample timing info" in extension_source and "let copyStatus = CMSampleBufferCreateCopyWithNewTiming" in extension_source and "guard copyStatus == noErr, let retimedSampleBuffer = copiedSampleBuffer else" in extension_source and "Failed to retime sample buffer" in extension_source and "test_validator_rejects_missing_sample_count_retiming_guard" in validate_project_test_source and "test_validator_rejects_missing_sample_timing_status_guard" in validate_project_test_source and "test_validator_rejects_missing_retimed_copy_status_guard" in validate_project_test_source,
             "extension should require one-sample buffers and CoreMedia retiming calls to succeed before streaming",
             failures)
-    require("private var hostPresentationTimebase: CMTime?" in extension_source and "hostPresentationTime(for assetPresentationTime: CMTime" in extension_source and "let hostScaledAssetPresentationTime = CMTimeConvertScale(assetPresentationTime" in extension_source and "let basePresentationTime = CMTimeSubtract(currentHostTime, assetPresentationTime)" in extension_source and "let hostPresentationTime = CMTimeAdd(hostPresentationTimebase, assetPresentationTime)" in extension_source and "hostTimeInNanoseconds: hostTimeInNanoseconds" in extension_source,
+    require("private var hostPresentationTimebase: CMTime?" in extension_source and "hostPresentationTime(for assetPresentationTime: CMTime" in extension_source and "timebase: CMTime?) -> (presentationTime: CMTime, timebase: CMTime)?" in extension_source and "let hostScaledAssetPresentationTime = CMTimeConvertScale(assetPresentationTime" in extension_source and "let basePresentationTime = CMTimeSubtract(currentHostTime, assetPresentationTime)" in extension_source and "let hostPresentationTime = CMTimeAdd(timebase, assetPresentationTime)" in extension_source and "hostTimeInNanoseconds: hostTimeInNanoseconds" in extension_source,
             "extension should retime emitted sample timestamps into the advertised host-time clock domain",
             failures)
+    candidate_offset_index = extension_source.find("var candidateTimestampOffset = timestampOffset")
+    retimed_sample_index = extension_source.find("guard let retimedSampleBuffer = retimedSampleBuffer(from: sampleBuffer")
+    offset_commit_index = extension_source.find("timestampOffset = candidateTimestampOffset", retimed_sample_index)
+    presentation_commit_index = extension_source.find("lastPresentationTime = presentationTime", retimed_sample_index)
+    timebase_commit_index = extension_source.find("hostPresentationTimebase = hostTiming.timebase", retimed_sample_index)
+    stream_send_index = extension_source.find("_streamSource.stream.send(retimedSampleBuffer", retimed_sample_index)
+    require(
+        min(candidate_offset_index, retimed_sample_index, offset_commit_index,
+            presentation_commit_index, timebase_commit_index, stream_send_index) >= 0
+        and candidate_offset_index < retimed_sample_index
+        < offset_commit_index < presentation_commit_index < timebase_commit_index < stream_send_index
+        and extension_source.find("timestampOffset = candidateTimestampOffset") == offset_commit_index
+        and extension_source.find("lastPresentationTime = presentationTime") == presentation_commit_index
+        and extension_source.find("hostPresentationTimebase = hostTiming.timebase") == timebase_commit_index
+        and "timestampOffset = CMTimeAdd(timestampOffset, assetDuration)" not in extension_source
+        and "test_validator_rejects_early_timestamp_offset_commit" in validate_project_test_source
+        and "test_validator_rejects_early_last_presentation_commit" in validate_project_test_source
+        and "test_validator_rejects_missing_transactional_timing_validator" in validate_project_test_source,
+        "extension should commit sample timing state only after retiming succeeds",
+        failures,
+    )
     require("case needsApplicationLocation" in host_source and "case needsBundleIdentifier" in host_source and "case needsApplicationExecutable" in host_source and "canSubmitActivationRequest" in host_source and "canSubmitDeactivationRequest" in host_source and "prepareForHostSystemExtensionRequest" in host_source and "prepareForSystemExtensionDeactivationRequest" in host_source,
             "host app should model the /Applications, host bundle identifier, and host executable requirements before submitting system-extension requests",
             failures)
@@ -1399,6 +1442,10 @@ def main():
             failures)
     require("test_validator_rejects_missing_runtime_diagnostics_all_architecture_details" in validate_project_test_source,
             "validate_project unit tests should cover runtime diagnostics all-architecture signature detail mutation rejection",
+            failures)
+    transactional_timing_message = '"extension should commit sample ' + 'timing state only after retiming succeeds"'
+    require(transactional_timing_message in validate_project_source and "test_validator_rejects_missing_transactional_timing_validator" in validate_project_test_source,
+            "validate_project should enforce transactional sample timing state",
             failures)
     require("test_validator_rejects_missing_runtime_diagnostics_all_architecture_entitlements" in validate_project_test_source,
             "validate_project unit tests should cover runtime diagnostics all-architecture boolean entitlement mutation rejection",

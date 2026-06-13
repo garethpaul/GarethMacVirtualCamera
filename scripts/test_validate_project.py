@@ -623,6 +623,24 @@ def test_validator_rejects_stale_reader_plan_evidence_regression():
     )
 
 
+def test_validator_rejects_transactional_timing_plan_status_regression():
+    assert_validator_rejects_mutation(
+        "docs/plans/2026-06-13-transactional-sample-timing.md",
+        "status: completed",
+        "status: planned",
+        "transactional sample timing plan should record completed status and actual verification",
+    )
+
+
+def test_validator_rejects_transactional_timing_plan_evidence_regression():
+    assert_validator_rejects_mutation(
+        "docs/plans/2026-06-13-transactional-sample-timing.md",
+        "early timestamp offset mutation failed",
+        "early timestamp offset mutation passed unexpectedly",
+        "transactional sample timing plan should record completed status and actual verification",
+    )
+
+
 def test_validator_rejects_missing_video_dimension_unwrap_guard():
     assert_validator_rejects_mutation(
         "Extension/ExtensionProvider.swift",
@@ -743,7 +761,7 @@ def test_validator_rejects_missing_retimed_copy_status_guard():
 def test_validator_rejects_missing_host_time_sample_retiming():
     assert_validator_rejects_mutation(
         "Extension/ExtensionProvider.swift",
-        """        let assetPresentationTime = CMTimeAdd(presentationTime, timestampOffset)
+        """        let assetPresentationTime = CMTimeAdd(presentationTime, candidateTimestampOffset)
         guard Self.isFiniteTime(assetPresentationTime) else {
             logger.error("Skipping sample buffer with non-finite adjusted presentation timestamp")
             return
@@ -762,19 +780,53 @@ def test_validator_rejects_missing_host_time_sample_retiming():
             return
         }
 
-        guard let adjustedPresentationTime = hostPresentationTime(for: hostScaledAssetPresentationTime,
-                                                                  currentHostTime: currentHostTime) else {
+        guard let hostTiming = hostPresentationTime(for: hostScaledAssetPresentationTime,
+                                                    currentHostTime: currentHostTime,
+                                                    timebase: hostPresentationTimebase) else {
             logger.error("Skipping sample buffer with non-finite host presentation timestamp")
             return
         }
 
-        guard let hostTimeInNanoseconds = hostTimeInNanoseconds(from: adjustedPresentationTime) else {
+        guard let hostTimeInNanoseconds = hostTimeInNanoseconds(from: hostTiming.presentationTime) else {
             logger.error("Skipping sample buffer with non-finite host-time nanoseconds")
             return
         }""",
-        """        let adjustedPresentationTime = CMTimeAdd(presentationTime, timestampOffset)
+        """        let adjustedPresentationTime = CMTimeAdd(presentationTime, candidateTimestampOffset)
         let hostTimeInNanoseconds = UInt64(0)""",
         "extension should retime emitted sample timestamps into the advertised host-time clock domain",
+    )
+
+
+def test_validator_rejects_early_timestamp_offset_commit():
+    assert_validator_rejects_mutation(
+        "Extension/ExtensionProvider.swift",
+        """        let assetPresentationTime = CMTimeAdd(presentationTime, candidateTimestampOffset)""",
+        """        timestampOffset = candidateTimestampOffset
+        let assetPresentationTime = CMTimeAdd(presentationTime, candidateTimestampOffset)""",
+        "extension should commit sample timing state only after retiming succeeds",
+    )
+
+
+def test_validator_rejects_early_last_presentation_commit():
+    assert_validator_rejects_mutation(
+        "Extension/ExtensionProvider.swift",
+        """        let assetPresentationTime = CMTimeAdd(presentationTime, candidateTimestampOffset)""",
+        """        lastPresentationTime = presentationTime
+        let assetPresentationTime = CMTimeAdd(presentationTime, candidateTimestampOffset)""",
+        "extension should commit sample timing state only after retiming succeeds",
+    )
+
+
+def test_validator_rejects_missing_transactional_timing_validator():
+    assert_validator_rejects_mutation(
+        "scripts/validate_project.py",
+        '''        "extension should commit sample timing state only after retiming succeeds",
+        failures,
+    )''',
+        '''        "transactional timing validation removed",
+        failures,
+    )''',
+        "validate_project should enforce transactional sample timing state",
     )
 
 
@@ -2017,6 +2069,8 @@ def main():
     test_validator_rejects_missing_released_source_reader_cleanup()
     test_validator_rejects_stale_reader_plan_status_regression()
     test_validator_rejects_stale_reader_plan_evidence_regression()
+    test_validator_rejects_transactional_timing_plan_status_regression()
+    test_validator_rejects_transactional_timing_plan_evidence_regression()
     test_validator_rejects_missing_video_dimension_unwrap_guard()
     test_validator_rejects_missing_finite_video_dimension_guard()
     test_validator_rejects_missing_non_finite_video_frame_rate_guard()
@@ -2026,6 +2080,9 @@ def main():
     test_validator_rejects_missing_sample_timing_status_guard()
     test_validator_rejects_missing_retimed_copy_status_guard()
     test_validator_rejects_missing_host_time_sample_retiming()
+    test_validator_rejects_early_timestamp_offset_commit()
+    test_validator_rejects_early_last_presentation_commit()
+    test_validator_rejects_missing_transactional_timing_validator()
     test_validator_rejects_missing_unknown_signature_state()
     test_validator_rejects_missing_all_architecture_signature_validation()
     test_validator_rejects_missing_signing_information_unknown_guard()

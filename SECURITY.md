@@ -32,6 +32,7 @@ Security-sensitive surfaces include:
 - host and extension code signing, Team ID matching, and entitlement validation
 - shared app-group configuration between the host app and embedded extension
 - bundled-video parsing, metadata validation, and pixel-buffer stream-format checks
+- transactional sample-timing state that is committed only after retiming succeeds
 - completed-reader-only bundled-video loop handling
 - explicit cancellation of prepared asset readers abandoned by stream startup
   cancellation or stale generation checks
