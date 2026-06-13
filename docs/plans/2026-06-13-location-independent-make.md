@@ -1,7 +1,7 @@
 ---
 title: Location-Independent Project Verification
 date: 2026-06-13
-status: planned
+status: completed
 execution: code
 ---
 
@@ -50,8 +50,26 @@ whitespace, unsigned-build, product-verification, and hosted macOS baseline.
 
 ## Work Completed
 
-Pending implementation.
+- Rooted the Make entry point from the loaded Makefile and invoked the
+  maintained checker through its absolute repository path.
+- Made `scripts/check_project.sh` enter its own repository root before running
+  the existing relative validation commands.
+- Added validator and mutation-test contracts for behavior, completed evidence,
+  and synchronized guidance without touching application or project files.
 
 ## Verification Completed
 
-Pending implementation and validation. Run `make check` before completion.
+- `./scripts/validate_project.py`, `./scripts/test_validate_project.py`, and
+  `./scripts/check_project.sh` passed.
+- All four Make gates (`make lint`, `make test`, `make build`, and `make check`)
+  passed at repository root and from /tmp through the absolute Makefile path.
+- The caller-relative Makefile mutation failed.
+- The missing check-script root mutation failed.
+- The plan-status mutation failed.
+- The plan-evidence mutation failed.
+- The documentation mutation failed.
+- Python and shell syntax, plist/project/scheme parsing, `git diff --check`,
+  exact intended-path review, added-line secret/signing inspection, and
+  generated-artifact inspection passed.
+- Signed extension activation and live virtual-camera output were unavailable
+  on this Linux host and are not claimed.

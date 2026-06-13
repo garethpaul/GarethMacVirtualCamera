@@ -698,6 +698,53 @@ def test_validator_rejects_missing_pull_request_validation():
     )
 
 
+def test_validator_rejects_caller_relative_makefile():
+    assert_validator_rejects_mutation(
+        "Makefile",
+        "ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))",
+        "ROOT := $(CURDIR)",
+        "Makefile should expose lint, test, build, and check validation entry points",
+    )
+
+
+def test_validator_rejects_missing_check_project_root():
+    assert_validator_rejects_mutation(
+        "scripts/check_project.sh",
+        '''ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+''',
+        "",
+        "check_project should enter its repository root before running relative commands",
+    )
+
+
+def test_validator_rejects_location_independent_make_plan_status_regression():
+    assert_validator_rejects_mutation(
+        "docs/plans/2026-06-13-location-independent-make.md",
+        "status: completed",
+        "status: planned",
+        "location-independent Make plan should record completed status and actual verification",
+    )
+
+
+def test_validator_rejects_location_independent_make_plan_evidence_regression():
+    assert_validator_rejects_mutation(
+        "docs/plans/2026-06-13-location-independent-make.md",
+        "caller-relative Makefile mutation failed",
+        "caller-relative Makefile mutation inspected",
+        "location-independent Make plan should record completed status and actual verification",
+    )
+
+
+def test_validator_rejects_location_independent_make_documentation_regression():
+    assert_validator_rejects_mutation(
+        "README.md",
+        "absolute Makefile path",
+        "loaded build file path",
+        "README and CHANGES should document location-independent project verification",
+    )
+
+
 def test_validator_rejects_missing_video_dimension_unwrap_guard():
     assert_validator_rejects_mutation(
         "Extension/ExtensionProvider.swift",
@@ -2133,6 +2180,11 @@ def main():
     test_validator_rejects_main_only_push_validation()
     test_validator_rejects_main_only_pull_request_validation()
     test_validator_rejects_missing_pull_request_validation()
+    test_validator_rejects_caller_relative_makefile()
+    test_validator_rejects_missing_check_project_root()
+    test_validator_rejects_location_independent_make_plan_status_regression()
+    test_validator_rejects_location_independent_make_plan_evidence_regression()
+    test_validator_rejects_location_independent_make_documentation_regression()
     test_validator_rejects_missing_video_dimension_unwrap_guard()
     test_validator_rejects_missing_finite_video_dimension_guard()
     test_validator_rejects_missing_non_finite_video_frame_rate_guard()

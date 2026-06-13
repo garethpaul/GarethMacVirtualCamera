@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Made project verification independent of the caller's working directory by
+  rooting both the Make entry point and the maintained check script.
 - Extended the canonical macOS workflow to pushes and pull requests on every
   branch so stacked changes receive the maintained Xcode build gate.
 - Kept rejected camera samples from committing loop offset, presentation-time,
