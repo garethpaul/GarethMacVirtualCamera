@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
 ./scripts/validate_project.py
 PYTHONDONTWRITEBYTECODE=1 ./scripts/test_validate_project.py
 ./scripts/test_scan_build_log.py

@@ -466,6 +466,8 @@ def main():
     transactional_timing_plan_text = transactional_timing_plan_path.read_text() if transactional_timing_plan_path.exists() else ""
     all_branch_ci_plan_path = ROOT / "docs/plans/2026-06-13-all-branch-hosted-validation.md"
     all_branch_ci_plan_text = all_branch_ci_plan_path.read_text() if all_branch_ci_plan_path.exists() else ""
+    location_independent_make_plan_path = ROOT / "docs/plans/2026-06-13-location-independent-make.md"
+    location_independent_make_plan_text = location_independent_make_plan_path.read_text() if location_independent_make_plan_path.exists() else ""
     docs_plan_paths = sorted((ROOT / "docs/plans").glob("*.md"))
     check_project_path = ROOT / "scripts/check_project.sh"
     check_project_source = check_project_path.read_text()
@@ -509,8 +511,13 @@ def main():
     require(makefile_path.exists()
             and ".PHONY: build check lint test" in makefile_text
             and "lint test build: check" in makefile_text
-            and "./scripts/check_project.sh" in makefile_text,
+            and 'ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))' in makefile_text
+            and '"$(ROOT)/scripts/check_project.sh"' in makefile_text,
             "Makefile should expose lint, test, build, and check validation entry points",
+            failures)
+    require('ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"' in check_project_source
+            and 'cd "$ROOT"' in check_project_source,
+            "check_project should enter its repository root before running relative commands",
             failures)
     require(plan_path.exists() and "status: completed" in plan_text and "make check" in plan_text and "./scripts/check_project.sh" in plan_text,
             "docs/plans should record the completed make-check baseline plan",
@@ -582,6 +589,35 @@ def main():
             and "test_validator_rejects_main_only_pull_request_validation" in validate_project_test_source
             and "test_validator_rejects_missing_pull_request_validation" in validate_project_test_source,
             "all-branch hosted validation plan should record completed status and actual verification",
+            failures)
+    location_independent_make_statuses = re.findall(r"^status: .+$", location_independent_make_plan_text, flags=re.MULTILINE)
+    location_independent_make_sections = location_independent_make_plan_text.split("## Verification Completed\n", 1)
+    location_independent_make_verification = location_independent_make_sections[1] if len(location_independent_make_sections) == 2 else ""
+    location_independent_make_required_evidence = (
+        "`./scripts/test_validate_project.py`",
+        "`./scripts/validate_project.py`",
+        "`./scripts/check_project.sh`",
+        "All four Make gates",
+        "from /tmp",
+        "caller-relative Makefile mutation failed",
+        "missing check-script root mutation failed",
+        "plan-status mutation failed",
+        "plan-evidence mutation failed",
+        "documentation mutation failed",
+    )
+    require(location_independent_make_statuses == ["status: completed"]
+            and all(item in location_independent_make_verification for item in location_independent_make_required_evidence)
+            and re.search(r"\b(?:pending|todo|tbd|not run)\b", location_independent_make_verification, re.IGNORECASE) is None
+            and "test_validator_rejects_caller_relative_makefile" in validate_project_test_source
+            and "test_validator_rejects_missing_check_project_root" in validate_project_test_source
+            and "test_validator_rejects_location_independent_make_plan_status_regression" in validate_project_test_source
+            and "test_validator_rejects_location_independent_make_plan_evidence_regression" in validate_project_test_source
+            and "test_validator_rejects_location_independent_make_documentation_regression" in validate_project_test_source,
+            "location-independent Make plan should record completed status and actual verification",
+            failures)
+    require("absolute Makefile path" in readme_text
+            and "Made project verification independent" in changes_text,
+            "README and CHANGES should document location-independent project verification",
             failures)
     require(changes_path.exists() and "make lint" in changes_text and "make test" in changes_text and "make build" in changes_text and "make check" in changes_text and "docs/plans/" in changes_text,
             "CHANGES should record the Makefile validation gate baseline",
