@@ -641,6 +641,63 @@ def test_validator_rejects_transactional_timing_plan_evidence_regression():
     )
 
 
+def test_validator_rejects_all_branch_ci_plan_status_regression():
+    assert_validator_rejects_mutation(
+        "docs/plans/2026-06-13-all-branch-hosted-validation.md",
+        "status: completed",
+        "status: planned",
+        "all-branch hosted validation plan should record completed status and actual verification",
+    )
+
+
+def test_validator_rejects_all_branch_ci_plan_evidence_regression():
+    assert_validator_rejects_mutation(
+        "docs/plans/2026-06-13-all-branch-hosted-validation.md",
+        "The main-only push mutation failed",
+        "The push trigger was inspected",
+        "all-branch hosted validation plan should record completed status and actual verification",
+    )
+
+
+def test_validator_rejects_main_only_push_validation():
+    assert_validator_rejects_mutation(
+        ".github/workflows/macos-build.yml",
+        """  push:
+  pull_request:
+""",
+        """  push:
+    branches:
+      - main
+  pull_request:
+""",
+        "macOS build workflow should validate pushes and pull requests for every branch",
+    )
+
+
+def test_validator_rejects_main_only_pull_request_validation():
+    assert_validator_rejects_mutation(
+        ".github/workflows/macos-build.yml",
+        """  pull_request:
+  workflow_dispatch:
+""",
+        """  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+""",
+        "macOS build workflow should validate pushes and pull requests for every branch",
+    )
+
+
+def test_validator_rejects_missing_pull_request_validation():
+    assert_validator_rejects_mutation(
+        ".github/workflows/macos-build.yml",
+        "  pull_request:\n",
+        "",
+        "macOS build workflow should validate pushes and pull requests for every branch",
+    )
+
+
 def test_validator_rejects_missing_video_dimension_unwrap_guard():
     assert_validator_rejects_mutation(
         "Extension/ExtensionProvider.swift",
@@ -2071,6 +2128,11 @@ def main():
     test_validator_rejects_stale_reader_plan_evidence_regression()
     test_validator_rejects_transactional_timing_plan_status_regression()
     test_validator_rejects_transactional_timing_plan_evidence_regression()
+    test_validator_rejects_all_branch_ci_plan_status_regression()
+    test_validator_rejects_all_branch_ci_plan_evidence_regression()
+    test_validator_rejects_main_only_push_validation()
+    test_validator_rejects_main_only_pull_request_validation()
+    test_validator_rejects_missing_pull_request_validation()
     test_validator_rejects_missing_video_dimension_unwrap_guard()
     test_validator_rejects_missing_finite_video_dimension_guard()
     test_validator_rejects_missing_non_finite_video_frame_rate_guard()

@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Extended the canonical macOS workflow to pushes and pull requests on every
+  branch so stacked changes receive the maintained Xcode build gate.
 - Kept rejected camera samples from committing loop offset, presentation-time,
   or host-timebase state before sample retiming succeeds. See
   `docs/plans/2026-06-13-transactional-sample-timing.md`.
