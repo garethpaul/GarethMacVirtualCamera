@@ -1,7 +1,7 @@
 ---
 title: All-Branch Hosted Validation
 date: 2026-06-13
-status: planned
+status: completed
 execution: code
 ---
 
@@ -42,7 +42,8 @@ feature branch.
 ## Verification Plan
 
 - Run focused validator tests, direct project validation, all shell suites, all
-  four Make gates, Python/shell syntax, plist/project/scheme parsing,
+  four Make gates (`make lint`, `make test`, `make build`, and `make check`),
+  Python/shell syntax, plist/project/scheme parsing,
   whitespace checks, and intended-file secret/artifact scans.
 - Restore main-only push filtering, restore main-only pull-request filtering,
   and remove pull-request coverage; each hostile mutation must fail.
@@ -51,8 +52,22 @@ feature branch.
 
 ## Work Completed
 
-- Pending implementation.
+- Removed the `main` branch filters from both canonical workflow events while
+  preserving manual dispatch and the complete hosted job.
+- Added an exact top-level trigger-block parser and validation contract.
+- Added plan-evidence and hostile-mutation tests for push coverage,
+  pull-request coverage, and event removal.
+- Documented the all-branch hosted gate in project guidance and change history.
 
 ## Verification Completed
 
-- Pending implementation and verification.
+- `./scripts/validate_project.py` and `./scripts/test_validate_project.py`
+  passed in a pristine copied tree with completed-plan evidence supplied in the
+  copy.
+- All four Make gates passed against the completed real plan.
+- The main-only push mutation failed after restoring the `main` branch filter.
+- The main-only pull-request mutation failed after restoring its `main` branch
+  filter.
+- The missing pull-request mutation failed after removing that event.
+- The hosted push and pull-request checks are a post-push evidence step; their
+  bounded exact-head result is recorded after the implementation commit.

@@ -108,6 +108,24 @@ def workflow_key_is_direct_step_input(step, occurrence):
     return False
 
 
+def workflow_top_level_block(workflow_text, key):
+    lines = workflow_text.splitlines()
+    header = f"{key}:"
+    matching_headers = [index for index, line in enumerate(lines) if line == header]
+    if len(matching_headers) != 1:
+        return None
+
+    start = matching_headers[0]
+    end = start + 1
+    while end < len(lines):
+        line = lines[end]
+        if line and not line.startswith((" ", "\t")):
+            break
+        end += 1
+
+    return lines[start:end]
+
+
 def load_plist(relative_path):
     with (ROOT / relative_path).open("rb") as file:
         return plistlib.load(file)
@@ -446,6 +464,8 @@ def main():
     stale_reader_plan_text = stale_reader_plan_path.read_text() if stale_reader_plan_path.exists() else ""
     transactional_timing_plan_path = ROOT / "docs/plans/2026-06-13-transactional-sample-timing.md"
     transactional_timing_plan_text = transactional_timing_plan_path.read_text() if transactional_timing_plan_path.exists() else ""
+    all_branch_ci_plan_path = ROOT / "docs/plans/2026-06-13-all-branch-hosted-validation.md"
+    all_branch_ci_plan_text = all_branch_ci_plan_path.read_text() if all_branch_ci_plan_path.exists() else ""
     docs_plan_paths = sorted((ROOT / "docs/plans").glob("*.md"))
     check_project_path = ROOT / "scripts/check_project.sh"
     check_project_source = check_project_path.read_text()
@@ -542,6 +562,26 @@ def main():
             and "test_validator_rejects_transactional_timing_plan_status_regression" in validate_project_test_source
             and "test_validator_rejects_transactional_timing_plan_evidence_regression" in validate_project_test_source,
             "transactional sample timing plan should record completed status and actual verification",
+            failures)
+    all_branch_ci_statuses = re.findall(r"^status: .+$", all_branch_ci_plan_text, flags=re.MULTILINE)
+    all_branch_ci_sections = all_branch_ci_plan_text.split("## Verification Completed\n", 1)
+    all_branch_ci_verification = all_branch_ci_sections[1] if len(all_branch_ci_sections) == 2 else ""
+    all_branch_ci_required_evidence = (
+        "`./scripts/test_validate_project.py`",
+        "`./scripts/validate_project.py`",
+        "All four Make gates",
+        "main-only push mutation failed",
+        "main-only pull-request mutation failed",
+        "missing pull-request mutation failed",
+        "hosted push and pull-request checks",
+    )
+    require(all_branch_ci_statuses == ["status: completed"]
+            and all(item in all_branch_ci_verification for item in all_branch_ci_required_evidence)
+            and re.search(r"\b(?:pending|todo|tbd|not run)\b", all_branch_ci_verification, re.IGNORECASE) is None
+            and "test_validator_rejects_main_only_push_validation" in validate_project_test_source
+            and "test_validator_rejects_main_only_pull_request_validation" in validate_project_test_source
+            and "test_validator_rejects_missing_pull_request_validation" in validate_project_test_source,
+            "all-branch hosted validation plan should record completed status and actual verification",
             failures)
     require(changes_path.exists() and "make lint" in changes_text and "make test" in changes_text and "make build" in changes_text and "make check" in changes_text and "docs/plans/" in changes_text,
             "CHANGES should record the Makefile validation gate baseline",
@@ -1522,6 +1562,16 @@ def main():
             failures)
     if workflow_path.exists():
         workflow_text = workflow_path.read_text()
+        expected_trigger_block = [
+            "on:",
+            "  push:",
+            "  pull_request:",
+            "  workflow_dispatch:",
+            "",
+        ]
+        require(workflow_top_level_block(workflow_text, "on") == expected_trigger_block,
+                "macOS build workflow should validate pushes and pull requests for every branch",
+                failures)
         checkout_references = [
             reference
             for step in workflow_steps(workflow_text)

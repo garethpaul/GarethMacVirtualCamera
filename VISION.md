@@ -18,6 +18,8 @@ Priority:
 - Preserve the host app and embedded camera extension relationship
 - Keep build-product, entitlement, signing, and bundled-video validation strong
 - Maintain local checks and CI-equivalent unsigned build paths
+- Run hosted macOS validation for pushes and pull requests on every branch,
+  including stacked pull requests
 - Keep third-party CI actions pinned to reviewed commit SHAs and covered by
   validator mutation tests
 - Keep build-log scanning strict for warnings, errors, failed Xcode commands,
