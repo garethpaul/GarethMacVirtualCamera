@@ -108,6 +108,24 @@ def workflow_key_is_direct_step_input(step, occurrence):
     return False
 
 
+def workflow_top_level_block(workflow_text, key):
+    lines = workflow_text.splitlines()
+    header = f"{key}:"
+    matching_headers = [index for index, line in enumerate(lines) if line == header]
+    if len(matching_headers) != 1:
+        return None
+
+    start = matching_headers[0]
+    end = start + 1
+    while end < len(lines):
+        line = lines[end]
+        if line and not line.startswith((" ", "\t")):
+            break
+        end += 1
+
+    return lines[start:end]
+
+
 def load_plist(relative_path):
     with (ROOT / relative_path).open("rb") as file:
         return plistlib.load(file)
@@ -421,7 +439,10 @@ def main():
     if "private struct DetailsActions" in host_source and "private struct ActivityPanel" in host_source:
         details_actions_source = host_source.split("private struct DetailsActions", 1)[1].split("private struct ActivityPanel", 1)[0]
     extension_source = (ROOT / "Extension/ExtensionProvider.swift").read_text()
+    sample_timestamp_validator_source = (ROOT / "Extension/SampleTimestampValidator.swift").read_text()
     extension_main_source = (ROOT / "Extension/main.swift").read_text()
+    package_source = (ROOT / "Package.swift").read_text()
+    sample_timestamp_test_source = (ROOT / "Tests/CameraTimelineTests/SampleTimestampValidatorTests.swift").read_text()
     readme_text = (ROOT / "README.md").read_text()
     vision_text = (ROOT / "VISION.md").read_text()
     security_text = (ROOT / "SECURITY.md").read_text()
@@ -442,6 +463,14 @@ def main():
     changes_text = changes_path.read_text() if changes_path.exists() else ""
     plan_path = ROOT / "docs/plans/2026-06-08-make-check-baseline.md"
     plan_text = plan_path.read_text() if plan_path.exists() else ""
+    stale_reader_plan_path = ROOT / "docs/plans/2026-06-12-stale-reader-cancellation.md"
+    stale_reader_plan_text = stale_reader_plan_path.read_text() if stale_reader_plan_path.exists() else ""
+    transactional_timing_plan_path = ROOT / "docs/plans/2026-06-13-transactional-sample-timing.md"
+    transactional_timing_plan_text = transactional_timing_plan_path.read_text() if transactional_timing_plan_path.exists() else ""
+    all_branch_ci_plan_path = ROOT / "docs/plans/2026-06-13-all-branch-hosted-validation.md"
+    all_branch_ci_plan_text = all_branch_ci_plan_path.read_text() if all_branch_ci_plan_path.exists() else ""
+    location_independent_make_plan_path = ROOT / "docs/plans/2026-06-13-location-independent-make.md"
+    location_independent_make_plan_text = location_independent_make_plan_path.read_text() if location_independent_make_plan_path.exists() else ""
     docs_plan_paths = sorted((ROOT / "docs/plans").glob("*.md"))
     check_project_path = ROOT / "scripts/check_project.sh"
     check_project_source = check_project_path.read_text()
@@ -485,8 +514,13 @@ def main():
     require(makefile_path.exists()
             and ".PHONY: build check lint test" in makefile_text
             and "lint test build: check" in makefile_text
-            and "./scripts/check_project.sh" in makefile_text,
+            and 'ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))' in makefile_text
+            and '"$(ROOT)/scripts/check_project.sh"' in makefile_text,
             "Makefile should expose lint, test, build, and check validation entry points",
+            failures)
+    require('ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"' in check_project_source
+            and 'cd "$ROOT"' in check_project_source,
+            "check_project should enter its repository root before running relative commands",
             failures)
     require(plan_path.exists() and "status: completed" in plan_text and "make check" in plan_text and "./scripts/check_project.sh" in plan_text,
             "docs/plans should record the completed make-check baseline plan",
@@ -502,6 +536,92 @@ def main():
         require("make check" in docs_plan_text,
                 f"{docs_plan_path.relative_to(ROOT)} should document make check verification",
                 failures)
+    stale_reader_statuses = re.findall(r"^status: .+$", stale_reader_plan_text, flags=re.MULTILINE)
+    stale_reader_sections = stale_reader_plan_text.split("## Verification Completed\n", 1)
+    stale_reader_verification = stale_reader_sections[1] if len(stale_reader_sections) == 2 else ""
+    stale_reader_required_evidence = (
+        "`./scripts/test_validate_project.py`, `./scripts/check_project.sh`, all four",
+        "Pull-request run `27393152277`",
+        "push run `27393226357`",
+        "CodeQL run `27402321140`",
+        "three required `cancelReading()` calls",
+    )
+    require(stale_reader_statuses == ["status: completed"]
+            and all(item in stale_reader_verification for item in stale_reader_required_evidence)
+            and re.search(r"\b(?:pending|todo|tbd)\b", stale_reader_verification, re.IGNORECASE) is None
+            and "test_validator_rejects_stale_reader_plan_status_regression" in validate_project_test_source
+            and "test_validator_rejects_stale_reader_plan_evidence_regression" in validate_project_test_source,
+            "stale reader cancellation plan should record completed status and actual verification",
+            failures)
+    transactional_timing_statuses = re.findall(r"^status: .+$", transactional_timing_plan_text, flags=re.MULTILINE)
+    transactional_timing_sections = transactional_timing_plan_text.split("## Verification Completed\n", 1)
+    transactional_timing_verification = transactional_timing_sections[1] if len(transactional_timing_sections) == 2 else ""
+    transactional_timing_required_evidence = (
+        "`./scripts/test_validate_project.py`",
+        "`./scripts/validate_project.py`",
+        "`./scripts/check_project.sh`",
+        "All four Make gates",
+        "early timestamp offset mutation failed",
+        "early last presentation mutation failed",
+        "validator removal mutation failed",
+        "hosted pull-request check",
+    )
+    require(transactional_timing_statuses == ["status: completed"]
+            and all(item in transactional_timing_verification for item in transactional_timing_required_evidence)
+            and re.search(r"\b(?:pending|todo|tbd|not run)\b", transactional_timing_verification, re.IGNORECASE) is None
+            and "test_validator_rejects_transactional_timing_plan_status_regression" in validate_project_test_source
+            and "test_validator_rejects_transactional_timing_plan_evidence_regression" in validate_project_test_source,
+            "transactional sample timing plan should record completed status and actual verification",
+            failures)
+    all_branch_ci_statuses = re.findall(r"^status: .+$", all_branch_ci_plan_text, flags=re.MULTILINE)
+    all_branch_ci_sections = all_branch_ci_plan_text.split("## Verification Completed\n", 1)
+    all_branch_ci_verification = all_branch_ci_sections[1] if len(all_branch_ci_sections) == 2 else ""
+    all_branch_ci_required_evidence = (
+        "`./scripts/test_validate_project.py`",
+        "`./scripts/validate_project.py`",
+        "All four Make gates",
+        "main-only push mutation failed",
+        "main-only pull-request mutation failed",
+        "missing pull-request mutation failed",
+        "hosted push and pull-request checks",
+    )
+    require(all_branch_ci_statuses == ["status: completed"]
+            and all(item in all_branch_ci_verification for item in all_branch_ci_required_evidence)
+            and re.search(r"\b(?:pending|todo|tbd|not run)\b", all_branch_ci_verification, re.IGNORECASE) is None
+            and "test_validator_rejects_main_only_push_validation" in validate_project_test_source
+            and "test_validator_rejects_main_only_pull_request_validation" in validate_project_test_source
+            and "test_validator_rejects_missing_pull_request_validation" in validate_project_test_source,
+            "all-branch hosted validation plan should record completed status and actual verification",
+            failures)
+    location_independent_make_statuses = re.findall(r"^status: .+$", location_independent_make_plan_text, flags=re.MULTILINE)
+    location_independent_make_sections = location_independent_make_plan_text.split("## Verification Completed\n", 1)
+    location_independent_make_verification = location_independent_make_sections[1] if len(location_independent_make_sections) == 2 else ""
+    location_independent_make_required_evidence = (
+        "`./scripts/test_validate_project.py`",
+        "`./scripts/validate_project.py`",
+        "`./scripts/check_project.sh`",
+        "All four Make gates",
+        "from /tmp",
+        "caller-relative Makefile mutation failed",
+        "missing check-script root mutation failed",
+        "plan-status mutation failed",
+        "plan-evidence mutation failed",
+        "documentation mutation failed",
+    )
+    require(location_independent_make_statuses == ["status: completed"]
+            and all(item in location_independent_make_verification for item in location_independent_make_required_evidence)
+            and re.search(r"\b(?:pending|todo|tbd|not run)\b", location_independent_make_verification, re.IGNORECASE) is None
+            and "test_validator_rejects_caller_relative_makefile" in validate_project_test_source
+            and "test_validator_rejects_missing_check_project_root" in validate_project_test_source
+            and "test_validator_rejects_location_independent_make_plan_status_regression" in validate_project_test_source
+            and "test_validator_rejects_location_independent_make_plan_evidence_regression" in validate_project_test_source
+            and "test_validator_rejects_location_independent_make_documentation_regression" in validate_project_test_source,
+            "location-independent Make plan should record completed status and actual verification",
+            failures)
+    require("absolute Makefile path" in readme_text
+            and "Made project verification independent" in changes_text,
+            "README and CHANGES should document location-independent project verification",
+            failures)
     require(changes_path.exists() and "make lint" in changes_text and "make test" in changes_text and "make build" in changes_text and "make check" in changes_text and "docs/plans/" in changes_text,
             "CHANGES should record the Makefile validation gate baseline",
             failures)
@@ -762,9 +882,61 @@ def main():
     require("CMSampleBufferGetNumSamples(sampleBuffer) == 1" in extension_source and "Skipping sample buffer with unexpected sample count" in extension_source and "let timingStatus = CMSampleBufferGetSampleTimingInfo" in extension_source and "guard timingStatus == noErr else" in extension_source and "Failed to read sample timing info" in extension_source and "let copyStatus = CMSampleBufferCreateCopyWithNewTiming" in extension_source and "guard copyStatus == noErr, let retimedSampleBuffer = copiedSampleBuffer else" in extension_source and "Failed to retime sample buffer" in extension_source and "test_validator_rejects_missing_sample_count_retiming_guard" in validate_project_test_source and "test_validator_rejects_missing_sample_timing_status_guard" in validate_project_test_source and "test_validator_rejects_missing_retimed_copy_status_guard" in validate_project_test_source,
             "extension should require one-sample buffers and CoreMedia retiming calls to succeed before streaming",
             failures)
-    require("private var hostPresentationTimebase: CMTime?" in extension_source and "hostPresentationTime(for assetPresentationTime: CMTime" in extension_source and "let hostScaledAssetPresentationTime = CMTimeConvertScale(assetPresentationTime" in extension_source and "let basePresentationTime = CMTimeSubtract(currentHostTime, assetPresentationTime)" in extension_source and "let hostPresentationTime = CMTimeAdd(hostPresentationTimebase, assetPresentationTime)" in extension_source and "hostTimeInNanoseconds: hostTimeInNanoseconds" in extension_source,
+    require("private var hostPresentationTimebase: CMTime?" in extension_source and "hostPresentationTime(for assetPresentationTime: CMTime" in extension_source and "timebase: CMTime?) -> (presentationTime: CMTime, timebase: CMTime)?" in extension_source and "let hostScaledAssetPresentationTime = CMTimeConvertScale(assetPresentationTime" in extension_source and "let basePresentationTime = CMTimeSubtract(currentHostTime, assetPresentationTime)" in extension_source and "let hostPresentationTime = CMTimeAdd(timebase, assetPresentationTime)" in extension_source and "hostTimeInNanoseconds: hostTimeInNanoseconds" in extension_source,
             "extension should retime emitted sample timestamps into the advertised host-time clock domain",
             failures)
+    require("enum SampleTimestampValidator" in sample_timestamp_validator_source
+            and "CMTimeCompare(presentationTime, previousPresentationTime) > 0" in sample_timestamp_validator_source
+            and extension_source.count("SampleTimestampValidator.strictlyAdvances") == 2
+            and "duplicate or regressing presentation timestamp" in extension_source
+            and "duplicate or regressing host presentation timestamp" in extension_source
+            and "testRejectsDuplicateSyntheticSampleTimestamp" in sample_timestamp_test_source
+            and "testRejectsRegressingSyntheticSampleTimestamp" in sample_timestamp_test_source,
+            "extension should reject duplicate or regressing source and host timestamps",
+            failures)
+    require('let failureDescription = nextAssetReader.error?.localizedDescription ?? "unknown error"' in extension_source
+            and "nextAssetReader.cancelReading()" in extension_source
+            and "throw CameraExtensionError.assetReaderFailedToStart(failureDescription)" in extension_source
+            and "test_validator_rejects_missing_failed_reader_cancellation" in validate_project_test_source,
+            "extension should cancel a partially started reader before propagating startup failure",
+            failures)
+    require("SampleTimestampValidator.swift in Sources" in project_text
+            and 'name: "CameraTimeline"' in package_source
+            and 'swift test --scratch-path "$SWIFT_TEST_SCRATCH"' in check_project_source,
+            "project checks should compile and run the synthetic sample timestamp unit tests",
+            failures)
+    restart_index = extension_source.find("let nextReaderState = try makeAssetReader")
+    loop_commit_index = extension_source.find("advanceLoopTiming(by: assetDuration)", restart_index)
+    reader_install_index = extension_source.find("installAssetReaderState(nextReaderState)", loop_commit_index)
+    require(min(restart_index, loop_commit_index, reader_install_index) >= 0
+            and restart_index < loop_commit_index < reader_install_index,
+            "extension should start the replacement reader before committing loop timing state",
+            failures)
+    candidate_offset_index = extension_source.find("let candidateTimestampOffset = timestampOffset")
+    retimed_sample_index = extension_source.find("guard let retimedSampleBuffer = retimedSampleBuffer(from: sampleBuffer")
+    offset_commit_index = extension_source.find("timestampOffset = candidateTimestampOffset", retimed_sample_index)
+    presentation_commit_index = extension_source.find("lastPresentationTime = presentationTime", retimed_sample_index)
+    host_presentation_commit_index = extension_source.find("lastHostPresentationTime = hostTiming.presentationTime", retimed_sample_index)
+    timebase_commit_index = extension_source.find("hostPresentationTimebase = hostTiming.timebase", retimed_sample_index)
+    stream_send_index = extension_source.find("_streamSource.stream.send(retimedSampleBuffer", retimed_sample_index)
+    require(
+        min(candidate_offset_index, retimed_sample_index, offset_commit_index,
+            presentation_commit_index, host_presentation_commit_index,
+            timebase_commit_index, stream_send_index) >= 0
+        and candidate_offset_index < retimed_sample_index
+        < offset_commit_index < presentation_commit_index < host_presentation_commit_index
+        < timebase_commit_index < stream_send_index
+        and extension_source.find("timestampOffset = candidateTimestampOffset") == offset_commit_index
+        and extension_source.find("lastPresentationTime = presentationTime") == presentation_commit_index
+        and extension_source.find("lastHostPresentationTime = hostTiming.presentationTime") == host_presentation_commit_index
+        and extension_source.find("hostPresentationTimebase = hostTiming.timebase") == timebase_commit_index
+        and "timestampOffset = CMTimeAdd(timestampOffset, assetDuration)" not in extension_source
+        and "test_validator_rejects_early_timestamp_offset_commit" in validate_project_test_source
+        and "test_validator_rejects_early_last_presentation_commit" in validate_project_test_source
+        and "test_validator_rejects_missing_transactional_timing_validator" in validate_project_test_source,
+        "extension should commit sample timing state only after retiming succeeds",
+        failures,
+    )
     require("case needsApplicationLocation" in host_source and "case needsBundleIdentifier" in host_source and "case needsApplicationExecutable" in host_source and "canSubmitActivationRequest" in host_source and "canSubmitDeactivationRequest" in host_source and "prepareForHostSystemExtensionRequest" in host_source and "prepareForSystemExtensionDeactivationRequest" in host_source,
             "host app should model the /Applications, host bundle identifier, and host executable requirements before submitting system-extension requests",
             failures)
@@ -1046,7 +1218,7 @@ def main():
     require("didOpenSettings" in host_source and "System Settings Unavailable" in host_source,
             "host app should report System Settings launch failures",
             failures)
-    require("./scripts/check_project.sh" in readme_text and "project metadata validation, validator mutation tests for recent runtime-readiness guardrails, build-log scanner tests, unsigned build script tests, runtime diagnostics tests, build-product verifier tests, shell syntax checks, and whitespace checks" in readme_text and "bundle identifiers, aligned bundle versions, declared executables, display metadata, product-specific privacy usage strings, bundled runtime diagnostics self-tests, resolved CoreMediaIO extension metadata, and bundled-video resource metadata" in readme_text and "exact host and extension entitlement keys, shared app-group values, Xcode entitlement file bindings" in readme_text and "decoded pixel-buffer and host-clock sample-timing guards" in readme_text,
+    require("./scripts/check_project.sh" in readme_text and "project metadata validation, five synthetic CoreMedia timestamp unit tests, validator mutation tests for recent runtime-readiness guardrails, build-log scanner tests, unsigned build script tests, runtime diagnostics tests, build-product verifier tests, shell syntax checks, and whitespace checks" in readme_text and "bundle identifiers, aligned bundle versions, declared executables, display metadata, product-specific privacy usage strings, bundled runtime diagnostics self-tests, resolved CoreMediaIO extension metadata, and bundled-video resource metadata" in readme_text and "exact host and extension entitlement keys, shared app-group values, Xcode entitlement file bindings" in readme_text and "decoded pixel-buffer and host-clock sample-timing guards" in readme_text,
             "README should document the local pre-push project check",
             failures)
     require("CI-equivalent unsigned compile" in readme_text and "./scripts/build_unsigned.sh" in readme_text and "./scripts/scan_build_log.py .build/Xcode/Logs/build-Debug.log .build/Xcode/Logs/build-Release.log" in readme_text and ".build/Xcode" in readme_text and ".build/Xcode/Logs" in readme_text and "BUILD_OUTPUT_PATH" in readme_text and "BUILD_LOG_PATH" in readme_text,
@@ -1381,6 +1553,10 @@ def main():
     require("test_validator_rejects_missing_runtime_diagnostics_all_architecture_details" in validate_project_test_source,
             "validate_project unit tests should cover runtime diagnostics all-architecture signature detail mutation rejection",
             failures)
+    transactional_timing_message = '"extension should commit sample ' + 'timing state only after retiming succeeds"'
+    require(transactional_timing_message in validate_project_source and "test_validator_rejects_missing_transactional_timing_validator" in validate_project_test_source,
+            "validate_project should enforce transactional sample timing state",
+            failures)
     require("test_validator_rejects_missing_runtime_diagnostics_all_architecture_entitlements" in validate_project_test_source,
             "validate_project unit tests should cover runtime diagnostics all-architecture boolean entitlement mutation rejection",
             failures)
@@ -1456,6 +1632,16 @@ def main():
             failures)
     if workflow_path.exists():
         workflow_text = workflow_path.read_text()
+        expected_trigger_block = [
+            "on:",
+            "  push:",
+            "  pull_request:",
+            "  workflow_dispatch:",
+            "",
+        ]
+        require(workflow_top_level_block(workflow_text, "on") == expected_trigger_block,
+                "macOS build workflow should validate pushes and pull requests for every branch",
+                failures)
         checkout_references = [
             reference
             for step in workflow_steps(workflow_text)

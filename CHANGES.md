@@ -1,5 +1,24 @@
 # Changes
 
+## 2026-06-19
+
+- Rejected duplicate and regressing source or host presentation timestamps
+  before retiming and sending camera samples.
+- Started each replacement `AVAssetReader` before committing loop timing state,
+  and cancelled partially started readers before reporting startup failure.
+- Added five executable CoreMedia timestamp tests and mutation contracts to the
+  location-independent `make check` gate.
+
+## 2026-06-13
+
+- Made project verification independent of the caller's working directory by
+  rooting both the Make entry point and the maintained check script.
+- Extended the canonical macOS workflow to pushes and pull requests on every
+  branch so stacked changes receive the maintained Xcode build gate.
+- Kept rejected camera samples from committing loop offset, presentation-time,
+  or host-timebase state before sample retiming succeeds. See
+  `docs/plans/2026-06-13-transactional-sample-timing.md`.
+
 ## 2026-06-08 to 2026-06-09
 
 - Cancelled prepared asset readers when asynchronous stream startup is

@@ -18,6 +18,8 @@ Priority:
 - Preserve the host app and embedded camera extension relationship
 - Keep build-product, entitlement, signing, and bundled-video validation strong
 - Maintain local checks and CI-equivalent unsigned build paths
+- Run hosted macOS validation for pushes and pull requests on every branch,
+  including stacked pull requests
 - Keep third-party CI actions pinned to reviewed commit SHAs and covered by
   validator mutation tests
 - Keep build-log scanning strict for warnings, errors, failed Xcode commands,
@@ -28,6 +30,8 @@ Priority:
   active and stop on cancelled or invalid reader states
 - Cancel prepared asset readers when asynchronous startup is cancelled, loses
   its device source, or is superseded before the reader is installed
+- Commit loop offset, presentation-time, and host-timebase state only after a
+  camera sample is successfully retimed
 - Keep `make lint`, `make test`, `make build`, and `make check` aligned with
   `./scripts/check_project.sh`
 - Make runtime activation blockers clear to users

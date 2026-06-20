@@ -29,6 +29,8 @@ A macOS CoreMediaIO camera extension packaged in a SwiftUI host app. The extensi
 - Test-related files detected: `docs/plans/2026-06-08-validate-project-parser-test.md`, `scripts/test_build_unsigned.sh`, `scripts/test_collect_runtime_diagnostics.sh`, `scripts/test_scan_build_log.py`, `scripts/test_validate_project.py`, `scripts/test_verify_build_products.sh`
 - Start with the narrowest relevant test or Make target, then run `make check` before handing off if the change is not documentation-only.
 - Keep README verification notes in sync when commands, fixtures, or supported toolchains change.
+- Keep the canonical macOS workflow enabled for pushes and pull requests on
+  every branch, including stacked pull requests.
 
 ## PR / change guidance
 

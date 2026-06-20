@@ -23,7 +23,9 @@ The shared scheme replaces `/Applications/GarethVideoCam.app` with the freshly b
 
 ## Validate
 
-This workspace does not require Xcode for local validation checks:
+This workspace does not require extension installation, signing, or camera
+access for local validation. The maintained checks require a macOS Swift
+toolchain:
 
 ```sh
 ./scripts/check_project.sh
@@ -39,10 +41,14 @@ make check
 ```
 
 The `lint`, `test`, and `build` targets currently delegate to `make check` so
-the same validator, mutation tests, script checks, and whitespace checks run
-through every local gate entry point.
+the same Swift unit tests, validator mutation tests, script checks, and
+whitespace checks run through every local gate entry point.
 
-The check script runs project metadata validation, validator mutation tests for recent runtime-readiness guardrails, build-log scanner tests, unsigned build script tests, runtime diagnostics tests, build-product verifier tests, shell syntax checks, and whitespace checks. The build-product verifier checks bundle identifiers, aligned bundle versions, declared executables, display metadata, product-specific privacy usage strings, bundled runtime diagnostics self-tests, resolved CoreMediaIO extension metadata, and bundled-video resource metadata. The validator also checks exact host and extension entitlement keys, shared app-group values, Xcode entitlement file bindings, the Makefile gate targets, the bundled `Extension/video.mp4` for parseable dimensions, frame rate, and positive video duration, and the extension's decoded pixel-buffer and host-clock sample-timing guards, plus completed-reader loop handling and explicit cancellation of prepared readers abandoned during asynchronous startup, so resource and stream-format regressions fail before runtime activation.
+Use the absolute Makefile path to run the same gates from another working
+directory. Both Make and the check script resolve the repository root before
+running the maintained relative commands.
+
+The check script runs project metadata validation, five synthetic CoreMedia timestamp unit tests, validator mutation tests for recent runtime-readiness guardrails, build-log scanner tests, unsigned build script tests, runtime diagnostics tests, build-product verifier tests, shell syntax checks, and whitespace checks. The build-product verifier checks bundle identifiers, aligned bundle versions, declared executables, display metadata, product-specific privacy usage strings, bundled runtime diagnostics self-tests, resolved CoreMediaIO extension metadata, and bundled-video resource metadata. The validator also checks exact host and extension entitlement keys, shared app-group values, Xcode entitlement file bindings, the Makefile gate targets, the bundled `Extension/video.mp4` for parseable dimensions, frame rate, and positive video duration, and the extension's decoded pixel-buffer and host-clock sample-timing guards. Duplicate, regressing, or otherwise rejected samples do not commit loop offset, source presentation time, host presentation time, or host-timebase state. Completed-reader loop handling, replacement-reader startup before loop-state commit, and explicit cancellation of abandoned or partially started readers are also enforced, so timing, resource, and stream-format regressions fail before runtime activation.
 
 The build-product verifier prefers `/usr/bin/python3` for plist and bundled-video metadata parsing and accepts `PYTHON3_BIN` when CI or a local runner needs an explicit interpreter path.
 
@@ -62,7 +68,7 @@ build and product-verifier scripts are validated before build log or product
 paths are created. `BUILD_ARCH` overrides are also validated as single
 architecture tokens before `xcodebuild` is resolved or build logs are created.
 
-Pushes and pull requests to `main` also run `.github/workflows/macos-build.yml` on GitHub's `macos-26` runner. That workflow records the selected macOS, Xcode, Swift, and macOS SDK evidence, runs `make check`, performs unsigned Debug and Release target builds, verifies the built app products contain the embedded system extension, aligned bundle versions, declared executables, display metadata, product-specific privacy usage strings, bundled runtime diagnostics self-tests, resolved CoreMediaIO extension metadata, and bundled-video metadata, captures the Xcode logs under `.build/Xcode/Logs`, scans any captured `build-*.log` output including partial logs from failed builds, and fails on source warnings, errors, build-failed, archive-failed, analyze-failed, clean-failed, install-failed, and test-failed banners, build or test failure summaries, or nonzero Xcode command failures. Xcode 26.5 currently emits an AppIntents metadata processor notice for targets without AppIntents; CI filters only that known tool notice.
+Pushes and pull requests for every branch run `.github/workflows/macos-build.yml` on GitHub's `macos-26` runner, including stacked pull requests whose base is another feature branch. That workflow records the selected macOS, Xcode, Swift, and macOS SDK evidence, runs `make check`, performs unsigned Debug and Release target builds, verifies the built app products contain the embedded system extension, aligned bundle versions, declared executables, display metadata, product-specific privacy usage strings, bundled runtime diagnostics self-tests, resolved CoreMediaIO extension metadata, and bundled-video metadata, captures the Xcode logs under `.build/Xcode/Logs`, scans any captured `build-*.log` output including partial logs from failed builds, and fails on source warnings, errors, build-failed, archive-failed, analyze-failed, clean-failed, install-failed, and test-failed banners, build or test failure summaries, or nonzero Xcode command failures. Xcode 26.5 currently emits an AppIntents metadata processor notice for targets without AppIntents; CI filters only that known tool notice.
 
 Third-party workflow actions are pinned to reviewed commit SHAs, checkout does
 not persist workflow credentials, and validator mutation tests reject floating
