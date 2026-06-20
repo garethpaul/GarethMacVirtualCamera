@@ -225,6 +225,7 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
     private let _timerQueue = DispatchQueue(label: "com.garethpaul.GarethVideoCam.stream")
 
     private var lastPresentationTime: CMTime?
+    private var lastHostPresentationTime: CMTime?
     private var timestampOffset: CMTime = .zero
     private var hostPresentationTimebase: CMTime?
 
@@ -374,7 +375,9 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
             nextAssetReader.add(nextTrackOutput)
 
             guard nextAssetReader.startReading() else {
-                throw CameraExtensionError.assetReaderFailedToStart(nextAssetReader.error?.localizedDescription ?? "unknown error")
+                let failureDescription = nextAssetReader.error?.localizedDescription ?? "unknown error"
+                nextAssetReader.cancelReading()
+                throw CameraExtensionError.assetReaderFailedToStart(failureDescription)
             }
 
             return AssetReaderState(assetReader: nextAssetReader,
@@ -386,6 +389,8 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
     }
 
     private func installAssetReaderState(_ readerState: AssetReaderState) {
+        assetReader?.cancelReading()
+        trackOutput = nil
         assetReader = readerState.assetReader
         trackOutput = readerState.trackOutput
     }
@@ -452,8 +457,9 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
         }
 
         do {
+            let nextReaderState = try makeAssetReader(asset: asset, videoTrack: videoTrack)
             advanceLoopTiming(by: assetDuration)
-            installAssetReaderState(try makeAssetReader(asset: asset, videoTrack: videoTrack))
+            installAssetReaderState(nextReaderState)
         } catch {
             logger.error("Unable to loop the bundled video: \(error.localizedDescription, privacy: .public)")
             stopStreamingSession()
@@ -461,11 +467,6 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
     }
 
     private func processSampleBuffer(_ sampleBuffer: CMSampleBuffer) {
-        guard let assetDuration else {
-            logger.error("No asset duration is available for stream timing")
-            return
-        }
-
         guard CMSampleBufferDataIsReady(sampleBuffer) else {
             logger.error("Skipping sample buffer that is not ready")
             return
@@ -481,11 +482,13 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
             return
         }
 
-        var candidateTimestampOffset = timestampOffset
-        if let lastPresentationTime, presentationTime < lastPresentationTime {
-            candidateTimestampOffset = CMTimeAdd(candidateTimestampOffset, assetDuration)
+        guard SampleTimestampValidator.strictlyAdvances(presentationTime,
+                                                        after: lastPresentationTime) else {
+            logger.error("Skipping sample buffer with a duplicate or regressing presentation timestamp")
+            return
         }
 
+        let candidateTimestampOffset = timestampOffset
         let assetPresentationTime = CMTimeAdd(presentationTime, candidateTimestampOffset)
         guard Self.isFiniteTime(assetPresentationTime) else {
             logger.error("Skipping sample buffer with non-finite adjusted presentation timestamp")
@@ -517,6 +520,12 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
             return
         }
 
+        guard SampleTimestampValidator.strictlyAdvances(hostTiming.presentationTime,
+                                                        after: lastHostPresentationTime) else {
+            logger.error("Skipping sample buffer with a duplicate or regressing host presentation timestamp")
+            return
+        }
+
         guard let retimedSampleBuffer = retimedSampleBuffer(from: sampleBuffer,
                                                            adjustedPresentationTime: hostTiming.presentationTime,
                                                            originalPresentationTime: presentationTime) else {
@@ -525,6 +534,7 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
 
         timestampOffset = candidateTimestampOffset
         lastPresentationTime = presentationTime
+        lastHostPresentationTime = hostTiming.presentationTime
         hostPresentationTimebase = hostTiming.timebase
         _streamSource.stream.send(retimedSampleBuffer,
                                   discontinuity: [],
@@ -659,6 +669,7 @@ final class ExtensionDeviceSource: NSObject, CMIOExtensionDeviceSource, @uncheck
 
     private func resetTiming() {
         lastPresentationTime = nil
+        lastHostPresentationTime = nil
         timestampOffset = .zero
         hostPresentationTimebase = nil
     }

@@ -1,5 +1,14 @@
 # Changes
 
+## 2026-06-19
+
+- Rejected duplicate and regressing source or host presentation timestamps
+  before retiming and sending camera samples.
+- Started each replacement `AVAssetReader` before committing loop timing state,
+  and cancelled partially started readers before reporting startup failure.
+- Added five executable CoreMedia timestamp tests and mutation contracts to the
+  location-independent `make check` gate.
+
 ## 2026-06-13
 
 - Made project verification independent of the caller's working directory by

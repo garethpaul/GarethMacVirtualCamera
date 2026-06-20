@@ -439,7 +439,10 @@ def main():
     if "private struct DetailsActions" in host_source and "private struct ActivityPanel" in host_source:
         details_actions_source = host_source.split("private struct DetailsActions", 1)[1].split("private struct ActivityPanel", 1)[0]
     extension_source = (ROOT / "Extension/ExtensionProvider.swift").read_text()
+    sample_timestamp_validator_source = (ROOT / "Extension/SampleTimestampValidator.swift").read_text()
     extension_main_source = (ROOT / "Extension/main.swift").read_text()
+    package_source = (ROOT / "Package.swift").read_text()
+    sample_timestamp_test_source = (ROOT / "Tests/CameraTimelineTests/SampleTimestampValidatorTests.swift").read_text()
     readme_text = (ROOT / "README.md").read_text()
     vision_text = (ROOT / "VISION.md").read_text()
     security_text = (ROOT / "SECURITY.md").read_text()
@@ -882,19 +885,50 @@ def main():
     require("private var hostPresentationTimebase: CMTime?" in extension_source and "hostPresentationTime(for assetPresentationTime: CMTime" in extension_source and "timebase: CMTime?) -> (presentationTime: CMTime, timebase: CMTime)?" in extension_source and "let hostScaledAssetPresentationTime = CMTimeConvertScale(assetPresentationTime" in extension_source and "let basePresentationTime = CMTimeSubtract(currentHostTime, assetPresentationTime)" in extension_source and "let hostPresentationTime = CMTimeAdd(timebase, assetPresentationTime)" in extension_source and "hostTimeInNanoseconds: hostTimeInNanoseconds" in extension_source,
             "extension should retime emitted sample timestamps into the advertised host-time clock domain",
             failures)
-    candidate_offset_index = extension_source.find("var candidateTimestampOffset = timestampOffset")
+    require("enum SampleTimestampValidator" in sample_timestamp_validator_source
+            and "CMTimeCompare(presentationTime, previousPresentationTime) > 0" in sample_timestamp_validator_source
+            and extension_source.count("SampleTimestampValidator.strictlyAdvances") == 2
+            and "duplicate or regressing presentation timestamp" in extension_source
+            and "duplicate or regressing host presentation timestamp" in extension_source
+            and "testRejectsDuplicateSyntheticSampleTimestamp" in sample_timestamp_test_source
+            and "testRejectsRegressingSyntheticSampleTimestamp" in sample_timestamp_test_source,
+            "extension should reject duplicate or regressing source and host timestamps",
+            failures)
+    require('let failureDescription = nextAssetReader.error?.localizedDescription ?? "unknown error"' in extension_source
+            and "nextAssetReader.cancelReading()" in extension_source
+            and "throw CameraExtensionError.assetReaderFailedToStart(failureDescription)" in extension_source
+            and "test_validator_rejects_missing_failed_reader_cancellation" in validate_project_test_source,
+            "extension should cancel a partially started reader before propagating startup failure",
+            failures)
+    require("SampleTimestampValidator.swift in Sources" in project_text
+            and 'name: "CameraTimeline"' in package_source
+            and 'swift test --scratch-path "$SWIFT_TEST_SCRATCH"' in check_project_source,
+            "project checks should compile and run the synthetic sample timestamp unit tests",
+            failures)
+    restart_index = extension_source.find("let nextReaderState = try makeAssetReader")
+    loop_commit_index = extension_source.find("advanceLoopTiming(by: assetDuration)", restart_index)
+    reader_install_index = extension_source.find("installAssetReaderState(nextReaderState)", loop_commit_index)
+    require(min(restart_index, loop_commit_index, reader_install_index) >= 0
+            and restart_index < loop_commit_index < reader_install_index,
+            "extension should start the replacement reader before committing loop timing state",
+            failures)
+    candidate_offset_index = extension_source.find("let candidateTimestampOffset = timestampOffset")
     retimed_sample_index = extension_source.find("guard let retimedSampleBuffer = retimedSampleBuffer(from: sampleBuffer")
     offset_commit_index = extension_source.find("timestampOffset = candidateTimestampOffset", retimed_sample_index)
     presentation_commit_index = extension_source.find("lastPresentationTime = presentationTime", retimed_sample_index)
+    host_presentation_commit_index = extension_source.find("lastHostPresentationTime = hostTiming.presentationTime", retimed_sample_index)
     timebase_commit_index = extension_source.find("hostPresentationTimebase = hostTiming.timebase", retimed_sample_index)
     stream_send_index = extension_source.find("_streamSource.stream.send(retimedSampleBuffer", retimed_sample_index)
     require(
         min(candidate_offset_index, retimed_sample_index, offset_commit_index,
-            presentation_commit_index, timebase_commit_index, stream_send_index) >= 0
+            presentation_commit_index, host_presentation_commit_index,
+            timebase_commit_index, stream_send_index) >= 0
         and candidate_offset_index < retimed_sample_index
-        < offset_commit_index < presentation_commit_index < timebase_commit_index < stream_send_index
+        < offset_commit_index < presentation_commit_index < host_presentation_commit_index
+        < timebase_commit_index < stream_send_index
         and extension_source.find("timestampOffset = candidateTimestampOffset") == offset_commit_index
         and extension_source.find("lastPresentationTime = presentationTime") == presentation_commit_index
+        and extension_source.find("lastHostPresentationTime = hostTiming.presentationTime") == host_presentation_commit_index
         and extension_source.find("hostPresentationTimebase = hostTiming.timebase") == timebase_commit_index
         and "timestampOffset = CMTimeAdd(timestampOffset, assetDuration)" not in extension_source
         and "test_validator_rejects_early_timestamp_offset_commit" in validate_project_test_source
@@ -1184,7 +1218,7 @@ def main():
     require("didOpenSettings" in host_source and "System Settings Unavailable" in host_source,
             "host app should report System Settings launch failures",
             failures)
-    require("./scripts/check_project.sh" in readme_text and "project metadata validation, validator mutation tests for recent runtime-readiness guardrails, build-log scanner tests, unsigned build script tests, runtime diagnostics tests, build-product verifier tests, shell syntax checks, and whitespace checks" in readme_text and "bundle identifiers, aligned bundle versions, declared executables, display metadata, product-specific privacy usage strings, bundled runtime diagnostics self-tests, resolved CoreMediaIO extension metadata, and bundled-video resource metadata" in readme_text and "exact host and extension entitlement keys, shared app-group values, Xcode entitlement file bindings" in readme_text and "decoded pixel-buffer and host-clock sample-timing guards" in readme_text,
+    require("./scripts/check_project.sh" in readme_text and "project metadata validation, five synthetic CoreMedia timestamp unit tests, validator mutation tests for recent runtime-readiness guardrails, build-log scanner tests, unsigned build script tests, runtime diagnostics tests, build-product verifier tests, shell syntax checks, and whitespace checks" in readme_text and "bundle identifiers, aligned bundle versions, declared executables, display metadata, product-specific privacy usage strings, bundled runtime diagnostics self-tests, resolved CoreMediaIO extension metadata, and bundled-video resource metadata" in readme_text and "exact host and extension entitlement keys, shared app-group values, Xcode entitlement file bindings" in readme_text and "decoded pixel-buffer and host-clock sample-timing guards" in readme_text,
             "README should document the local pre-push project check",
             failures)
     require("CI-equivalent unsigned compile" in readme_text and "./scripts/build_unsigned.sh" in readme_text and "./scripts/scan_build_log.py .build/Xcode/Logs/build-Debug.log .build/Xcode/Logs/build-Release.log" in readme_text and ".build/Xcode" in readme_text and ".build/Xcode/Logs" in readme_text and "BUILD_OUTPUT_PATH" in readme_text and "BUILD_LOG_PATH" in readme_text,

@@ -934,6 +934,95 @@ def test_validator_rejects_missing_transactional_timing_validator():
     )
 
 
+def test_source_requires_strictly_increasing_sample_timestamps():
+    extension_source = (ROOT / "Extension/ExtensionProvider.swift").read_text(encoding="utf-8")
+
+    assert "SampleTimestampValidator.strictlyAdvances" in extension_source, (
+        "extension should reject duplicate or regressing sample timestamps before retiming"
+    )
+
+
+def test_reader_restart_precedes_loop_timing_commit():
+    extension_source = (ROOT / "Extension/ExtensionProvider.swift").read_text(encoding="utf-8")
+    restart_index = extension_source.find("let nextReaderState = try makeAssetReader")
+    loop_commit_index = extension_source.find("advanceLoopTiming(by: assetDuration)")
+    install_index = extension_source.find("installAssetReaderState(nextReaderState)")
+
+    assert min(restart_index, loop_commit_index, install_index) >= 0, (
+        "extension should expose the transactional reader restart sequence"
+    )
+    assert restart_index < loop_commit_index < install_index, (
+        "extension should not commit loop timing until the replacement reader starts successfully"
+    )
+
+
+def test_reader_start_failure_cancels_partial_reader():
+    extension_source = (ROOT / "Extension/ExtensionProvider.swift").read_text(encoding="utf-8")
+
+    assert """            guard nextAssetReader.startReading() else {
+                let failureDescription = nextAssetReader.error?.localizedDescription ?? "unknown error"
+                nextAssetReader.cancelReading()
+                throw CameraExtensionError.assetReaderFailedToStart(failureDescription)
+            }""" in extension_source, (
+        "extension should cancel a partially started reader before propagating startup failure"
+    )
+
+
+def test_validator_rejects_non_strict_sample_timestamp_comparison():
+    assert_validator_rejects_mutation(
+        "Extension/SampleTimestampValidator.swift",
+        "return CMTimeCompare(presentationTime, previousPresentationTime) > 0",
+        "return CMTimeCompare(presentationTime, previousPresentationTime) >= 0",
+        "extension should reject duplicate or regressing source and host timestamps",
+    )
+
+
+def test_validator_rejects_missing_host_timestamp_guard():
+    assert_validator_rejects_mutation(
+        "Extension/ExtensionProvider.swift",
+        """        guard SampleTimestampValidator.strictlyAdvances(hostTiming.presentationTime,
+                                                        after: lastHostPresentationTime) else {
+            logger.error("Skipping sample buffer with a duplicate or regressing host presentation timestamp")
+            return
+        }
+
+""",
+        "",
+        "extension should reject duplicate or regressing source and host timestamps",
+    )
+
+
+def test_validator_rejects_early_loop_timing_commit():
+    assert_validator_rejects_mutation(
+        "Extension/ExtensionProvider.swift",
+        """            let nextReaderState = try makeAssetReader(asset: asset, videoTrack: videoTrack)
+            advanceLoopTiming(by: assetDuration)
+            installAssetReaderState(nextReaderState)""",
+        """            advanceLoopTiming(by: assetDuration)
+            let nextReaderState = try makeAssetReader(asset: asset, videoTrack: videoTrack)
+            installAssetReaderState(nextReaderState)""",
+        "extension should start the replacement reader before committing loop timing state",
+    )
+
+
+def test_validator_rejects_missing_synthetic_timestamp_unit_gate():
+    assert_validator_rejects_mutation(
+        "scripts/check_project.sh",
+        'swift test --scratch-path "$SWIFT_TEST_SCRATCH"\n',
+        "",
+        "project checks should compile and run the synthetic sample timestamp unit tests",
+    )
+
+
+def test_validator_rejects_missing_failed_reader_cancellation():
+    assert_validator_rejects_mutation(
+        "Extension/ExtensionProvider.swift",
+        "                nextAssetReader.cancelReading()\n",
+        "",
+        "extension should cancel a partially started reader before propagating startup failure",
+    )
+
+
 def test_validator_rejects_missing_unknown_signature_state():
     assert_validator_rejects_mutation(
         "GarethVideoCam/ContentView.swift",
@@ -2197,6 +2286,14 @@ def main():
     test_validator_rejects_early_timestamp_offset_commit()
     test_validator_rejects_early_last_presentation_commit()
     test_validator_rejects_missing_transactional_timing_validator()
+    test_source_requires_strictly_increasing_sample_timestamps()
+    test_reader_restart_precedes_loop_timing_commit()
+    test_reader_start_failure_cancels_partial_reader()
+    test_validator_rejects_non_strict_sample_timestamp_comparison()
+    test_validator_rejects_missing_host_timestamp_guard()
+    test_validator_rejects_early_loop_timing_commit()
+    test_validator_rejects_missing_synthetic_timestamp_unit_gate()
+    test_validator_rejects_missing_failed_reader_cancellation()
     test_validator_rejects_missing_unknown_signature_state()
     test_validator_rejects_missing_all_architecture_signature_validation()
     test_validator_rejects_missing_signing_information_unknown_guard()
