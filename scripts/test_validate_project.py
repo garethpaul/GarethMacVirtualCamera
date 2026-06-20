@@ -701,9 +701,18 @@ def test_validator_rejects_missing_pull_request_validation():
 def test_validator_rejects_caller_relative_makefile():
     assert_validator_rejects_mutation(
         "Makefile",
-        "ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))",
+        "override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))",
         "ROOT := $(CURDIR)",
-        "Makefile should expose lint, test, build, and check validation entry points",
+        "Makefile should protect its root and expose lint, test, build, and check validation entry points",
+    )
+
+
+def test_validator_rejects_overrideable_makefile_root():
+    assert_validator_rejects_mutation(
+        "Makefile",
+        "override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))",
+        "ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))",
+        "Makefile should protect its root and expose lint, test, build, and check validation entry points",
     )
 
 
@@ -2106,7 +2115,7 @@ def test_validator_rejects_missing_make_gate_aliases():
         "Makefile",
         "\nlint test build: check\n",
         "\n",
-        "Makefile should expose lint, test, build, and check validation entry points",
+        "Makefile should protect its root and expose lint, test, build, and check validation entry points",
     )
 
 

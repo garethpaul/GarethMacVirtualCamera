@@ -514,9 +514,9 @@ def main():
     require(makefile_path.exists()
             and ".PHONY: build check lint test" in makefile_text
             and "lint test build: check" in makefile_text
-            and 'ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))' in makefile_text
+            and 'override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))' in makefile_text
             and '"$(ROOT)/scripts/check_project.sh"' in makefile_text,
-            "Makefile should expose lint, test, build, and check validation entry points",
+            "Makefile should protect its root and expose lint, test, build, and check validation entry points",
             failures)
     require('ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"' in check_project_source
             and 'cd "$ROOT"' in check_project_source,
