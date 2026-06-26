@@ -30,6 +30,33 @@ section() {
   printf '\n== %s ==\n' "$1"
 }
 
+validate_log_window() {
+  local duration_value
+  local duration_unit
+  local maximum_value
+
+  if [[ ! "$LOG_WINDOW" =~ ^([1-9][0-9]{0,4})([smhd])$ ]]; then
+    printf 'Log window must be a positive duration no greater than 24h (for example 30m or 1h).\n' >&2
+    return 1
+  fi
+
+  duration_value="${BASH_REMATCH[1]}"
+  duration_unit="${BASH_REMATCH[2]}"
+  case "$duration_unit" in
+    s) maximum_value=86400 ;;
+    m) maximum_value=1440 ;;
+    h) maximum_value=24 ;;
+    d) maximum_value=1 ;;
+  esac
+
+  if [ "$duration_value" -gt "$maximum_value" ]; then
+    printf 'Log window must be a positive duration no greater than 24h (for example 30m or 1h).\n' >&2
+    return 1
+  fi
+}
+
+validate_log_window
+
 run_if_available() {
   local command_name="$1"
   shift

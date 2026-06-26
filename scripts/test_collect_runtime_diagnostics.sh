@@ -16,6 +16,22 @@ require_output() {
   fi
 }
 
+require_rejected_log_window() {
+  local log_window="$1"
+  local output
+
+  if output="$(GARETH_DIAGNOSTICS_SELF_TEST=resource-discovery "$ROOT/scripts/collect_runtime_diagnostics.sh" /Applications/GarethVideoCam.app "$log_window" 2>&1)"; then
+    printf 'Expected diagnostics log window to be rejected: %s\n' "$log_window" >&2
+    exit 1
+  fi
+
+  require_output "$output" "Log window must be a positive duration no greater than 24h"
+}
+
+require_rejected_log_window "all"
+require_rejected_log_window "25h"
+require_rejected_log_window "2d"
+
 blocked_output="$(GARETH_DIAGNOSTICS_SELF_TEST=readiness-rollup "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 resource_discovery_output="$(GARETH_DIAGNOSTICS_SELF_TEST=resource-discovery "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 unknown_output="$(GARETH_DIAGNOSTICS_SELF_TEST=readiness-rollup-unknown "$ROOT/scripts/collect_runtime_diagnostics.sh")"

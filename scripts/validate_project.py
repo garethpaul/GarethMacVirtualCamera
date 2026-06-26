@@ -1590,6 +1590,11 @@ def main():
     require("run_if_available xcode-select -p" in runtime_diagnostics_source and "run_if_available xcodebuild -version" in runtime_diagnostics_source and "run_if_available swift --version" in runtime_diagnostics_source and "run_if_available xcrun --sdk macosx --show-sdk-version" in runtime_diagnostics_source and "run_if_available xcrun --sdk macosx --show-sdk-path" in runtime_diagnostics_source and "selected developer directory, Swift version, macOS SDK version and path" in readme_text,
             "runtime diagnostics should report selected developer directory, Swift, and macOS SDK evidence",
             failures)
+    require("validate_log_window" in runtime_diagnostics_source and
+            "no greater than 24h" in runtime_diagnostics_source and
+            "require_rejected_log_window" in runtime_diagnostics_test_source,
+            "runtime diagnostics should bound caller-selected log history",
+            failures)
     require("camera_name = $0" in runtime_diagnostics_source and "sub(/^[[:space:]]+/, \"\", camera_name)" in runtime_diagnostics_source and "sub(/[[:space:]]+$/, \"\", camera_name)" in runtime_diagnostics_source and "sub(/:$/, \"\", camera_name)" in runtime_diagnostics_source and "camera_name == expected_camera_name" in runtime_diagnostics_source,
             "runtime diagnostics camera-device parser should compare exact normalized camera names",
             failures)
