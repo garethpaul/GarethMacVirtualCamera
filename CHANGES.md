@@ -1,5 +1,22 @@
 # Changes
 
+## 2026-06-26T22:58:38Z
+
+- **Priority:** Security and diagnostic resource boundaries.
+- **Summary:** Validate caller-selected unified-log windows and cap collection
+  at 24 hours before invoking `log show`.
+- **Files:** `scripts/collect_runtime_diagnostics.sh`,
+  `scripts/test_collect_runtime_diagnostics.sh`, `scripts/validate_project.py`,
+  `README.md`, `SECURITY.md`, `VISION.md`, and `CHANGES.md`.
+- **Tests:** Malformed and over-limit duration regressions pass alongside the
+  project validator, build-log scanner, unsigned-build, runtime diagnostics,
+  build-product verifier, shell syntax, and diff checks.
+- **Findings:** Static project validation passes locally, but this Linux host
+  has no `swift` executable for the SwiftPM or Xcode portions of `make check`.
+- **Blockers:** Native Swift/Xcode validation requires the hosted macOS gate.
+- **Next action:** Open a focused pull request and require the exact PR SHA to
+  pass hosted macOS validation.
+
 ## 2026-06-19
 
 - Rejected duplicate and regressing source or host presentation timestamps

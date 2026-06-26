@@ -43,6 +43,7 @@ Next priorities:
 - Preserve strict validation around bundle IDs, app groups, entitlements, and
   video metadata
 - Document signed-host evidence when testing on real developer machines
+- Keep runtime diagnostic log collection bounded to at most 24 hours
 
 Contribution rules:
 
