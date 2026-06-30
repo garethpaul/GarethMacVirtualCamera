@@ -55,7 +55,35 @@ validate_log_window() {
   fi
 }
 
+validate_app_path() {
+  if [ -z "$APP_PATH" ]; then
+    printf 'App path must be an absolute .app bundle path.\n' >&2
+    return 1
+  fi
+
+  if [ "$APP_PATH" = "-" ]; then
+    printf 'App path must be an absolute .app bundle path.\n' >&2
+    return 1
+  fi
+
+  if [[ "$APP_PATH" == *[$'\n\r\t']* ]]; then
+    printf 'App path must not contain control characters.\n' >&2
+    return 1
+  fi
+
+  if [[ ! "$APP_PATH" = /* ]]; then
+    printf 'App path must be an absolute path.\n' >&2
+    return 1
+  fi
+
+  if [[ ! "$APP_PATH" == *.app ]]; then
+    printf 'App path must end with .app.\n' >&2
+    return 1
+  fi
+}
+
 validate_log_window
+validate_app_path
 
 run_if_available() {
   local command_name="$1"

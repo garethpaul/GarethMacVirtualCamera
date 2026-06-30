@@ -725,6 +725,38 @@ if ! grep -q "Configured PYTHON3_BIN is not executable or not found" "$TMP_DIR/b
 fi
 
 set +e
+PYTHON3_BIN="-" PRODUCTS_PATH="$GOOD_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/bad-python-dash.out" 2>"$TMP_DIR/bad-python-dash.err"
+bad_python_dash_status=$?
+set -e
+
+if [ "$bad_python_dash_status" -eq 0 ]; then
+  printf 'Expected verifier to reject a dash PYTHON3_BIN override.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Configured PYTHON3_BIN is not executable or not found" "$TMP_DIR/bad-python-dash.err"; then
+  printf 'Verifier failure did not explain the dash PYTHON3_BIN override.\n' >&2
+  cat "$TMP_DIR/bad-python-dash.err" >&2
+  exit 1
+fi
+
+set +e
+PYTHON3_BIN=$'/usr/bin/python3\n' PRODUCTS_PATH="$GOOD_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" Debug >"$TMP_DIR/bad-python-newline.out" 2>"$TMP_DIR/bad-python-newline.err"
+bad_python_newline_status=$?
+set -e
+
+if [ "$bad_python_newline_status" -eq 0 ]; then
+  printf 'Expected verifier to reject a newline PYTHON3_BIN override.\n' >&2
+  exit 1
+fi
+
+if ! grep -q "Configured PYTHON3_BIN is not executable or not found" "$TMP_DIR/bad-python-newline.err"; then
+  printf 'Verifier failure did not explain the newline PYTHON3_BIN override.\n' >&2
+  cat "$TMP_DIR/bad-python-newline.err" >&2
+  exit 1
+fi
+
+set +e
 PYTHON3_BIN="$TMP_DIR/missing-python3" PRODUCTS_PATH="$GOOD_PRODUCTS" "$ROOT/scripts/verify_build_products.sh" "../Debug" >"$TMP_DIR/invalid-configuration.out" 2>"$TMP_DIR/invalid-configuration.err"
 invalid_configuration_status=$?
 set -e

@@ -50,6 +50,9 @@ playground.xcworkspace
 
 .build/
 
+__pycache__/
+*.py[cod]
+
 .DS_Store
 
 # CocoaPods

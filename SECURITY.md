@@ -58,7 +58,7 @@ This repository does not use a root package dependency manifest. If dependencies
 
 Build and validation changes should keep `./scripts/check_project.sh`, `.github/workflows/macos-build.yml`, `./scripts/build_unsigned.sh`, `./scripts/verify_build_products.sh`, and `./scripts/scan_build_log.py` aligned so local and CI evidence stay comparable.
 Caller-selected unified-log history must be validated and capped at 24 hours
-before `log show` runs.
+before `log show` runs. Runtime diagnostics app paths must be absolute paths ending in `.app` and must not contain control characters.
 Keep hosted validation enabled for pushes and pull requests on every branch so
 stacked changes cannot bypass the only available Swift and Xcode build gate.
 Keep third-party workflow actions pinned to reviewed commit SHAs; update the
