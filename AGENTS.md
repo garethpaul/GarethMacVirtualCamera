@@ -16,7 +16,8 @@ A macOS CoreMediaIO camera extension packaged in a SwiftUI host app. The extensi
 ## Development commands
 
 - Install dependencies: no repository-specific install command is documented.
-- Full baseline: `make check`
+- Full baseline: `make check` (also available as `make lint`, `make test`, and `make build`); both `./scripts/check_project.sh` and the Make targets run the same gate
+- Partial baseline without Swift: project validation, script tests, shell syntax checks, and whitespace checks still run when swift is unavailable or `CHECK_SKIP_SWIFT=1`; hosted macOS CI remains the authoritative Swift and Xcode gate
 - Local Apple development: `open GarethVideoCam.xcodeproj`
 - If a command above skips because a platform toolchain is missing, verify on a machine with that SDK before claiming platform behavior is tested.
 
@@ -31,6 +32,7 @@ A macOS CoreMediaIO camera extension packaged in a SwiftUI host app. The extensi
 - Keep README verification notes in sync when commands, fixtures, or supported toolchains change.
 - Keep the canonical macOS workflow enabled for pushes and pull requests on
   every branch, including stacked pull requests.
+- Update [`CHANGES.md`](CHANGES.md) when validation behavior, security posture, or documented commands change.
 
 ## PR / change guidance
 
@@ -42,6 +44,7 @@ A macOS CoreMediaIO camera extension packaged in a SwiftUI host app. The extensi
 ## Safety and gotchas
 
 - No repo-specific secrets are documented; keep local credentials, build outputs, and machine-specific files out of commits.
+- Runtime diagnostic log collection is bounded to at most 24 hours; see [`SECURITY.md`](SECURITY.md) for the canonical security policy.
 
 ## Agent workflow
 

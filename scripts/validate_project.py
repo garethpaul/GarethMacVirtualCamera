@@ -27,6 +27,8 @@ EXPECTED_EXTENSION_ENTITLEMENT_KEYS = {
 }
 CHECKOUT_ACTION = "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10"
 CHECKOUT_RELEASE = "v6.0.3"
+ARTIFACT_ACTION = "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
+ARTIFACT_RELEASE = "v7.0.1"
 
 
 def workflow_steps(workflow_text):
@@ -446,6 +448,7 @@ def main():
     readme_text = (ROOT / "README.md").read_text()
     vision_text = (ROOT / "VISION.md").read_text()
     security_text = (ROOT / "SECURITY.md").read_text()
+    agents_text = (ROOT / "AGENTS.md").read_text()
     readme_overview_path = ROOT / "docs/readme-overview.svg"
     readme_overview_text = ""
     readme_overview_xml_valid = False
@@ -633,6 +636,18 @@ def main():
             failures)
     require("make lint" in vision_text and "make test" in vision_text and "make build" in vision_text and "make check" in vision_text and "./scripts/check_project.sh" in vision_text,
             "VISION should keep the Makefile gate entry points aligned with the project script",
+            failures)
+    require("make lint" in agents_text and "make test" in agents_text and "make build" in agents_text and "make check" in agents_text and "./scripts/check_project.sh" in agents_text,
+            "AGENTS should document the Makefile gate entry points and check script",
+            failures)
+    require("CHECK_SKIP_SWIFT" in agents_text and "swift is unavailable" in agents_text,
+            "AGENTS should document partial validation when the Swift toolchain is unavailable",
+            failures)
+    require("at most 24 hours" in agents_text and "[`SECURITY.md`](SECURITY.md)" in agents_text,
+            "AGENTS should document the bounded runtime diagnostic log window and security policy link",
+            failures)
+    require("no greater than 24" in readme_text and "capped at 24 hours" in security_text and "at most 24 hours" in vision_text,
+            "README, SECURITY, and VISION should document the bounded runtime diagnostic log window",
             failures)
     require(readme_overview_path.exists() and readme_overview_path.stat().st_size > 0,
             "README overview SVG should exist and be non-empty",
@@ -902,7 +917,10 @@ def main():
             failures)
     require("SampleTimestampValidator.swift in Sources" in project_text
             and 'name: "CameraTimeline"' in package_source
-            and 'swift test --scratch-path "$SWIFT_TEST_SCRATCH"' in check_project_source,
+            and ".macOS(.v14)" in package_source
+            and 'swift test --scratch-path "$SWIFT_TEST_SCRATCH"' in check_project_source
+            and "python3 -m py_compile" in check_project_source
+            and "CHECK_SKIP_SWIFT" in check_project_source,
             "project checks should compile and run the synthetic sample timestamp unit tests",
             failures)
     restart_index = extension_source.find("let nextReaderState = try makeAssetReader")
@@ -1592,7 +1610,8 @@ def main():
             failures)
     require("validate_log_window" in runtime_diagnostics_source and
             "no greater than 24h" in runtime_diagnostics_source and
-            "require_rejected_log_window" in runtime_diagnostics_test_source,
+            "require_rejected_log_window" in runtime_diagnostics_test_source and
+            "require_accepted_log_window" in runtime_diagnostics_test_source,
             "runtime diagnostics should bound caller-selected log history",
             failures)
     require("camera_name = $0" in runtime_diagnostics_source and "sub(/^[[:space:]]+/, \"\", camera_name)" in runtime_diagnostics_source and "sub(/[[:space:]]+$/, \"\", camera_name)" in runtime_diagnostics_source and "sub(/:$/, \"\", camera_name)" in runtime_diagnostics_source and "camera_name == expected_camera_name" in runtime_diagnostics_source,
@@ -1676,6 +1695,23 @@ def main():
                     and checkout_credentials[0]["value"] == "false",
                     "macOS build workflow checkout should disable persisted credentials exactly once in the checkout step",
                     failures)
+        artifact_references = [
+            reference
+            for step in workflow_steps(workflow_text)
+            for reference in workflow_action_references(step)
+            if reference["reference"].startswith("actions/upload-artifact@")
+        ]
+        require(len(artifact_references) == 1,
+                "macOS build workflow should contain exactly one upload-artifact action step",
+                failures)
+        if len(artifact_references) == 1:
+            artifact_reference = artifact_references[0]
+            require(artifact_reference["reference"] == ARTIFACT_ACTION,
+                    "macOS build workflow should pin the upload-artifact action",
+                    failures)
+            require(artifact_reference["annotation"] == ARTIFACT_RELEASE,
+                    "macOS build workflow should label the upload-artifact action with its exact release",
+                    failures)
         require("runs-on: macos-26" in workflow_text,
                 "macOS build workflow should run on the macOS 26 runner",
                 failures)
@@ -1724,7 +1760,7 @@ def main():
         require("Scan Xcode logs for warnings and failures" in workflow_text and "if: always() && hashFiles('.build/Xcode/Logs/build-*.log') != ''" in workflow_text and "./scripts/scan_build_log.py .build/Xcode/Logs/build-*.log" in workflow_text,
                 "macOS build workflow should scan any captured Debug or Release xcodebuild output even after failed build steps",
                 failures)
-        require("actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" in workflow_text and "xcode-build-logs" in workflow_text and "path: .build/Xcode/Logs/build-*.log" in workflow_text and "if-no-files-found: ignore" in workflow_text,
+        require("actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" in workflow_text and "xcode-build-logs" in workflow_text and "path: .build/Xcode/Logs/build-*.log" in workflow_text and "if-no-files-found: ignore" in workflow_text and "test_validator_rejects_incorrect_artifact_release_annotation" in validate_project_test_source,
                 "macOS build workflow should upload captured Xcode build logs for later inspection",
                 failures)
 

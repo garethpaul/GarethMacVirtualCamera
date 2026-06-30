@@ -1,5 +1,26 @@
 # Changes
 
+## 2026-06-30
+
+- **Priority:** Linux-friendly validation and guardrail coverage.
+- **Summary:** Run Python compile, script, and shell checks before Swift unit
+  tests; skip Swift when the toolchain is unavailable or `CHECK_SKIP_SWIFT=1`.
+  Wire two previously unexecuted validator mutation tests, align SwiftPM with
+  the macOS 14.0 deployment target, expand runtime log-window boundary tests,
+  pin upload-artifact release annotations, and sync `AGENTS.md` with the
+  Makefile gates and 24-hour diagnostic log cap.
+- **Files:** `scripts/check_project.sh`, `Package.swift`,
+  `scripts/validate_project.py`, `scripts/test_validate_project.py`,
+  `scripts/test_collect_runtime_diagnostics.sh`, `AGENTS.md`, and `CHANGES.md`.
+- **Tests:** Project validator, build-log scanner, unsigned-build, runtime
+  diagnostics, build-product verifier, shell syntax, and diff checks pass on
+  this Linux host; Swift unit tests remain skipped without a macOS toolchain.
+- **Findings:** Partial `make check` now completes off macOS; hosted CI still
+  runs the full Swift and Xcode gate.
+- **Blockers:** Native Swift/Xcode validation requires the hosted macOS gate.
+- **Next action:** Continue hardening runtime diagnostics input validation and
+  PYTHON3_BIN resolution in build-product verification.
+
 ## 2026-06-26T22:58:38Z
 
 - **Priority:** Security and diagnostic resource boundaries.
