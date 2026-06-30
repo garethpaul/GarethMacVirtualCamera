@@ -518,9 +518,27 @@ def main():
             and ".PHONY: build check lint test" in makefile_text
             and "lint test build: check" in makefile_text
             and 'override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))' in makefile_text
-            and '"$(ROOT)/scripts/check_project.sh"' in makefile_text,
+            and '"$(ROOT)/scripts/check_project.sh"' in makefile_text
+            and "test_validator_rejects_overrideable_makefile_root" in validate_project_test_source,
             "Makefile should protect its root and expose lint, test, build, and check validation entry points",
             failures)
+    mutation_test_names = re.findall(
+        r"^def (test_validator_rejects_[^\(]+)\(",
+        validate_project_test_source,
+        re.MULTILINE,
+    )
+    mutation_test_calls = re.findall(
+        r"^\s+(test_validator_rejects_[^\(]+)\(\)",
+        validate_project_test_source,
+        re.MULTILINE,
+    )
+    missing_mutation_test_calls = sorted(set(mutation_test_names) - set(mutation_test_calls))
+    require(
+        not missing_mutation_test_calls,
+        "validator mutation tests missing from test_validate_project.main(): "
+        + ", ".join(missing_mutation_test_calls),
+        failures,
+    )
     require('ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"' in check_project_source
             and 'cd "$ROOT"' in check_project_source,
             "check_project should enter its repository root before running relative commands",
@@ -646,7 +664,7 @@ def main():
     require("at most 24 hours" in agents_text and "[`SECURITY.md`](SECURITY.md)" in agents_text,
             "AGENTS should document the bounded runtime diagnostic log window and security policy link",
             failures)
-    require("no greater than 24" in readme_text and "capped at 24 hours" in security_text and "at most 24 hours" in vision_text,
+    require("no greater than 24" in readme_text and "absolute path ending in" in readme_text and "capped at 24 hours" in security_text and "at most 24 hours" in vision_text,
             "README, SECURITY, and VISION should document the bounded runtime diagnostic log window",
             failures)
     require(readme_overview_path.exists() and readme_overview_path.stat().st_size > 0,

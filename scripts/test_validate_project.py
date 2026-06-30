@@ -2326,6 +2326,7 @@ def main():
     test_validator_rejects_main_only_pull_request_validation()
     test_validator_rejects_missing_pull_request_validation()
     test_validator_rejects_caller_relative_makefile()
+    test_validator_rejects_overrideable_makefile_root()
     test_validator_rejects_missing_check_project_root()
     test_validator_rejects_location_independent_make_plan_status_regression()
     test_validator_rejects_location_independent_make_plan_evidence_regression()

@@ -24,8 +24,7 @@
 - **Findings:** Partial `make check` now completes off macOS; hosted CI still
   runs the full Swift and Xcode gate.
 - **Blockers:** Native Swift/Xcode validation requires the hosted macOS gate.
-- **Next action:** Continue hardening runtime diagnostics input validation and
-  PYTHON3_BIN resolution in build-product verification.
+- **Next action:** Require hosted macOS CI before merging to protected `main`.
 
 ## 2026-06-26T22:58:38Z
 
