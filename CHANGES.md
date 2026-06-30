@@ -7,11 +7,17 @@
   tests; skip Swift when the toolchain is unavailable or `CHECK_SKIP_SWIFT=1`.
   Wire two previously unexecuted validator mutation tests, align SwiftPM with
   the macOS 14.0 deployment target, expand runtime log-window boundary tests,
-  pin upload-artifact release annotations, and sync `AGENTS.md` with the
-  Makefile gates and 24-hour diagnostic log cap.
-- **Files:** `scripts/check_project.sh`, `Package.swift`,
+  pin upload-artifact release annotations, sync `AGENTS.md` with the Makefile
+  gates and 24-hour diagnostic log cap, validate runtime diagnostics app paths,
+  harden `PYTHON3_BIN` overrides, ignore Python bytecode caches, and exercise
+  unreadable build-log scanner coverage as an unprivileged user when running
+  as root.
+- **Files:** `scripts/check_project.sh`, `Package.swift`, `.gitignore`,
   `scripts/validate_project.py`, `scripts/test_validate_project.py`,
-  `scripts/test_collect_runtime_diagnostics.sh`, `AGENTS.md`, and `CHANGES.md`.
+  `scripts/test_collect_runtime_diagnostics.sh`,
+  `scripts/collect_runtime_diagnostics.sh`, `scripts/verify_build_products.sh`,
+  `scripts/test_verify_build_products.sh`, `scripts/test_scan_build_log.py`,
+  `AGENTS.md`, and `CHANGES.md`.
 - **Tests:** Project validator, build-log scanner, unsigned-build, runtime
   diagnostics, build-product verifier, shell syntax, and diff checks pass on
   this Linux host; Swift unit tests remain skipped without a macOS toolchain.

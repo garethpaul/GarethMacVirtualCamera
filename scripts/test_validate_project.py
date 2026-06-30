@@ -1126,6 +1126,44 @@ def test_validator_rejects_numeric_boolean_entitlement_acceptance():
     )
 
 
+def test_validator_rejects_missing_runtime_diagnostics_app_path_guard():
+    assert_validator_rejects_mutation(
+        "scripts/collect_runtime_diagnostics.sh",
+        """validate_app_path() {
+  if [ -z "$APP_PATH" ]; then
+    printf 'App path must be an absolute .app bundle path.\\n' >&2
+    return 1
+  fi
+
+  if [ "$APP_PATH" = "-" ]; then
+    printf 'App path must be an absolute .app bundle path.\\n' >&2
+    return 1
+  fi
+
+  if [[ "$APP_PATH" == *[$'\\n\\r\\t']* ]]; then
+    printf 'App path must not contain control characters.\\n' >&2
+    return 1
+  fi
+
+  if [[ ! "$APP_PATH" = /* ]]; then
+    printf 'App path must be an absolute path.\\n' >&2
+    return 1
+  fi
+
+  if [[ ! "$APP_PATH" == *.app ]]; then
+    printf 'App path must end with .app.\\n' >&2
+    return 1
+  fi
+}
+
+validate_log_window
+validate_app_path
+""",
+        "validate_log_window\n",
+        "runtime diagnostics should bound caller-selected log history",
+    )
+
+
 def test_validator_rejects_missing_runtime_diagnostics_all_architecture_details():
     assert_validator_rejects_mutation(
         "scripts/collect_runtime_diagnostics.sh",
@@ -2321,6 +2359,7 @@ def main():
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_details()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_entitlements()
     test_validator_rejects_missing_runtime_diagnostics_executable_name_guard()
+    test_validator_rejects_missing_runtime_diagnostics_app_path_guard()
     test_validator_rejects_missing_runtime_diagnostics_scalar_boolean_entitlement_guard()
     test_validator_rejects_missing_runtime_diagnostics_info_plist_string_guard()
     test_validator_rejects_missing_runtime_diagnostics_blank_info_plist_guard()

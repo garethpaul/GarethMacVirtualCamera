@@ -46,6 +46,23 @@ require_rejected_log_window "1441m"
 require_accepted_log_window "24h"
 require_accepted_log_window "86400s"
 
+require_rejected_app_path() {
+  local app_path="$1"
+  local expected="$2"
+  local output
+
+  if output="$(GARETH_DIAGNOSTICS_SELF_TEST=resource-discovery "$ROOT/scripts/collect_runtime_diagnostics.sh" "$app_path" 30m 2>&1)"; then
+    printf 'Expected diagnostics app path to be rejected: %s\n' "$app_path" >&2
+    exit 1
+  fi
+
+  require_output "$output" "$expected"
+}
+
+require_rejected_app_path "-" "App path must be an absolute .app bundle path."
+require_rejected_app_path "GarethVideoCam.app" "App path must be an absolute path."
+require_rejected_app_path "/tmp/not-an-app" "App path must end with .app."
+
 blocked_output="$(GARETH_DIAGNOSTICS_SELF_TEST=readiness-rollup "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 resource_discovery_output="$(GARETH_DIAGNOSTICS_SELF_TEST=resource-discovery "$ROOT/scripts/collect_runtime_diagnostics.sh")"
 unknown_output="$(GARETH_DIAGNOSTICS_SELF_TEST=readiness-rollup-unknown "$ROOT/scripts/collect_runtime_diagnostics.sh")"

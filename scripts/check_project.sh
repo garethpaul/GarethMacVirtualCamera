@@ -10,7 +10,7 @@ for python_script in \
   scripts/test_validate_project.py \
   scripts/test_scan_build_log.py
 do
-  python3 -m py_compile "$python_script"
+  PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile "$python_script"
 done
 
 ./scripts/validate_project.py

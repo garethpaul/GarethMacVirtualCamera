@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -190,18 +191,20 @@ def test_fails_on_directory_build_log():
 
 
 def test_fails_on_unreadable_build_log():
-    if hasattr(os, "geteuid") and os.geteuid() == 0:
-        return
-
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", delete=False) as build_log:
         build_log.write("SwiftCompile warning: hidden warning\n")
         build_log_path = Path(build_log.name)
 
     try:
-        build_log_path.chmod(0)
+        build_log_path.chmod(0o000)
+        scanner_command = [sys.executable, str(SCANNER), str(build_log_path)]
+        if hasattr(os, "geteuid") and os.geteuid() == 0:
+            if not shutil.which("runuser"):
+                return
+            scanner_command = ["runuser", "-u", "nobody", "--", *scanner_command]
 
         result = subprocess.run(
-            [sys.executable, str(SCANNER), str(build_log_path)],
+            scanner_command,
             cwd=ROOT,
             text=True,
             capture_output=True,
