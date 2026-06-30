@@ -664,8 +664,11 @@ def main():
     require("at most 24 hours" in agents_text and "[`SECURITY.md`](SECURITY.md)" in agents_text,
             "AGENTS should document the bounded runtime diagnostic log window and security policy link",
             failures)
-    require("no greater than 24" in readme_text and "absolute path ending in" in readme_text and "capped at 24 hours" in security_text and "at most 24 hours" in vision_text,
-            "README, SECURITY, and VISION should document the bounded runtime diagnostic log window",
+    require("CHECK_SKIP_SWIFT" in readme_text and "swift is unavailable" in readme_text,
+            "README should document partial validation when the Swift toolchain is unavailable",
+            failures)
+    require("no greater than 24" in readme_text and "absolute path ending in" in readme_text and "capped at 24 hours" in security_text and "absolute paths ending in" in security_text and "at most 24 hours" in vision_text,
+            "README, SECURITY, and VISION should document the bounded runtime diagnostic log window and app path requirements",
             failures)
     require(readme_overview_path.exists() and readme_overview_path.stat().st_size > 0,
             "README overview SVG should exist and be non-empty",

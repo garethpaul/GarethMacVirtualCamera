@@ -24,8 +24,10 @@ The shared scheme replaces `/Applications/GarethVideoCam.app` with the freshly b
 ## Validate
 
 This workspace does not require extension installation, signing, or camera
-access for local validation. The maintained checks require a macOS Swift
-toolchain:
+access for local validation. The full maintained checks require a macOS Swift
+toolchain. When swift is unavailable or `CHECK_SKIP_SWIFT=1` is set, the check
+script still runs project validation, script tests, shell syntax checks, and
+whitespace checks before skipping the Swift unit tests.
 
 ```sh
 ./scripts/check_project.sh

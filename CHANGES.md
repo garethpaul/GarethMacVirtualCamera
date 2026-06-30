@@ -11,7 +11,8 @@
   gates and 24-hour diagnostic log cap, validate runtime diagnostics app paths,
   harden `PYTHON3_BIN` overrides, ignore Python bytecode caches, and exercise
   unreadable build-log scanner coverage as an unprivileged user when running
-  as root.
+  as root, and enforce that every validator mutation test is invoked from
+  `test_validate_project.main()`.
 - **Files:** `scripts/check_project.sh`, `Package.swift`, `.gitignore`,
   `scripts/validate_project.py`, `scripts/test_validate_project.py`,
   `scripts/test_collect_runtime_diagnostics.sh`,
