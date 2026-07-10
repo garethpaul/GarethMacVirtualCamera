@@ -322,7 +322,7 @@ def expected_icon_pixel_size(image):
     if not scale_value.endswith("x"):
         return None
 
-    scale_digits = scale_value.removesuffix("x")
+    scale_digits = scale_value[:-1]
     if not re.fullmatch(r"[0-9]+", size_parts[0]) or not re.fullmatch(r"[0-9]+", size_parts[1]) or not re.fullmatch(r"[0-9]+", scale_digits):
         return None
 
