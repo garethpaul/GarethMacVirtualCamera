@@ -1514,4 +1514,18 @@ if ! grep -q "Mismatched Debug bundle build versions" "$TMP_DIR/build-version-mi
   exit 1
 fi
 
+# CI relies on the default repository-relative PRODUCTS_PATH (.build/Xcode/Products),
+# which must resolve against the repository root so the bundled diagnostics script
+# receives the absolute .app path it requires.
+RELATIVE_FIXTURE_DIR=".build/verify-relative-fixture-$$"
+trap 'rm -rf "$TMP_DIR" "$ROOT/$RELATIVE_FIXTURE_DIR"' EXIT
+write_product_fixture "$ROOT/$RELATIVE_FIXTURE_DIR/Products" Debug
+
+if ! (cd / && PRODUCTS_PATH="$RELATIVE_FIXTURE_DIR/Products" "$ROOT/scripts/verify_build_products.sh" Debug) \
+  >"$TMP_DIR/relative-products.out" 2>"$TMP_DIR/relative-products.err"; then
+  printf 'Expected verifier to accept a repository-relative PRODUCTS_PATH.\n' >&2
+  cat "$TMP_DIR/relative-products.err" >&2
+  exit 1
+fi
+
 printf 'Build-product verifier tests passed.\n'
