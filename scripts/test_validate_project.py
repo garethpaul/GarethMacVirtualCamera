@@ -1126,6 +1126,44 @@ def test_validator_rejects_numeric_boolean_entitlement_acceptance():
     )
 
 
+def test_validator_rejects_missing_runtime_diagnostics_app_path_guard():
+    assert_validator_rejects_mutation(
+        "scripts/collect_runtime_diagnostics.sh",
+        """validate_app_path() {
+  if [ -z "$APP_PATH" ]; then
+    printf 'App path must be an absolute .app bundle path.\\n' >&2
+    return 1
+  fi
+
+  if [ "$APP_PATH" = "-" ]; then
+    printf 'App path must be an absolute .app bundle path.\\n' >&2
+    return 1
+  fi
+
+  if [[ "$APP_PATH" == *[$'\\n\\r\\t']* ]]; then
+    printf 'App path must not contain control characters.\\n' >&2
+    return 1
+  fi
+
+  if [[ ! "$APP_PATH" = /* ]]; then
+    printf 'App path must be an absolute path.\\n' >&2
+    return 1
+  fi
+
+  if [[ ! "$APP_PATH" == *.app ]]; then
+    printf 'App path must end with .app.\\n' >&2
+    return 1
+  fi
+}
+
+validate_log_window
+validate_app_path
+""",
+        "validate_log_window\n",
+        "runtime diagnostics should bound caller-selected log history",
+    )
+
+
 def test_validator_rejects_missing_runtime_diagnostics_all_architecture_details():
     assert_validator_rejects_mutation(
         "scripts/collect_runtime_diagnostics.sh",
@@ -1972,6 +2010,15 @@ def test_validator_rejects_floating_artifact_action():
     )
 
 
+def test_validator_rejects_incorrect_artifact_release_annotation():
+    assert_validator_rejects_mutation(
+        ".github/workflows/macos-build.yml",
+        "# v7.0.1",
+        "# v7.0.0",
+        "macOS build workflow should label the upload-artifact action with its exact release",
+    )
+
+
 def test_validator_rejects_missing_unreadable_build_log_guard():
     assert_validator_rejects_mutation(
         "scripts/scan_build_log.py",
@@ -2279,6 +2326,7 @@ def main():
     test_validator_rejects_main_only_pull_request_validation()
     test_validator_rejects_missing_pull_request_validation()
     test_validator_rejects_caller_relative_makefile()
+    test_validator_rejects_overrideable_makefile_root()
     test_validator_rejects_missing_check_project_root()
     test_validator_rejects_location_independent_make_plan_status_regression()
     test_validator_rejects_location_independent_make_plan_evidence_regression()
@@ -2312,6 +2360,7 @@ def main():
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_details()
     test_validator_rejects_missing_runtime_diagnostics_all_architecture_entitlements()
     test_validator_rejects_missing_runtime_diagnostics_executable_name_guard()
+    test_validator_rejects_missing_runtime_diagnostics_app_path_guard()
     test_validator_rejects_missing_runtime_diagnostics_scalar_boolean_entitlement_guard()
     test_validator_rejects_missing_runtime_diagnostics_info_plist_string_guard()
     test_validator_rejects_missing_runtime_diagnostics_blank_info_plist_guard()
@@ -2334,6 +2383,7 @@ def main():
     test_validator_rejects_missing_header_action_buttons()
     test_validator_rejects_missing_activity_limit()
     test_validator_rejects_missing_unsigned_build_configuration_guard()
+    test_validator_rejects_missing_unsigned_build_architecture_guard()
     test_validator_rejects_missing_host_duplicate_extension_guard()
     test_validator_rejects_directory_runtime_diagnostics_script_resource()
     test_validator_rejects_raw_extension_executable_metadata()
@@ -2358,6 +2408,7 @@ def main():
     test_validator_rejects_broad_appintents_log_ignore()
     test_validator_rejects_missing_appintents_ignore_disqualifier()
     test_validator_rejects_missing_appintents_same_line_warning_disqualifier()
+    test_validator_rejects_missing_install_failed_banner_scan()
     test_validator_rejects_missing_partial_ci_log_scan()
     test_validator_rejects_floating_checkout_action()
     test_validator_rejects_duplicate_checkout_action()
@@ -2367,6 +2418,7 @@ def main():
     test_validator_rejects_relocated_checkout_credential_guard()
     test_validator_rejects_contradictory_checkout_credential_guard()
     test_validator_rejects_floating_artifact_action()
+    test_validator_rejects_incorrect_artifact_release_annotation()
     test_validator_rejects_missing_unreadable_build_log_guard()
     test_validator_rejects_root_level_unsigned_build_logs()
     test_validator_rejects_missing_build_product_python_resolver()

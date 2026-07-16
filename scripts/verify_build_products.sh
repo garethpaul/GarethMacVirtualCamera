@@ -4,6 +4,12 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_OUTPUT_PATH="${BUILD_OUTPUT_PATH:-.build/Xcode}"
 PRODUCTS_PATH="${PRODUCTS_PATH:-$BUILD_OUTPUT_PATH/Products}"
+# The bundled diagnostics script requires an absolute .app path, so anchor a
+# relative products path to the repository root before deriving bundle paths.
+case "$PRODUCTS_PATH" in
+  /*) ;;
+  *) PRODUCTS_PATH="$ROOT/$PRODUCTS_PATH" ;;
+esac
 APP_NAME="${APP_NAME:-GarethVideoCam.app}"
 EXTENSION_NAME="${EXTENSION_NAME:-com.garethpaul.GarethVideoCam.Extension.systemextension}"
 APP_ID="${APP_ID:-com.garethpaul.GarethVideoCam}"
@@ -20,9 +26,22 @@ EXPECTED_VIDEO_FRAME_RATE="${EXPECTED_VIDEO_FRAME_RATE:-24}"
 
 python3_command() {
   if [ -n "${PYTHON3_BIN:-}" ]; then
-    if command -v "$PYTHON3_BIN" >/dev/null 2>&1; then
-      command -v "$PYTHON3_BIN"
+    if [[ "$PYTHON3_BIN" == *[$'\n\r\t']* ]] || [ "$PYTHON3_BIN" = "-" ]; then
+      printf 'Configured PYTHON3_BIN is not executable or not found: %s\n' "$PYTHON3_BIN" >&2
+      exit 1
+    fi
+
+    if [ -x "$PYTHON3_BIN" ]; then
+      printf '%s\n' "$PYTHON3_BIN"
       return
+    fi
+
+    if command -v "$PYTHON3_BIN" >/dev/null 2>&1; then
+      resolved_python="$(command -v "$PYTHON3_BIN")"
+      if [ -x "$resolved_python" ]; then
+        printf '%s\n' "$resolved_python"
+        return
+      fi
     fi
 
     printf 'Configured PYTHON3_BIN is not executable or not found: %s\n' "$PYTHON3_BIN" >&2

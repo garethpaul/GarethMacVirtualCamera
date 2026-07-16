@@ -27,6 +27,8 @@ EXPECTED_EXTENSION_ENTITLEMENT_KEYS = {
 }
 CHECKOUT_ACTION = "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10"
 CHECKOUT_RELEASE = "v6.0.3"
+ARTIFACT_ACTION = "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
+ARTIFACT_RELEASE = "v7.0.1"
 
 
 def workflow_steps(workflow_text):
@@ -446,6 +448,7 @@ def main():
     readme_text = (ROOT / "README.md").read_text()
     vision_text = (ROOT / "VISION.md").read_text()
     security_text = (ROOT / "SECURITY.md").read_text()
+    agents_text = (ROOT / "AGENTS.md").read_text()
     readme_overview_path = ROOT / "docs/readme-overview.svg"
     readme_overview_text = ""
     readme_overview_xml_valid = False
@@ -508,16 +511,34 @@ def main():
     require(project_text.count("SDKROOT = macosx;") == 2,
             "project Debug and Release build configurations should use the macOS SDK",
             failures)
-    require(".build/" in gitignore_text and "build-*.log" in gitignore_text and "*.xcresult" in gitignore_text,
+    require(".build/" in gitignore_text and "__pycache__/" in gitignore_text and "build-*.log" in gitignore_text and "*.xcresult" in gitignore_text,
             "gitignore should exclude local Xcode build products, logs, and result bundles",
             failures)
     require(makefile_path.exists()
             and ".PHONY: build check lint test" in makefile_text
             and "lint test build: check" in makefile_text
             and 'override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))' in makefile_text
-            and '"$(ROOT)/scripts/check_project.sh"' in makefile_text,
+            and '"$(ROOT)/scripts/check_project.sh"' in makefile_text
+            and "test_validator_rejects_overrideable_makefile_root" in validate_project_test_source,
             "Makefile should protect its root and expose lint, test, build, and check validation entry points",
             failures)
+    mutation_test_names = re.findall(
+        r"^def (test_validator_rejects_[^\(]+)\(",
+        validate_project_test_source,
+        re.MULTILINE,
+    )
+    mutation_test_calls = re.findall(
+        r"^\s+(test_validator_rejects_[^\(]+)\(\)",
+        validate_project_test_source,
+        re.MULTILINE,
+    )
+    missing_mutation_test_calls = sorted(set(mutation_test_names) - set(mutation_test_calls))
+    require(
+        not missing_mutation_test_calls,
+        "validator mutation tests missing from test_validate_project.main(): "
+        + ", ".join(missing_mutation_test_calls),
+        failures,
+    )
     require('ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"' in check_project_source
             and 'cd "$ROOT"' in check_project_source,
             "check_project should enter its repository root before running relative commands",
@@ -633,6 +654,21 @@ def main():
             failures)
     require("make lint" in vision_text and "make test" in vision_text and "make build" in vision_text and "make check" in vision_text and "./scripts/check_project.sh" in vision_text,
             "VISION should keep the Makefile gate entry points aligned with the project script",
+            failures)
+    require("make lint" in agents_text and "make test" in agents_text and "make build" in agents_text and "make check" in agents_text and "./scripts/check_project.sh" in agents_text,
+            "AGENTS should document the Makefile gate entry points and check script",
+            failures)
+    require("CHECK_SKIP_SWIFT" in agents_text and "swift is unavailable" in agents_text,
+            "AGENTS should document partial validation when the Swift toolchain is unavailable",
+            failures)
+    require("at most 24 hours" in agents_text and "[`SECURITY.md`](SECURITY.md)" in agents_text,
+            "AGENTS should document the bounded runtime diagnostic log window and security policy link",
+            failures)
+    require("CHECK_SKIP_SWIFT" in readme_text and "swift is unavailable" in readme_text,
+            "README should document partial validation when the Swift toolchain is unavailable",
+            failures)
+    require("no greater than 24" in readme_text and "absolute path ending in" in readme_text and "capped at 24 hours" in security_text and "absolute paths ending in" in security_text and "at most 24 hours" in vision_text,
+            "README, SECURITY, and VISION should document the bounded runtime diagnostic log window and app path requirements",
             failures)
     require(readme_overview_path.exists() and readme_overview_path.stat().st_size > 0,
             "README overview SVG should exist and be non-empty",
@@ -902,7 +938,10 @@ def main():
             failures)
     require("SampleTimestampValidator.swift in Sources" in project_text
             and 'name: "CameraTimeline"' in package_source
-            and 'swift test --scratch-path "$SWIFT_TEST_SCRATCH"' in check_project_source,
+            and ".macOS(.v14)" in package_source
+            and 'swift test --scratch-path "$SWIFT_TEST_SCRATCH"' in check_project_source
+            and "python3 -m py_compile" in check_project_source
+            and "CHECK_SKIP_SWIFT" in check_project_source,
             "project checks should compile and run the synthetic sample timestamp unit tests",
             failures)
     restart_index = extension_source.find("let nextReaderState = try makeAssetReader")
@@ -1302,7 +1341,7 @@ def main():
     require("GarethVideoCam.app" in verify_build_products_source and "com.garethpaul.GarethVideoCam.Extension.systemextension" in verify_build_products_source and "Contents/Library/SystemExtensions" in verify_build_products_source and "Contents/Resources/video.mp4" in verify_build_products_source and "read_bundle_identifier" in verify_build_products_source and "read_bundle_short_version" in verify_build_products_source and "read_bundle_build_version" in verify_build_products_source and "verify_aligned_bundle_versions" in verify_build_products_source and "Mismatched %s bundle short versions" in verify_build_products_source and "Mismatched %s bundle build versions" in verify_build_products_source and "read_bundle_executable" in verify_build_products_source and "verify_bundle_executable" in verify_build_products_source and "verify_info_plist_string" in verify_build_products_source and "verify_info_plist_value" in verify_build_products_source and "verify_app_diagnostics_resources" in verify_build_products_source and "verify_app_diagnostics_self_test" in verify_build_products_source and 'GARETH_DIAGNOSTICS_SELF_TEST="$self_test"' in verify_build_products_source and "collect_runtime_diagnostics.sh" in verify_build_products_source and "Missing %s app runtime diagnostics script" in verify_build_products_source and "Missing %s app runtime diagnostics parser" in verify_build_products_source and "resource-discovery" in verify_build_products_source and "Diagnostics script path:" in verify_build_products_source and "Diagnostics script directory:" in verify_build_products_source and "Diagnostics parser path:" in verify_build_products_source and "Diagnostics parser source: adjacent script resource" in verify_build_products_source and "Diagnostics parser available: yes" in verify_build_products_source and "video-parser" in verify_build_products_source and "GARETH_DIAGNOSTICS_VIDEO_FIXTURE" in verify_build_products_source and "Video parser pixel width fixture: 1280" in verify_build_products_source and "Video parser pixel height fixture: 720" in verify_build_products_source and "Video parser frame rate fixture: 24" in verify_build_products_source and "Video parser duration fixture: 3.0833333333333335" in verify_build_products_source and "Video parser metadata ready fixture: yes" in verify_build_products_source and "APP_DISPLAY_NAME" in verify_build_products_source and "EXTENSION_DISPLAY_NAME" in verify_build_products_source and "CFBundleDisplayName" in verify_build_products_source and "display metadata" in verify_build_products_source and "NSCameraUsageDescription" in verify_build_products_source and "NSSystemExtensionUsageDescription" in verify_build_products_source and "read_extension_mach_service_name" in verify_build_products_source and "verify_extension_cmio_metadata" in verify_build_products_source and "mach_service_matches_expected_identifier" in verify_build_products_source and "team_prefixed_suffix" in verify_build_products_source and "^[[:alnum:]]{10}$" in verify_build_products_source and "verify_bundled_video_metadata" in verify_build_products_source and "validate_project.py" in verify_build_products_source and "mp4_video_metadata" in verify_build_products_source and "dont_write_bytecode" in verify_build_products_source and "EXPECTED_VIDEO_WIDTH" in verify_build_products_source and "EXPECTED_VIDEO_HEIGHT" in verify_build_products_source and "EXPECTED_VIDEO_FRAME_RATE" in verify_build_products_source and "Unexpected {configuration} bundled video dimensions" in verify_build_products_source and "Unexpected {configuration} bundled video frame rate" in verify_build_products_source and "CMIOExtensionMachServiceName" in verify_build_products_source and "Unresolved %s extension CMIOExtensionMachServiceName" in verify_build_products_source and "Unexpected %s extension CMIOExtensionMachServiceName" in verify_build_products_source and "Contents/Info.plist" in verify_build_products_source and "Contents/MacOS" in verify_build_products_source and "CFBundleExecutable" in verify_build_products_source and "CFBundleShortVersionString" in verify_build_products_source and "CFBundleVersion" in verify_build_products_source and "plistlib" in verify_build_products_source and "PlistBuddy" not in verify_build_products_source and "Debug Release" in verify_build_products_source,
             "build-product verifier should check app, embedded extension, bundle identifiers, aligned bundle versions, declared executables, display metadata, privacy usage strings, diagnostics resources, resolved CoreMediaIO metadata, and bundled video",
             failures)
-    require("python3_command()" in verify_build_products_source and "PYTHON3_BIN=\"$(python3_command)\"" in verify_build_products_source and "Configured PYTHON3_BIN is not executable or not found" in verify_build_products_source and "/usr/bin/python3" in verify_build_products_source and "command -v python3" in verify_build_products_source and '"$PYTHON3_BIN" - "$info_plist"' in verify_build_products_source and '"$PYTHON3_BIN" - "$ROOT/scripts/validate_project.py"' in verify_build_products_source and "PYTHON3_BIN=\"$TMP_DIR/missing-python3\"" in verify_build_products_test_source and "missing configured Python interpreter" in verify_build_products_test_source,
+    require("python3_command()" in verify_build_products_source and "PYTHON3_BIN=\"$(python3_command)\"" in verify_build_products_source and "Configured PYTHON3_BIN is not executable or not found" in verify_build_products_source and 'PYTHON3_BIN" = "-"' in verify_build_products_source and "/usr/bin/python3" in verify_build_products_source and "command -v python3" in verify_build_products_source and '"$PYTHON3_BIN" - "$info_plist"' in verify_build_products_source and '"$PYTHON3_BIN" - "$ROOT/scripts/validate_project.py"' in verify_build_products_source and "PYTHON3_BIN=\"$TMP_DIR/missing-python3\"" in verify_build_products_test_source and "missing configured Python interpreter" in verify_build_products_test_source and 'PYTHON3_BIN="-"' in verify_build_products_test_source and "dash PYTHON3_BIN override" in verify_build_products_test_source and "newline PYTHON3_BIN override" in verify_build_products_test_source,
             "build-product verifier should resolve one explicit Python 3 interpreter before parsing plists or bundled-video metadata",
             failures)
     require("validate_configuration_name" in verify_build_products_source and "^[A-Za-z0-9_][A-Za-z0-9_.-]*$" in verify_build_products_source and "Invalid Xcode configuration name:" in verify_build_products_source and 'validate_configuration_name "$configuration"' in verify_build_products_source and 'PYTHON3_BIN="$(python3_command)"' in verify_build_products_source and verify_build_products_source.index('validate_configuration_name "$configuration"') < verify_build_products_source.index('PYTHON3_BIN="$(python3_command)"') and "invalid_configuration_status" in verify_build_products_test_source and "Expected verifier to reject an invalid configuration before resolving Python" in verify_build_products_test_source and "Invalid Xcode configuration name: ../Debug" in verify_build_products_test_source and "dot_segment_configuration_status" in verify_build_products_test_source and "Invalid Xcode configuration name: .." in verify_build_products_test_source,
@@ -1591,9 +1630,19 @@ def main():
             "runtime diagnostics should report selected developer directory, Swift, and macOS SDK evidence",
             failures)
     require("validate_log_window" in runtime_diagnostics_source and
+            "validate_app_path" in runtime_diagnostics_source and
+            "App path must be an absolute .app bundle path." in runtime_diagnostics_source and
             "no greater than 24h" in runtime_diagnostics_source and
-            "require_rejected_log_window" in runtime_diagnostics_test_source,
+            "require_rejected_log_window" in runtime_diagnostics_test_source and
+            "require_accepted_log_window" in runtime_diagnostics_test_source and
+            "require_rejected_app_path" in runtime_diagnostics_test_source,
             "runtime diagnostics should bound caller-selected log history",
+            failures)
+    require("test_validator_rejects_missing_runtime_diagnostics_app_path_guard" in validate_project_test_source,
+            "runtime diagnostics app-path guard should have mutation coverage",
+            failures)
+    require("runuser" in build_log_scanner_test_source and "nobody" in build_log_scanner_test_source,
+            "build-log scanner tests should exercise unreadable logs with dropped privileges when running as root",
             failures)
     require("camera_name = $0" in runtime_diagnostics_source and "sub(/^[[:space:]]+/, \"\", camera_name)" in runtime_diagnostics_source and "sub(/[[:space:]]+$/, \"\", camera_name)" in runtime_diagnostics_source and "sub(/:$/, \"\", camera_name)" in runtime_diagnostics_source and "camera_name == expected_camera_name" in runtime_diagnostics_source,
             "runtime diagnostics camera-device parser should compare exact normalized camera names",
@@ -1676,6 +1725,23 @@ def main():
                     and checkout_credentials[0]["value"] == "false",
                     "macOS build workflow checkout should disable persisted credentials exactly once in the checkout step",
                     failures)
+        artifact_references = [
+            reference
+            for step in workflow_steps(workflow_text)
+            for reference in workflow_action_references(step)
+            if reference["reference"].startswith("actions/upload-artifact@")
+        ]
+        require(len(artifact_references) == 1,
+                "macOS build workflow should contain exactly one upload-artifact action step",
+                failures)
+        if len(artifact_references) == 1:
+            artifact_reference = artifact_references[0]
+            require(artifact_reference["reference"] == ARTIFACT_ACTION,
+                    "macOS build workflow should pin the upload-artifact action",
+                    failures)
+            require(artifact_reference["annotation"] == ARTIFACT_RELEASE,
+                    "macOS build workflow should label the upload-artifact action with its exact release",
+                    failures)
         require("runs-on: macos-26" in workflow_text,
                 "macOS build workflow should run on the macOS 26 runner",
                 failures)
@@ -1724,7 +1790,7 @@ def main():
         require("Scan Xcode logs for warnings and failures" in workflow_text and "if: always() && hashFiles('.build/Xcode/Logs/build-*.log') != ''" in workflow_text and "./scripts/scan_build_log.py .build/Xcode/Logs/build-*.log" in workflow_text,
                 "macOS build workflow should scan any captured Debug or Release xcodebuild output even after failed build steps",
                 failures)
-        require("actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" in workflow_text and "xcode-build-logs" in workflow_text and "path: .build/Xcode/Logs/build-*.log" in workflow_text and "if-no-files-found: ignore" in workflow_text,
+        require("actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" in workflow_text and "xcode-build-logs" in workflow_text and "path: .build/Xcode/Logs/build-*.log" in workflow_text and "if-no-files-found: ignore" in workflow_text and "test_validator_rejects_incorrect_artifact_release_annotation" in validate_project_test_source,
                 "macOS build workflow should upload captured Xcode build logs for later inspection",
                 failures)
 
