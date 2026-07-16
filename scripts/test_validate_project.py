@@ -1808,12 +1808,12 @@ def test_validator_rejects_untrimmed_icon_size_metadata():
 def test_validator_rejects_permissive_icon_integer_metadata():
     assert_validator_rejects_mutation(
         "scripts/validate_project.py",
-        """    scale_digits = scale_value.removesuffix("x")
+        """    scale_digits = scale_value[:-1]
     if not re.fullmatch(r"[0-9]+", size_parts[0]) or not re.fullmatch(r"[0-9]+", size_parts[1]) or not re.fullmatch(r"[0-9]+", scale_digits):
         return None
 
 """,
-        """    scale_digits = scale_value.removesuffix("x")
+        """    scale_digits = scale_value[:-1]
 """,
         "app icon validator should reject malformed icon catalog size metadata without raising",
     )
